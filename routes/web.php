@@ -26,10 +26,6 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/fees/{fee}', [App\Http\Controllers\FeeController::class, 'destroy'])->name('fees.destroy');
     Route::put('/fees/{fee}/toggle-status', [App\Http\Controllers\FeeController::class, 'toggleStatus'])->name('fees.toggle-status');
     Route::post('/fees/{fee}/beneficiaries', [App\Http\Controllers\FeeController::class, 'manageBeneficiaries'])->name('fees.beneficiaries');
-    
-    Route::get('/activity-log', function () {
-        return Inertia\Inertia::render('ActivityLog');
-    })->name('activity-log');
 
     Route::prefix('business')->group(function () {
         Route::get('/bank-accounts', [App\Http\Controllers\BankAccountController::class, 'index'])->name('bank-accounts.index');

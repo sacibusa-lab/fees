@@ -8,7 +8,6 @@ import {
     DollarSign,
     Calendar,
     Building2,
-    Activity,
     LogOut,
     ChevronDown,
     Settings
@@ -134,11 +133,6 @@ const Sidebar = ({ institution }) => {
                         </div>
                     )}
                 </div>
-
-                <Link href="/activity-log" className={`nav-item ${isActive('/activity-log') ? 'active' : ''}`}>
-                    <Activity size={18} />
-                    <span>Activity Log</span>
-                </Link>
 
                 <Link href="/settings" className={`nav-item ${isActive('/settings') ? 'active' : ''}`}>
                     <Settings size={18} />

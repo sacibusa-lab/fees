@@ -37,7 +37,7 @@ class StudentController extends Controller
                 'added_on' => $student->created_at->format('M d, Y, h:i A'),
                 'session_added' => $currentSession ? $currentSession->name : 'N/A', // approximate
                 'academic_history' => [
-                    ['class' => $student->schoolClass->name ?? 'N/A', 'session' => $currentSession->name ?? 'N/A']
+                    ['class' => $student->schoolClass->name ?? 'N/A', 'session' => $currentSession ? $currentSession->name : 'N/A']
                 ],
                 // Mocking account numbers for now as VirtualAccount model is not yet established
                 'account_numbers' => [
