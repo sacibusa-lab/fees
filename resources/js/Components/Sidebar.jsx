@@ -10,12 +10,13 @@ import {
     Building2,
     LogOut,
     ChevronDown,
-    Settings
+    Settings,
+    X
 } from 'lucide-react';
 import VerifyPaymentModal from './VerifyPaymentModal';
 import './Sidebar.css';
 
-const Sidebar = ({ institution }) => {
+const Sidebar = ({ institution, isOpen, onClose }) => {
     const currentPath = window.location.pathname;
 
     const [studentsOpen, setStudentsOpen] = useState(currentPath.startsWith('/students'));
@@ -30,15 +31,25 @@ const Sidebar = ({ institution }) => {
     const isActive = (path) => window.location.pathname === path;
 
     return (
-        <div className="sidebar">
+        <div className={`sidebar ${isOpen ? 'open' : ''}`}>
+            {/* Mobile Close Button */}
+            <button className="sidebar-close-btn" onClick={onClose}>
+                <X size={20} />
+            </button>
             {/* Logo and Portal ID */}
             <div className="sidebar-header">
                 <div className="logo">
-                    <div className="logo-icon">
-                        <svg viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z" />
-                        </svg>
-                    </div>
+                    {institution?.logo ? (
+                        <div className="logo-image-container">
+                            <img src={institution.logo} alt="Logo" className="logo-img" />
+                        </div>
+                    ) : (
+                        <div className="logo-icon">
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z" />
+                            </svg>
+                        </div>
+                    )}
                     <span className="logo-text">{institution?.name || 'Fees'}</span>
                 </div>
                 <div className="portal-id">Portal ID: {institution?.portal_id || 'N/A'}</div>
@@ -57,7 +68,7 @@ const Sidebar = ({ institution }) => {
 
             {/* Navigation */}
             <nav className="sidebar-nav">
-                <Link href="/dashboard" className={`nav-item ${isActive('/dashboard') ? 'active' : ''}`}>
+                <Link href="/dashboard" className={`nav-item ${isActive('/dashboard') ? 'active' : ''}`} onClick={onClose}>
                     <Home size={18} />
                     <span>Home</span>
                 </Link>
@@ -74,11 +85,11 @@ const Sidebar = ({ institution }) => {
                     </button>
                     {studentsOpen && (
                         <div className="nav-submenu">
-                            <Link href="/students/classes" className={`nav-subitem ${isActive('/students/classes') ? 'active' : ''}`}>
+                            <Link href="/students/classes" className={`nav-subitem ${isActive('/students/classes') ? 'active' : ''}`} onClick={onClose}>
                                 <span className="dot"></span>
                                 Classes
                             </Link>
-                            <Link href="/students" className={`nav-subitem ${isActive('/students') ? 'active' : ''}`}>
+                            <Link href="/students" className={`nav-subitem ${isActive('/students') ? 'active' : ''}`} onClick={onClose}>
                                 <span className="dot"></span>
                                 Students
                             </Link>
@@ -86,7 +97,7 @@ const Sidebar = ({ institution }) => {
                     )}
                 </div>
 
-                <Link href="/fees" className={`nav-item ${isActive('/fees') ? 'active' : ''}`}>
+                <Link href="/fees" className={`nav-item ${isActive('/fees') ? 'active' : ''}`} onClick={onClose}>
                     <FileText size={18} />
                     <span>Fees</span>
                 </Link>
@@ -103,11 +114,11 @@ const Sidebar = ({ institution }) => {
                     </button>
                     {paymentsOpen && (
                         <div className="nav-submenu">
-                            <Link href="/payments/overview" className={`nav-subitem ${isActive('/payments/overview') ? 'active' : ''}`}>
+                            <Link href="/payments/overview" className={`nav-subitem ${isActive('/payments/overview') ? 'active' : ''}`} onClick={onClose}>
                                 <span className="dot"></span>
                                 Overview
                             </Link>
-                            <Link href="/payments/transactions" className={`nav-subitem ${isActive('/payments/transactions') ? 'active' : ''}`}>
+                            <Link href="/payments/transactions" className={`nav-subitem ${isActive('/payments/transactions') ? 'active' : ''}`} onClick={onClose}>
                                 <span className="dot"></span>
                                 Transactions
                             </Link>
@@ -115,7 +126,7 @@ const Sidebar = ({ institution }) => {
                     )}
                 </div>
 
-                <Link href="/academic-sessions" className={`nav-item ${isActive('/academic-sessions') ? 'active' : ''}`}>
+                <Link href="/academic-sessions" className={`nav-item ${isActive('/academic-sessions') ? 'active' : ''}`} onClick={onClose}>
                     <Calendar size={18} />
                     <span>Academic Sessions</span>
                 </Link>
@@ -132,11 +143,11 @@ const Sidebar = ({ institution }) => {
                     </button>
                     {businessOpen && (
                         <div className="nav-submenu">
-                            <Link href="/business/profile" className={`nav-subitem ${isActive('/business/profile') ? 'active' : ''}`}>
+                            <Link href="/business/profile" className={`nav-subitem ${isActive('/business/profile') ? 'active' : ''}`} onClick={onClose}>
                                 <span className="dot"></span>
                                 Business Profile
                             </Link>
-                            <Link href="/business/bank-accounts" className={`nav-subitem ${isActive('/business/bank-accounts') ? 'active' : ''}`}>
+                            <Link href="/business/bank-accounts" className={`nav-subitem ${isActive('/business/bank-accounts') ? 'active' : ''}`} onClick={onClose}>
                                 <span className="dot"></span>
                                 Bank Accounts
                             </Link>
@@ -144,7 +155,7 @@ const Sidebar = ({ institution }) => {
                     )}
                 </div>
 
-                <Link href="/settings" className={`nav-item ${isActive('/settings') ? 'active' : ''}`}>
+                <Link href="/settings" className={`nav-item ${isActive('/settings') ? 'active' : ''}`} onClick={onClose}>
                     <Settings size={18} />
                     <span>Settings</span>
                 </Link>

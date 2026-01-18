@@ -52,6 +52,7 @@ class HandleInertiaRequests extends Middleware
                     'name' => $institution->name,
                     'portal_id' => $institution->portal_id,
                     'logo' => $institution->logo,
+                    'favicon' => $institution->favicon,
                     'email' => $institution->email,
                     'phone' => $institution->phone,
                     'address' => $institution->address,

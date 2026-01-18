@@ -31,6 +31,7 @@ class SettingsController extends Controller
             'phone' => 'nullable|string',
             'address' => 'nullable|string',
             'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'favicon' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,ico|max:1024',
             'primary_color' => 'nullable|string|max:7',
             'sidebar_color' => 'nullable|string|max:7',
             'secondary_color' => 'nullable|string|max:7',
@@ -39,6 +40,11 @@ class SettingsController extends Controller
         if ($request->hasFile('logo')) {
             $path = $request->file('logo')->store('uploads', 'public');
             $validated['logo'] = '/storage/' . $path;
+        }
+
+        if ($request->hasFile('favicon')) {
+            $path = $request->file('favicon')->store('uploads', 'public');
+            $validated['favicon'] = '/storage/' . $path;
         }
 
         $institutionId = auth()->user()->institution_id;

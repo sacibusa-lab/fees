@@ -7,13 +7,17 @@ import './Layout.css';
 const Layout = ({ children }) => {
     const { institution } = usePage().props;
     const [pageTitle, setPageTitle] = useState('Portal');
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+    const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
+    const closeSidebar = () => setIsSidebarOpen(false);
 
     useEffect(() => {
+        // ... previous useEffect logic ...
         if (institution) {
             const root = document.documentElement;
             if (institution.primary_color) {
                 root.style.setProperty('--primary', institution.primary_color);
-                // Also update primary-light for backgrounds (10% opacity)
                 root.style.setProperty('--primary-light', `${institution.primary_color}1A`);
             }
             if (institution.secondary_color) {
@@ -21,22 +25,21 @@ const Layout = ({ children }) => {
             }
             if (institution.sidebar_color) {
                 root.style.setProperty('--sidebar-bg', institution.sidebar_color);
-                // If sidebar color is dark, we might need to adjust sidebar text color, 
-                // but let's stick to background for now.
             }
         }
     }, [institution]);
 
     return (
         <div className="layout">
-            <Sidebar institution={institution} />
+            {/* Mobile Sidebar Overlay */}
+            {isSidebarOpen && <div className="sidebar-overlay" onClick={closeSidebar} />}
+
+            <Sidebar institution={institution} isOpen={isSidebarOpen} onClose={closeSidebar} />
 
             <div className="main-content">
-                <Header title={pageTitle} />
+                <Header title={pageTitle} onMenuButtonClick={toggleSidebar} />
 
                 <main className="content">
-                    {/* We can use React.cloneElement if we need to pass setPageTitle down, 
-                        but better to use userPage() or a context provider for title management in Inertia */}
                     {children}
                 </main>
             </div>

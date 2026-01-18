@@ -39,10 +39,8 @@ const SettingsLayout = ({ children, title }) => {
                     </nav>
                 </div>
                 <div className="settings-content-area">
-                    {title && <h1 className="settings-page-title">{title}</h1>}
-                    <div className="settings-card">
-                        {children}
-                    </div>
+                    {title && <h1 className="settings-page-title" style={{ marginBottom: '24px' }}>{title}</h1>}
+                    {children}
                 </div>
             </div>
         </Layout>
