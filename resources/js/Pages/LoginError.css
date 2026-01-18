@@ -1,0 +1,20 @@
+.error-message {
+    padding: var(--spacing-md);
+    background: var(--danger-light);
+    color: var(--danger);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--spacing-lg);
+    font-size: 0.875rem;
+    text-align: center;
+}
+
+.login-submit-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.form-input:disabled,
+.toggle-password-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}

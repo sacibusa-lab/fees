@@ -1,0 +1,138 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Fee;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
+
+class FeeController extends Controller
+{
+    public function index()
+    {
+        $institutionId = auth()->user()->institution_id;
+        $fees = Fee::with('beneficiaries')
+            ->where('institution_id', $institutionId)
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($fee) {
+                return [
+                    'id' => $fee->id,
+                    'title' => $fee->title,
+                    'revenueCode' => $fee->revenue_code,
+                    'cycle' => ucfirst($fee->cycle),
+                    'type' => ucfirst($fee->type),
+                    'payeeAllowed' => ucfirst($fee->payee_allowed),
+                    'amount' => $fee->amount > 0 ? '₦' . number_format($fee->amount) : 'N/A',
+                    'raw_amount' => $fee->amount, // Useful for edit form
+                    'chargeBear' => ucfirst($fee->charge_bearer),
+                    'status' => ucfirst($fee->status),
+                    'beneficiaries' => $fee->beneficiaries
+                ];
+            });
+
+        return Inertia::render('FeesManagement', [
+            'fees' => $fees,
+            'feeCount' => $fees->count()
+        ]);
+    }
+
+    public function store(Request $request)
+    {
+        $institutionId = auth()->user()->institution_id;
+        
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'revenue_code' => 'required|string|max:255',
+            'cycle' => 'required|in:termly,annually',
+            'type' => 'required|in:compulsory,optional',
+            'payee_allowed' => 'required|in:students,all',
+            'amount' => 'required|numeric',
+            'charge_bearer' => 'required|in:self,institution',
+            'status' => 'required|in:active,inactive',
+        ]);
+
+        Fee::create([
+            'institution_id' => $institutionId,
+            ...$validated
+        ]);
+
+        return redirect()->back()->with('success', 'Fee created successfully');
+    }
+
+    public function show(Fee $fee)
+    {
+        $fee->load('beneficiaries');
+        return Inertia::render('FeeDetails', [
+            'fee' => [
+                'id' => $fee->id,
+                'title' => $fee->title,
+                'revenueCode' => $fee->revenue_code,
+                'revenue_code' => $fee->revenue_code, // raw
+                'cycle' => ucfirst($fee->cycle),
+                'type' => ucfirst($fee->type),
+                'payeeAllowed' => ucfirst($fee->payee_allowed),
+                'payee_allowed' => $fee->payee_allowed, // raw
+                'amount' => '₦' . number_format($fee->amount),
+                'raw_amount' => $fee->amount,
+                'chargeBear' => ucfirst($fee->charge_bearer),
+                'charge_bearer' => $fee->charge_bearer, // raw
+                'status' => ucfirst($fee->status),
+                'beneficiaries' => $fee->beneficiaries,
+                'created_at' => $fee->created_at->format('M d, Y'),
+            ]
+        ]);
+    }
+
+    public function update(Request $request, Fee $fee)
+    {
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'revenue_code' => 'required|string|max:255',
+            'cycle' => 'required|in:termly,annually',
+            'type' => 'required|in:compulsory,optional',
+            'payee_allowed' => 'required|in:students,all',
+            'amount' => 'required|numeric',
+            'charge_bearer' => 'required|in:self,institution',
+            'status' => 'required|in:active,inactive',
+        ]);
+
+        $fee->update($validated);
+
+        return redirect()->back()->with('success', 'Fee updated successfully');
+    }
+
+    public function destroy(Fee $fee)
+    {
+        $fee->delete();
+        return redirect()->back()->with('success', 'Fee deleted successfully');
+    }
+
+    public function toggleStatus(Fee $fee)
+    {
+        $newStatus = $fee->status === 'active' ? 'inactive' : 'active';
+        $fee->update(['status' => $newStatus]);
+        
+        return redirect()->back()->with('success', 'Fee status updated');
+    }
+
+    public function manageBeneficiaries(Request $request, Fee $fee)
+    {
+        $request->validate([
+            'beneficiaries' => 'required|array',
+            'beneficiaries.*.account_name' => 'required|string',
+            'beneficiaries.*.account_number' => 'required|string',
+            'beneficiaries.*.bank_name' => 'required|string',
+            'beneficiaries.*.percentage' => 'required|numeric|min:0|max:100',
+        ]);
+
+        // Replace all beneficiaries for this fee (simple sync)
+        $fee->beneficiaries()->delete();
+        
+        foreach ($request->beneficiaries as $ben) {
+            $fee->beneficiaries()->create($ben);
+        }
+
+        return redirect()->back()->with('success', 'Beneficiaries updated successfully');
+    }
+}

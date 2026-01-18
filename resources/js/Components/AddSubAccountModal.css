@@ -1,0 +1,180 @@
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.4);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 3000;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 12px;
+    width: 480px;
+    padding: 24px;
+    position: relative;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    animation: slideUp 0.3s ease-out;
+}
+
+.modal-close-container {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    /* Screenshot shows X on LEFT top? Wait. Image 3 shows X inside a circle on TOP LEFT. */
+}
+
+.modal-close-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: white;
+    border: 1px solid #fee2e2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.modal-close-btn:hover {
+    background: #fef2f2;
+}
+
+.modal-body {
+    padding-top: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.modal-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 24px;
+    text-align: center;
+}
+
+form {
+    width: 100%;
+}
+
+.form-group {
+    margin-bottom: 16px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 6px;
+}
+
+.form-select,
+.form-input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #3b82f6;
+    /* Blue border in screenshot for active input? Or just blue outline on focus. */
+    border: 1px solid #d1d5db;
+    /* Default gray */
+    border-radius: 6px;
+    font-size: 14px;
+    color: #374151;
+}
+
+.form-select:focus,
+.form-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    /* Blue focus */
+    box-shadow: 0 0 0 1px #3b82f6;
+}
+
+/* Validation Result Card */
+.validation-success {
+    background-color: #ecfdf5;
+    border: 1px solid #10b981;
+    /* Or lighter green border */
+    border-radius: 6px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.success-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #10B981;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    color: white;
+}
+
+.account-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #10B981;
+    /* Green text */
+    text-transform: uppercase;
+}
+
+.validation-error {
+    color: #EF4444;
+    font-size: 13px;
+    margin-bottom: 16px;
+    text-align: center;
+}
+
+.validation-status {
+    color: #6B7280;
+    font-size: 13px;
+    margin-bottom: 16px;
+    text-align: center;
+    font-style: italic;
+}
+
+.save-btn {
+    width: 100%;
+    background-color: #E91E63;
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.save-btn:disabled {
+    background-color: #fce4ec;
+    cursor: not-allowed;
+    color: #f48fb1;
+}
+
+.save-btn:hover:not(:disabled) {
+    background-color: #d81b60;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

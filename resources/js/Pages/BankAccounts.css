@@ -1,0 +1,162 @@
+.bank-accounts {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xl);
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.page-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.btn-add {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: 0.625rem 1.25rem;
+    background: var(--primary);
+    color: white;
+    border-radius: var(--radius-md);
+    font-weight: 500;
+    font-size: 0.875rem;
+    transition: all var(--transition-fast);
+}
+
+.btn-add:hover {
+    background: var(--primary-dark);
+    transform: translateY(-1px);
+}
+
+.accounts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: var(--spacing-lg);
+}
+
+.account-card {
+    background: white;
+    padding: var(--spacing-lg);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    transition: all var(--transition-fast);
+    border: 1px solid var(--border);
+}
+
+.account-card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+    border-color: var(--primary);
+}
+
+.account-card .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.bank-icon {
+    width: 48px;
+    height: 48px;
+    background: var(--background);
+    color: var(--primary);
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.status-indicator .active {
+    color: var(--success);
+}
+
+.status-indicator .inactive {
+    color: var(--danger);
+}
+
+.bank-name {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.account-number {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.125rem;
+    letter-spacing: 1px;
+    color: var(--text-secondary);
+    margin-top: var(--spacing-xs);
+}
+
+.account-name {
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-top: var(--spacing-sm);
+}
+
+.card-footer {
+    border-top: 1px solid var(--border);
+    padding-top: var(--spacing-md);
+    margin-top: auto;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.btn-delete {
+    background: transparent;
+    color: var(--text-secondary);
+    padding: var(--spacing-xs);
+    border-radius: var(--radius-sm);
+    transition: all var(--transition-fast);
+}
+
+.btn-delete:hover {
+    color: var(--danger);
+    background: #fff5f5;
+}
+
+.empty-state {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 5rem;
+    text-align: center;
+    color: var(--text-secondary);
+    gap: var(--spacing-md);
+}
+
+.empty-state h3 {
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.bank-form {
+    padding: var(--spacing-xl);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+}
+
+.modal-content {
+    width: 450px !important;
+}
+
+@media (max-width: 640px) {
+    .accounts-grid {
+        grid-template-columns: 1fr;
+    }
+}
