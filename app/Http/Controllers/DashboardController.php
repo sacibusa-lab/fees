@@ -73,38 +73,15 @@ class DashboardController extends Controller
             'revenueCodes' => Fee::where('institution_id', $institutionId)->distinct('revenue_code')->count('revenue_code'),
             'gross_transaction' => $grossTotal,
             'term_breakdown' => $termData,
+            'totalSchools' => \App\Models\Institution::count(),
+            'adminAccounts' => \App\Models\User::count(),
         ];
-
-        // Format chart data for Terms instead of Days
-        $chartData = [
-            ['name' => 'First Term', 'amount' => (float) $termData['first']['amount']],
-            ['name' => 'Second Term', 'amount' => (float) $termData['second']['amount']],
-            ['name' => 'Third Term', 'amount' => (float) $termData['third']['amount']],
-        ];
-
-        // Fetch recent successful transactions for the dashboard table
-        $recentTransactions = Transaction::where('institution_id', $institutionId)
-            ->where('status', 'success')
-            ->with(['student', 'fee'])
-            ->orderBy('paid_at', 'desc')
-            ->limit(10)
-            ->get()
-            ->map(function ($t) {
-                return [
-                    'id' => $t->id,
-                    'payer' => $t->student->name ?? 'External Payee',
-                    'fee' => $t->fee->title ?? 'General Payment',
-                    'payment_method' => ucfirst($t->payment_method),
-                    'amount' => $t->amount,
-                    'status' => ucfirst($t->status),
-                    'date' => $t->paid_at->format('M d, Y h:i A'),
-                ];
-            });
 
         return Inertia::render('Dashboard', [
             'stats' => $stats,
             'chartData' => $chartData,
-            'recentTransactions' => $recentTransactions
+            'recentTransactions' => $recentTransactions,
+            'userName' => auth()->user()->name
         ]);
     }
 }

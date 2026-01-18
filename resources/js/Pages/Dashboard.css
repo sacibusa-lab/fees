@@ -1,5 +1,13 @@
 .dashboard {
     max-width: 1400px;
+    padding: var(--spacing-lg);
+}
+
+.dashboard-greeting {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-xl);
 }
 
 .stats-grid {
@@ -12,8 +20,9 @@
 .stat-card {
     background: var(--surface);
     padding: var(--spacing-lg);
-    border-radius: var(--radius-md);
-    box-shadow: var(--shadow-sm);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    border: 1px solid var(--border);
 }
 
 .stat-header {
@@ -24,37 +33,51 @@
 }
 
 .stat-label {
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: var(--text-secondary);
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #999;
     letter-spacing: 0.5px;
+    text-transform: uppercase;
 }
 
-.stat-icon {
-    color: var(--text-disabled);
+.stat-label.pink {
+    color: #D81B60;
+}
+
+.trend-arrow {
+    color: #999;
+}
+
+.trend-arrow.pink {
+    color: #D81B60;
 }
 
 .stat-value {
-    font-size: 2rem;
-    font-weight: 700;
+    font-size: 1.75rem;
+    font-weight: 800;
     color: var(--text-primary);
-    margin-bottom: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
 }
 
-.stat-change {
+.stat-value.pink {
+    color: #D81B60;
+}
+
+.stat-footer {
     display: flex;
     align-items: center;
     gap: var(--spacing-xs);
-    font-size: 0.875rem;
-    font-weight: 500;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #4caf50;
 }
 
-.stat-change.positive {
-    color: var(--success);
+.stat-footer.pink {
+    color: #D81B60;
 }
 
-.stat-change.negative {
-    color: var(--danger);
+.footer-percentage {
+    margin-right: 2px;
 }
 
 .charts-section {

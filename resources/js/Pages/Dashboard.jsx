@@ -5,9 +5,10 @@ import { TrendingUp, Users, School, CreditCard, ArrowUpRight, Search, Filter, Do
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import './Dashboard.css';
 
-const Dashboard = ({ stats = {}, chartData = [], recentTransactions = [] }) => {
-    // Statistically, we can use usePage or pass titles down, 
-    // but for now we'll stick to a simple Head component.
+const Dashboard = ({ stats = {}, chartData = [], recentTransactions = [], userName = 'Nwayei' }) => {
+    // Determine greeting based on time of day
+    const hour = new Date().getHours();
+    const greeting = hour < 12 ? 'Good Morning' : (hour < 18 ? 'Good Afternoon' : 'Good Evening');
 
     if (!stats) return <Layout><div style={{ padding: '2rem' }}>Loading dashboard data...</div></Layout>;
 
@@ -15,51 +16,54 @@ const Dashboard = ({ stats = {}, chartData = [], recentTransactions = [] }) => {
         <Layout>
             <Head title="Dashboard" />
             <div className="dashboard">
+                <h1 className="dashboard-greeting">{greeting} {userName} !</h1>
                 {/* Stats Cards */}
                 <div className="stats-grid">
                     <div className="stat-card">
                         <div className="stat-header">
+                            <span className="stat-label">TOTAL FEES</span>
+                            <ArrowUpRight size={14} className="trend-arrow" />
+                        </div>
+                        <div className="stat-value">{(stats?.revenueCodes || 0).toLocaleString()}</div>
+                        <div className="stat-footer">
+                            <span className="footer-percentage">+ 0%</span>
+                            <TrendingUp size={14} />
+                        </div>
+                    </div>
+
+                    <div className="stat-card">
+                        <div className="stat-header">
                             <span className="stat-label">TOTAL STUDENTS</span>
-                            <Users size={20} className="stat-icon green" />
+                            <ArrowUpRight size={14} className="trend-arrow" />
                         </div>
                         <div className="stat-value">{(stats?.totalStudents || 0).toLocaleString()}</div>
-                        <div className="stat-change positive">
-                            <span>Active</span>
+                        <div className="stat-footer">
+                            <span className="footer-percentage">+ 0%</span>
+                            <TrendingUp size={14} />
                         </div>
                     </div>
 
                     <div className="stat-card">
                         <div className="stat-header">
-                            <span className="stat-label">TOTAL FEES RECEIVED</span>
-                            <CreditCard size={20} className="stat-icon pink" />
+                            <span className="stat-label">SCHOOLS</span>
+                            <ArrowUpRight size={14} className="trend-arrow" />
                         </div>
-                        <div className="stat-value">₦{(stats?.totalReceived || 0).toLocaleString()}</div>
-                        <div className="stat-change positive">
-                            <span>12%</span>
-                            <ArrowUpRight size={14} />
-                        </div>
-                    </div>
-
-                    <div className="stat-card">
-                        <div className="stat-header">
-                            <span className="stat-label">EXPECTED REVENUE</span>
-                            <Users size={20} className="stat-icon blue" />
-                        </div>
-                        <div className="stat-value">₦{(stats?.expected || 0).toLocaleString()}</div>
-                        <div className="stat-change positive">
-                            <span>5%</span>
-                            <ArrowUpRight size={14} />
+                        <div className="stat-value">{(stats?.totalSchools || 0).toLocaleString()}</div>
+                        <div className="stat-footer">
+                            <span className="footer-percentage">+ 0%</span>
+                            <TrendingUp size={14} />
                         </div>
                     </div>
 
                     <div className="stat-card">
                         <div className="stat-header">
-                            <span className="stat-label">DEFAULTERS</span>
-                            <School size={20} className="stat-icon purple" />
+                            <span className="stat-label pink">ADMIN ACCOUNTS</span>
+                            <ArrowUpRight size={14} className="trend-arrow pink" />
                         </div>
-                        <div className="stat-value">{(stats?.defaulters || 0).toLocaleString()}</div>
-                        <div className="stat-change">
-                            <span>Stable</span>
+                        <div className="stat-value pink">{(stats?.adminAccounts || 0).toLocaleString()}</div>
+                        <div className="stat-footer pink">
+                            <span className="footer-percentage">+ 0%</span>
+                            <TrendingUp size={14} />
                         </div>
                     </div>
                 </div>
