@@ -339,8 +339,12 @@ class StudentController extends Controller
             return back()->with('error', 'Student already has a virtual account');
         }
 
-        if (!$student->email) {
-            return back()->with('error', 'Student must have an email address to generate a virtual account');
+        // 1. Resolve Email (Paystack requires an email)
+        $email = $student->email;
+        if (!$email) {
+            $portalId = $student->institution->portal_id ?? 'portal';
+            $email = strtolower(str_replace([' ', '/', '\\'], '-', $student->admission_number)) . "@{$portalId}.fees.ng";
+            Log::info("Generating VA with placeholder email: {$email}", ['student_id' => $student->id]);
         }
 
         // Split name for Paystack
@@ -348,9 +352,9 @@ class StudentController extends Controller
         $firstName = $nameParts[0];
         $lastName = $nameParts[1] ?? 'Student';
 
-        // 1. Create or Find Paystack Customer
+        // 2. Create or Find Paystack Customer
         $customerResult = $this->paystack->createCustomer([
-            'email' => $student->email,
+            'email' => $email,
             'first_name' => $firstName,
             'last_name' => $lastName,
             'phone' => $student->phone
