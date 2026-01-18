@@ -38,13 +38,17 @@ class SettingsController extends Controller
         ]);
 
         if ($request->hasFile('logo')) {
-            $path = $request->file('logo')->store('uploads', 'public');
-            $validated['logo'] = '/storage/' . $path;
+            $file = $request->file('logo');
+            $filename = time() . '_' . $file->getClientOriginalName();
+            $file->move(public_path('uploads'), $filename);
+            $validated['logo'] = '/uploads/' . $filename;
         }
 
         if ($request->hasFile('favicon')) {
-            $path = $request->file('favicon')->store('uploads', 'public');
-            $validated['favicon'] = '/storage/' . $path;
+            $file = $request->file('favicon');
+            $filename = time() . '_fav_' . $file->getClientOriginalName();
+            $file->move(public_path('uploads'), $filename);
+            $validated['favicon'] = '/uploads/' . $filename;
         }
 
         $institutionId = auth()->user()->institution_id;
