@@ -4,14 +4,15 @@ import { Head, useForm, router } from '@inertiajs/react'; // Import router
 import Layout from '../Components/Layout';
 import { Plus, MoreVertical, Edit, Trash2, Split, Power, Info, RefreshCcw } from 'lucide-react';
 import FeeBeneficiariesModal from '../Components/FeeBeneficiariesModal';
+import FeeClassOverridesModal from '../Components/FeeClassOverridesModal';
 import './FeesManagement.css';
 
-const FeesManagement = ({ fees = [], feeCount = 0, bankAccounts = [] }) => {
+const FeesManagement = ({ fees = [], feeCount = 0, bankAccounts = [], classes = [] }) => {
     const [showAddModal, setShowAddModal] = useState(false);
     const [modalMode, setModalMode] = useState('add'); // 'add', 'edit', 'set-amount'
     const [editingFee, setEditingFee] = useState(null);
     const [showBeneficiaryModal, setShowBeneficiaryModal] = useState(false);
-    const [activeDropdown, setActiveDropdown] = useState(null);
+    const [showOverridesModal, setShowOverridesModal] = useState(false);
 
     // Form for Add/Edit
     const { data, setData, post, put, processing, reset, errors, clearErrors } = useForm({
@@ -39,7 +40,6 @@ const FeesManagement = ({ fees = [], feeCount = 0, bankAccounts = [] }) => {
         setFormData(fee);
         clearErrors();
         setShowAddModal(true);
-        setActiveDropdown(null);
     };
 
     const openSetAmountModal = (fee) => {
@@ -48,7 +48,6 @@ const FeesManagement = ({ fees = [], feeCount = 0, bankAccounts = [] }) => {
         setFormData(fee);
         clearErrors();
         setShowAddModal(true);
-        setActiveDropdown(null);
     };
 
     const setFormData = (fee) => {
@@ -67,7 +66,11 @@ const FeesManagement = ({ fees = [], feeCount = 0, bankAccounts = [] }) => {
     const openBeneficiaryModal = (fee) => {
         setEditingFee(fee);
         setShowBeneficiaryModal(true);
-        setActiveDropdown(null);
+    };
+
+    const openOverridesModal = (fee) => {
+        setEditingFee(fee);
+        setShowOverridesModal(true);
     };
 
     const handleSubmit = (e) => {
@@ -101,16 +104,7 @@ const FeesManagement = ({ fees = [], feeCount = 0, bankAccounts = [] }) => {
         setActiveDropdown(null);
     };
 
-    // Close dropdown when clicking outside
-    useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (activeDropdown && !event.target.closest('.actions-cell') && !event.target.closest('.action-menu-portal')) {
-                setActiveDropdown(null);
-            }
-        };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, [activeDropdown]);
+    // Close active modals handled by state, no more dropdown to close outside.
 
     return (
         <Layout>
@@ -138,7 +132,6 @@ const FeesManagement = ({ fees = [], feeCount = 0, bankAccounts = [] }) => {
                                     <th>Amount</th>
                                     <th>Charge Bearer</th>
                                     <th className="status-col">Status</th>
-                                    <th className="actions-col"></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -164,7 +157,7 @@ const FeesManagement = ({ fees = [], feeCount = 0, bankAccounts = [] }) => {
                                             </span>
                                         </td>
                                         <td className="actions-cell">
-                                            {/* Action column removed as per request, entire row is clickable */}
+                                            {/* Action column removed, entire row is clickable to view details */}
                                         </td>
                                     </tr>
                                 ))}
@@ -307,6 +300,14 @@ const FeesManagement = ({ fees = [], feeCount = 0, bankAccounts = [] }) => {
                         fee={editingFee}
                         onClose={() => setShowBeneficiaryModal(false)}
                         bankAccounts={bankAccounts}
+                    />
+                )}
+                {/* Overrides Modal */}
+                {showOverridesModal && editingFee && (
+                    <FeeClassOverridesModal
+                        fee={editingFee}
+                        classes={classes}
+                        onClose={() => setShowOverridesModal(false)}
                     />
                 )}
             </div>

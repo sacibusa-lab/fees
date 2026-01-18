@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Head, useForm, Link } from '@inertiajs/react';
+import { Head, useForm, Link, router } from '@inertiajs/react';
 import Layout from '../Components/Layout';
 import { User, CreditCard, Activity, Settings, Save, Trash2, ArrowLeft } from 'lucide-react';
 import './StudentProfile.css';
@@ -25,24 +25,23 @@ const StudentProfile = ({ student, classes, subClasses }) => {
 
     const handleDelete = () => {
         if (confirm('Are you sure you want to delete this student? This action cannot be undone.')) {
-            // In a real app, use delete method. For now just alert/log as delete route isn't explicitly requested yet?
-            // User requested "delete their profiles". I'll implement the UI but maybe not the backend delete route unless I add it.
-            // I'll add the UI interaction.
-            alert('Delete functionality would be triggered here.');
+            router.delete(`/students/${student.id}`, {
+                onSuccess: () => alert('Student profile deleted successfully'),
+            });
         }
     };
 
     return (
         <Layout>
             <Head title={`${student.name} - Profile`} />
-            
+
             <div className="student-profile-container">
                 {/* Header */}
                 <div className="profile-header">
                     <Link href="/students" className="back-link">
                         <ArrowLeft size={20} /> Back to Students
                     </Link>
-                    
+
                     <div className="profile-summary">
                         <div className="profile-avatar-large">
                             {student.name.charAt(0)}
@@ -62,25 +61,25 @@ const StudentProfile = ({ student, classes, subClasses }) => {
                     </div>
 
                     <div className="profile-tabs">
-                        <button 
+                        <button
                             className={`tab-item ${activeTab === 'profile' ? 'active' : ''}`}
                             onClick={() => setActiveTab('profile')}
                         >
                             <User size={18} /> Profile Details
                         </button>
-                        <button 
+                        <button
                             className={`tab-item ${activeTab === 'accounts' ? 'active' : ''}`}
                             onClick={() => setActiveTab('accounts')}
                         >
                             <CreditCard size={18} /> Virtual Accounts
                         </button>
-                        <button 
+                        <button
                             className={`tab-item ${activeTab === 'activity' ? 'active' : ''}`}
                             onClick={() => setActiveTab('activity')}
                         >
                             <Activity size={18} /> Payment Activity
                         </button>
-                        <button 
+                        <button
                             className={`tab-item ${activeTab === 'settings' ? 'active' : ''}`}
                             onClick={() => setActiveTab('settings')}
                         >
@@ -91,7 +90,7 @@ const StudentProfile = ({ student, classes, subClasses }) => {
 
                 {/* Content Area */}
                 <div className="profile-content">
-                    
+
                     {/* PROFILE TAB */}
                     {activeTab === 'profile' && (
                         <div className="content-card">
@@ -103,9 +102,9 @@ const StudentProfile = ({ student, classes, subClasses }) => {
                                 <div className="form-grid">
                                     <div className="form-group">
                                         <label>Full Name</label>
-                                        <input 
-                                            type="text" 
-                                            value={data.name} 
+                                        <input
+                                            type="text"
+                                            value={data.name}
                                             onChange={e => setData('name', e.target.value)}
                                             className={errors.name ? 'error' : ''}
                                         />
@@ -114,8 +113,8 @@ const StudentProfile = ({ student, classes, subClasses }) => {
 
                                     <div className="form-group">
                                         <label>Gender</label>
-                                        <select 
-                                            value={data.gender} 
+                                        <select
+                                            value={data.gender}
                                             onChange={e => setData('gender', e.target.value)}
                                         >
                                             <option value="Male">Male</option>
@@ -125,8 +124,8 @@ const StudentProfile = ({ student, classes, subClasses }) => {
 
                                     <div className="form-group">
                                         <label>Class</label>
-                                        <select 
-                                            value={data.class_id} 
+                                        <select
+                                            value={data.class_id}
                                             onChange={e => setData('class_id', e.target.value)}
                                         >
                                             {classes.map(c => (
@@ -137,8 +136,8 @@ const StudentProfile = ({ student, classes, subClasses }) => {
 
                                     <div className="form-group">
                                         <label>Subclass</label>
-                                        <select 
-                                            value={data.sub_class_id} 
+                                        <select
+                                            value={data.sub_class_id}
                                             onChange={e => setData('sub_class_id', e.target.value)}
                                         >
                                             {subClasses.map(sc => (

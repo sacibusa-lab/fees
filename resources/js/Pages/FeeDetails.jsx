@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
 import { Head, useForm, Link, router } from '@inertiajs/react';
+const number_format = (num) => new Intl.NumberFormat().format(num);
 import Layout from '../Components/Layout';
 import { CreditCard, Activity, Settings, Save, Trash2, ArrowLeft, Info, Split, Power, RefreshCcw, Edit } from 'lucide-react';
 import FeeBeneficiariesModal from '../Components/FeeBeneficiariesModal';
+import FeeClassOverridesModal from '../Components/FeeClassOverridesModal';
 import '../Pages/StudentProfile.css'; // Reusing Student Profile CSS
 
-const FeeDetails = ({ fee, bankAccounts = [] }) => {
+const FeeDetails = ({ fee, bankAccounts = [], classes = [] }) => {
     const [activeTab, setActiveTab] = useState('details');
     const [showBeneficiaryModal, setShowBeneficiaryModal] = useState(false);
+    const [showOverridesModal, setShowOverridesModal] = useState(false);
     const [modalMode, setModalMode] = useState('edit'); // 'edit', 'set-amount', note: we are just reusing the form logic if needed, but here we can just do inline forms or modals
 
     // Reuse the form logic from FeesManagement, simplified for single fee update
@@ -80,6 +83,12 @@ const FeeDetails = ({ fee, bankAccounts = [] }) => {
                             onClick={() => setActiveTab('beneficiaries')}
                         >
                             <Split size={18} /> Beneficiaries
+                        </button>
+                        <button
+                            className={`tab-item ${activeTab === 'overrides' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('overrides')}
+                        >
+                            <CreditCard size={18} /> Class Amounts
                         </button>
                         <button
                             className={`tab-item ${activeTab === 'activity' ? 'active' : ''}`}
@@ -220,6 +229,54 @@ const FeeDetails = ({ fee, bankAccounts = [] }) => {
                         </div>
                     )}
 
+                    {/* CLASS OVERRIDES TAB */}
+                    {activeTab === 'overrides' && (
+                        <div className="content-card">
+                            <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <div>
+                                    <h3>Class Specific Amounts</h3>
+                                    <p>Set unique payment amounts for different classes.</p>
+                                </div>
+                                <button className="secondary-btn" onClick={() => setShowOverridesModal(true)}>
+                                    <Edit size={16} style={{ marginRight: '6px' }} /> Manage Overrides
+                                </button>
+                            </div>
+
+                            {fee.overrides && fee.overrides.length > 0 ? (
+                                <table className="modern-table" style={{ width: '100%', marginTop: '20px' }}>
+                                    <thead>
+                                        <tr>
+                                            <th>Class</th>
+                                            <th>Amount (₦)</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {fee.overrides.map((override, idx) => {
+                                            const classObj = classes.find(c => c.id === override.class_id);
+                                            return (
+                                                <tr key={idx}>
+                                                    <td>{classObj ? classObj.name : 'Unknown Class'}</td>
+                                                    <td>₦{number_format(override.amount)}</td>
+                                                    <td>
+                                                        <span className={`status-pill ${override.status}`}>
+                                                            {override.status}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            ) : (
+                                <div className="empty-state">
+                                    <CreditCard size={48} className="text-gray-300" />
+                                    <p>No class overrides set. All classes pay the default amount (₦{fee.raw_amount.toLocaleString()}).</p>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
                     {/* ACTIVITY TAB */}
                     {activeTab === 'activity' && (
                         <div className="content-card">
@@ -270,6 +327,14 @@ const FeeDetails = ({ fee, bankAccounts = [] }) => {
                         fee={{ ...fee, id: fee.id }} // pass fee object with id
                         onClose={() => setShowBeneficiaryModal(false)}
                         bankAccounts={bankAccounts}
+                    />
+                )}
+                {/* Overrides Modal */}
+                {showOverridesModal && (
+                    <FeeClassOverridesModal
+                        fee={fee}
+                        classes={classes}
+                        onClose={() => setShowOverridesModal(false)}
                     />
                 )}
             </div>

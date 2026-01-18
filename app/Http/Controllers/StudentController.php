@@ -286,4 +286,18 @@ class StudentController extends Controller
             'subClasses' => \App\Models\SubClass::all()
         ]);
     }
+
+    public function destroy(Student $student)
+    {
+        $institutionId = auth()->user()->institution_id;
+        
+        // Ensure the student belongs to the same institution
+        if ($student->institution_id !== $institutionId) {
+             abort(403);
+        }
+
+        $student->delete();
+
+        return redirect()->route('students.index')->with('success', 'Student profile deleted successfully');
+    }
 }

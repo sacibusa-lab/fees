@@ -6,6 +6,8 @@ use App\Models\Fee;
 use App\Models\PaymentSummary;
 use App\Models\SchoolClass;
 use App\Models\Session;
+use App\Models\Student;
+use App\Models\Transaction;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -25,36 +27,33 @@ class PaymentController extends Controller
             ]);
         }
 
-        // 1. Calculate Expected Income (All students * Active fees)
-        $studentCount = Student::where('institution_id', $institutionId)->count();
-        $totalFeesAmount = Fee::where('institution_id', $institutionId)->where('status', 'active')->sum('amount');
-        $expectedAmount = $totalFeesAmount * $studentCount;
-
-        // 2. Calculate Total Received (Sum of successful transactions)
-        $totalReceivedAmount = \App\Models\Transaction::where('institution_id', $institutionId)
-            ->where('status', 'success')
-            ->sum('amount');
-
-        // 3. Count Completed (Students who paid fully - simplified)
-        // For a more complex system, we'd check if specific students' balances are zero
-        $completedCount = Student::where('institution_id', $institutionId)->where('payment_status', 'paid')->count();
-
-        $stats = [
-            ['label' => 'RECEIVED', 'amount' => '₦' . number_format($totalReceivedAmount), 'count' => $completedCount],
-            ['label' => 'EXPECTED', 'amount' => '₦' . number_format($expectedAmount), 'count' => $studentCount],
-            ['label' => 'DEBT', 'amount' => '₦' . number_format(max(0, $expectedAmount - $totalReceivedAmount)), 'count' => max(0, $studentCount - $completedCount)],
-            ['label' => 'DISCOUNT APPLIED', 'amount' => '₦0', 'count' => 0],
-            ['label' => 'EXTRA APPLIED', 'amount' => '₦0', 'count' => 0],
-        ];
-
-        // Breakdown per class
+        // 1. Calculate Expected Income (Iterate through classes and check for overrides)
+        $activeFees = Fee::where('institution_id', $institutionId)->where('status', 'active')->with('overrides')->get();
         $classes = SchoolClass::where('institution_id', $institutionId)->with(['category'])->get();
-        $breakdown = $classes->map(function ($class) use ($institutionId, $currentSession) {
-            $classStudentCount = Student::where('class_id', $class->id)->count();
-            $classFeesAmount = Fee::where('class_id', $class->id)->where('status', 'active')->sum('amount');
-            $classExpected = $classFeesAmount * $classStudentCount;
+        
+        $expectedAmount = 0;
+        $totalStudentCount = Student::where('institution_id', $institutionId)->count();
 
-            $classReceived = \App\Models\Transaction::where('institution_id', $institutionId)
+        $breakdown = $classes->map(function ($class) use ($institutionId, $activeFees, &$expectedAmount) {
+            $classStudentCount = Student::where('class_id', $class->id)->count();
+            
+            // Calculate total fee for this specific class
+            $classUnitFee = 0;
+            foreach ($activeFees as $fee) {
+                $override = $fee->overrides->where('class_id', $class->id)->first();
+                if ($override) {
+                    if ($override->status === 'active') {
+                        $classUnitFee += $override->amount;
+                    }
+                } else {
+                    $classUnitFee += $fee->amount;
+                }
+            }
+
+            $classExpected = $classUnitFee * $classStudentCount;
+            $expectedAmount += $classExpected;
+
+            $classReceived = Transaction::where('institution_id', $institutionId)
                 ->where('status', 'success')
                 ->whereHas('student', function($q) use ($class) {
                     $q->where('class_id', $class->id);
@@ -66,7 +65,7 @@ class PaymentController extends Controller
             return [
                 'id' => $class->id,
                 'title' => $class->name,
-                'flatAmount' => (float) $classFeesAmount,
+                'flatAmount' => (float) $classUnitFee,
                 'expected' => number_format($classExpected) . ' (' . $classStudentCount . ')',
                 'totalReceived' => number_format($classReceived) . ' (' . $classCompleted . ')',
                 'completed' => number_format($classReceived) . ' (' . $classCompleted . ')',
@@ -77,6 +76,22 @@ class PaymentController extends Controller
                 'extraCharge' => 0.0,
             ];
         });
+
+        // 2. Calculate Total Received (Sum of successful transactions)
+        $totalReceivedAmount = Transaction::where('institution_id', $institutionId)
+            ->where('status', 'success')
+            ->sum('amount');
+
+        // 3. Count Completed
+        $completedCount = Student::where('institution_id', $institutionId)->where('payment_status', 'paid')->count();
+
+        $stats = [
+            ['label' => 'RECEIVED', 'amount' => '₦' . number_format($totalReceivedAmount), 'count' => $completedCount],
+            ['label' => 'EXPECTED', 'amount' => '₦' . number_format($expectedAmount), 'count' => $totalStudentCount],
+            ['label' => 'DEBT', 'amount' => '₦' . number_format(max(0, $expectedAmount - $totalReceivedAmount)), 'count' => max(0, $totalStudentCount - $completedCount)],
+            ['label' => 'DISCOUNT APPLIED', 'amount' => '₦0', 'count' => 0],
+            ['label' => 'EXTRA APPLIED', 'amount' => '₦0', 'count' => 0],
+        ];
 
         return Inertia::render('PaymentsOverview', [
             'initialExpandedStats' => $stats,
@@ -90,7 +105,7 @@ class PaymentController extends Controller
     {
         $institutionId = auth()->user()->institution_id;
 
-        $transactions = \App\Models\Transaction::where('institution_id', $institutionId)
+        $transactions = Transaction::where('institution_id', $institutionId)
             ->with(['student', 'fee'])
             ->orderBy('created_at', 'desc')
             ->get()

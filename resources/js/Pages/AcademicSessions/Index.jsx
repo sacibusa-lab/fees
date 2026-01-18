@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import Layout from '../../Components/Layout';
-import { MoreVertical, ArrowRight } from 'lucide-react';
+import { MoreVertical, ArrowRight, CheckCircle, XCircle } from 'lucide-react';
 import StartNextTermModal from '../../Components/StartNextTermModal';
 import NewSessionModal from '../../Components/NewSessionModal';
 import './Index.css';
@@ -33,16 +33,26 @@ const SessionsIndex = ({ sessions = [] }) => {
         setIsStartTermModalOpen(true);
     };
 
+    const handleToggleStatus = (session) => {
+        router.put(`/academic-sessions/${session.id}/toggle-status`, {}, {
+            onSuccess: () => setActiveDropdown(null),
+        });
+    };
+
     const handleStartNextTerm = (paymentAction) => {
-        console.log(`Starting next term for session ${currentActionSession?.year}, action: ${paymentAction}`);
-        // Here you would make an API call to start next term
-        setIsStartTermModalOpen(false);
+        router.post(`/academic-sessions/${currentActionSession.id}/next-term`, {
+            payment_action: paymentAction
+        }, {
+            onSuccess: () => setIsStartTermModalOpen(false),
+        });
     };
 
     const handleSaveNewSession = (year) => {
-        console.log(`Creating new session: ${year}`);
-        // API call to create session
-        setIsNewSessionModalOpen(false);
+        router.post('/academic-sessions', {
+            year: year
+        }, {
+            onSuccess: () => setIsNewSessionModalOpen(false),
+        });
     };
 
     return (
@@ -91,7 +101,7 @@ const SessionsIndex = ({ sessions = [] }) => {
                                         </button>
 
                                         {activeDropdown === session.id && (
-                                            <div className="action-dropdown">
+                                            <div className="action-dropdown shadow-lg">
                                                 <button
                                                     className="dropdown-item"
                                                     onClick={() => handleNextTermClick(session)}
@@ -99,6 +109,16 @@ const SessionsIndex = ({ sessions = [] }) => {
                                                     <ArrowRight size={14} />
                                                     <span>Next Term</span>
                                                 </button>
+
+                                                {session.status === 'inactive' && (
+                                                    <button
+                                                        className="dropdown-item active-action"
+                                                        onClick={() => handleToggleStatus(session)}
+                                                    >
+                                                        <CheckCircle size={14} color="#10b981" />
+                                                        <span>Make Active</span>
+                                                    </button>
+                                                )}
                                             </div>
                                         )}
                                     </td>

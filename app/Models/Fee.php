@@ -30,4 +30,9 @@ class Fee extends Model
     {
         return $this->hasMany(FeeBeneficiary::class);
     }
+
+    public function overrides()
+    {
+        return $this->hasMany(FeeClassOverride::class);
+    }
 }

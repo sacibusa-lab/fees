@@ -31,6 +31,9 @@ class SettingsController extends Controller
             'phone' => 'nullable|string',
             'address' => 'nullable|string',
             'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'primary_color' => 'nullable|string|max:7',
+            'sidebar_color' => 'nullable|string|max:7',
+            'secondary_color' => 'nullable|string|max:7',
         ]);
 
         if ($request->hasFile('logo')) {

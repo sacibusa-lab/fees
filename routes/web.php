@@ -24,8 +24,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/fees/{fee}', [App\Http\Controllers\FeeController::class, 'show'])->name('fees.show'); // New Show Route
     Route::put('/fees/{fee}', [App\Http\Controllers\FeeController::class, 'update'])->name('fees.update');
     Route::delete('/fees/{fee}', [App\Http\Controllers\FeeController::class, 'destroy'])->name('fees.destroy');
-    Route::put('/fees/{fee}/toggle-status', [App\Http\Controllers\FeeController::class, 'toggleStatus'])->name('fees.toggle-status');
-    Route::post('/fees/{fee}/beneficiaries', [App\Http\Controllers\FeeController::class, 'manageBeneficiaries'])->name('fees.beneficiaries');
+    Route::post('/fees/{fee}/toggle-status', [FeeController::class, 'toggleStatus'])->name('fees.toggle-status');
+    Route::post('/fees/{fee}/beneficiaries', [FeeController::class, 'manageBeneficiaries'])->name('fees.beneficiaries');
+    Route::post('/fees/{fee}/overrides', [FeeController::class, 'manageOverrides'])->name('fees.overrides');
 
     Route::prefix('business')->group(function () {
         Route::get('/bank-accounts', [App\Http\Controllers\BankAccountController::class, 'index'])->name('bank-accounts.index');
@@ -54,8 +55,9 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/', [StudentController::class, 'store'])->name('students.store');
         
         // Wildcard routes LAST (Model Binding)
-        Route::put('/{student}', [StudentController::class, 'update'])->name('students.update');
         Route::get('/{student}', [StudentController::class, 'show'])->name('students.show');
+        Route::put('/{student}', [StudentController::class, 'update'])->name('students.update');
+        Route::delete('/{student}', [StudentController::class, 'destroy'])->name('students.destroy');
     });
 
     Route::prefix('settings')->group(function () {
@@ -71,6 +73,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/payments/transactions', [PaymentController::class, 'transactions'])->name('payments.transactions');
     Route::get('/payments/transactions/{transaction}', [PaymentController::class, 'show'])->name('payments.transactions.show');
     Route::get('/academic-sessions', [AcademicSessionController::class, 'index'])->name('academic-sessions.index');
+    Route::post('/academic-sessions', [AcademicSessionController::class, 'store'])->name('academic-sessions.store');
+    Route::post('/academic-sessions/{session}/next-term', [AcademicSessionController::class, 'nextTerm'])->name('academic-sessions.next-term');
+    Route::put('/academic-sessions/{session}/toggle-status', [AcademicSessionController::class, 'toggleStatus'])->name('academic-sessions.toggle-status');
 
     // API-like routes for components
     Route::get('/api/payments/verify', [PaymentController::class, 'verifyStatus']);

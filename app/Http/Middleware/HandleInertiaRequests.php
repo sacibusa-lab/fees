@@ -55,6 +55,9 @@ class HandleInertiaRequests extends Middleware
                     'email' => $institution->email,
                     'phone' => $institution->phone,
                     'address' => $institution->address,
+                    'primary_color' => $institution->primary_color,
+                    'sidebar_color' => $institution->sidebar_color,
+                    'secondary_color' => $institution->secondary_color,
                 ] : null;
             },
             'flash' => [

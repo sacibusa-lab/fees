@@ -145,8 +145,19 @@
 }
 
 .dropdown-item:hover {
-    background-color: #f3f4f6;
-    color: #E91E63;
+    background: #f9fafb;
+}
+
+.dropdown-item.active-action {
+    color: #10b981;
+}
+
+.dropdown-item.active-action:hover {
+    background: #ecfdf5;
+}
+
+.dropdown-item span {
+    font-size: 0.875rem;
 }
 
 .table-pagination {

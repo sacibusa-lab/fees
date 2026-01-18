@@ -7,7 +7,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Institution extends Model
 {
-    protected $fillable = ['name', 'portal_id', 'logo', 'address', 'phone', 'email', 'status'];
+    protected $fillable = [
+        'name', 'portal_id', 'logo', 'address', 'phone', 'email', 'status',
+        'primary_color', 'sidebar_color', 'secondary_color'
+    ];
 
     public function users(): HasMany
     {

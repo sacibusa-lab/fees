@@ -10,6 +10,9 @@ const Global = ({ institution }) => {
         phone: institution?.phone || '',
         address: institution?.address || '',
         logo: null,
+        primary_color: institution?.primary_color || '#E91E63',
+        sidebar_color: institution?.sidebar_color || '#FFFFFF',
+        secondary_color: institution?.secondary_color || '#3B82F6',
     });
 
     const handleSubmit = (e) => {
@@ -52,54 +55,122 @@ const Global = ({ institution }) => {
                     </div>
                 </div>
 
-                <div className="settings-form-group">
-                    <label className="settings-label">Institution Name</label>
-                    <input
-                        type="text"
-                        className="settings-input"
-                        value={data.name}
-                        onChange={e => setData('name', e.target.value)}
-                    />
-                    {errors.name && <div className="text-red-500 text-sm mt-1">{errors.name}</div>}
+                <div className="grid grid-cols-2 gap-6">
+                    <div className="settings-form-group">
+                        <label className="settings-label">Institution Name</label>
+                        <input
+                            type="text"
+                            className="settings-input"
+                            value={data.name}
+                            onChange={e => setData('name', e.target.value)}
+                        />
+                        {errors.name && <div className="text-red-500 text-sm mt-1">{errors.name}</div>}
+                    </div>
+
+                    <div className="settings-form-group">
+                        <label className="settings-label">Email Address</label>
+                        <input
+                            type="email"
+                            className="settings-input"
+                            value={data.email}
+                            onChange={e => setData('email', e.target.value)}
+                        />
+                        {errors.email && <div className="text-red-500 text-sm mt-1">{errors.email}</div>}
+                    </div>
                 </div>
 
-                <div className="settings-form-group">
-                    <label className="settings-label">Email Address</label>
-                    <input
-                        type="email"
-                        className="settings-input"
-                        value={data.email}
-                        onChange={e => setData('email', e.target.value)}
-                    />
-                    {errors.email && <div className="text-red-500 text-sm mt-1">{errors.email}</div>}
+                <div className="grid grid-cols-2 gap-6">
+                    <div className="settings-form-group">
+                        <label className="settings-label">Phone Number</label>
+                        <input
+                            type="text"
+                            className="settings-input"
+                            value={data.phone}
+                            onChange={e => setData('phone', e.target.value)}
+                        />
+                        {errors.phone && <div className="text-red-500 text-sm mt-1">{errors.phone}</div>}
+                    </div>
+
+                    <div className="settings-form-group">
+                        <label className="settings-label">Address</label>
+                        <input
+                            className="settings-input"
+                            value={data.address}
+                            onChange={e => setData('address', e.target.value)}
+                        />
+                        {errors.address && <div className="text-red-500 text-sm mt-1">{errors.address}</div>}
+                    </div>
                 </div>
 
-                <div className="settings-form-group">
-                    <label className="settings-label">Phone Number</label>
-                    <input
-                        type="text"
-                        className="settings-input"
-                        value={data.phone}
-                        onChange={e => setData('phone', e.target.value)}
-                    />
-                    {errors.phone && <div className="text-red-500 text-sm mt-1">{errors.phone}</div>}
-                </div>
+                <hr className="my-8 border-gray-100" />
 
-                <div className="settings-form-group">
-                    <label className="settings-label">Address</label>
-                    <textarea
-                        className="settings-input"
-                        rows="3"
-                        value={data.address}
-                        onChange={e => setData('address', e.target.value)}
-                    ></textarea>
-                    {errors.address && <div className="text-red-500 text-sm mt-1">{errors.address}</div>}
+                <div className="mb-6">
+                    <h3 className="text-lg font-bold text-gray-800 mb-4">Theme & Appearance</h3>
+                    <div className="grid grid-cols-3 gap-6">
+                        <div className="settings-form-group">
+                            <label className="settings-label">Primary Color</label>
+                            <div className="flex items-center gap-3 mt-1">
+                                <input
+                                    type="color"
+                                    className="w-10 h-10 rounded cursor-pointer border-none"
+                                    value={data.primary_color}
+                                    onChange={e => setData('primary_color', e.target.value)}
+                                />
+                                <input
+                                    type="text"
+                                    className="settings-input font-mono"
+                                    style={{ fontSize: '13px' }}
+                                    value={data.primary_color}
+                                    onChange={e => setData('primary_color', e.target.value)}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="settings-form-group">
+                            <label className="settings-label">Sidebar Background</label>
+                            <div className="flex items-center gap-3 mt-1">
+                                <input
+                                    type="color"
+                                    className="w-10 h-10 rounded cursor-pointer border-none"
+                                    value={data.sidebar_color}
+                                    onChange={e => setData('sidebar_color', e.target.value)}
+                                />
+                                <input
+                                    type="text"
+                                    className="settings-input font-mono"
+                                    style={{ fontSize: '13px' }}
+                                    value={data.sidebar_color}
+                                    onChange={e => setData('sidebar_color', e.target.value)}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="settings-form-group">
+                            <label className="settings-label">Secondary Color</label>
+                            <div className="flex items-center gap-3 mt-1">
+                                <input
+                                    type="color"
+                                    className="w-10 h-10 rounded cursor-pointer border-none"
+                                    value={data.secondary_color}
+                                    onChange={e => setData('secondary_color', e.target.value)}
+                                />
+                                <input
+                                    type="text"
+                                    className="settings-input font-mono"
+                                    style={{ fontSize: '13px' }}
+                                    value={data.secondary_color}
+                                    onChange={e => setData('secondary_color', e.target.value)}
+                                />
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div className="flex justify-end items-center gap-4 mt-6">
                     {wasSuccessful && <span className="text-green-600 font-medium">Saved successfully!</span>}
                     <button type="submit" className="settings-submit-btn" disabled={processing}>
-                        {processing ? 'Saving...' : 'Save Changes'}
+                        <Save size={18} />
+                        <span>{processing ? 'Saving...' : 'Save Changes'}</span>
                     </button>
                 </div>
             </form>
