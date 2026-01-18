@@ -63,6 +63,32 @@
 }
 
 /* Specific column styles can go here if needed */
+.actions-col {
+    text-align: right !important;
+    width: 100px;
+}
+
+.actions-cell {
+    text-align: right !important;
+}
+
+.delete-btn {
+    background: none;
+    border: none;
+    color: #ef4444;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 6px;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.delete-btn:hover {
+    background: #fee2e2;
+    color: #dc2626;
+}
 
 .empty-state {
     text-align: center;
