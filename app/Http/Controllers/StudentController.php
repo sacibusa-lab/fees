@@ -347,17 +347,20 @@ class StudentController extends Controller
             Log::info("Generating VA with placeholder email: {$email}", ['student_id' => $student->id]);
         }
 
+        // 2. Resolve Phone (DVA requires a phone number on the customer)
+        $phone = $student->phone ?? $student->guardian_phone ?? $student->institution->phone ?? '08000000000';
+
         // Split name for Paystack
         $nameParts = explode(' ', $student->name, 2);
         $firstName = $nameParts[0];
         $lastName = $nameParts[1] ?? 'Student';
 
-        // 2. Create or Find Paystack Customer
+        // 3. Create or Find Paystack Customer
         $customerResult = $this->paystack->createCustomer([
             'email' => $email,
             'first_name' => $firstName,
             'last_name' => $lastName,
-            'phone' => $student->phone
+            'phone' => $phone
         ]);
 
         if (!$customerResult['status']) {
