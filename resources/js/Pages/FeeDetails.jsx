@@ -256,7 +256,7 @@ const FeeDetails = ({ fee, bankAccounts = [], classes = [] }) => {
                                             const classObj = classes.find(c => c.id === override.class_id);
                                             return (
                                                 <tr key={idx}>
-                                                    <td>{classObj ? classObj.name : 'Unknown Class'}</td>
+                                                    <td>{override.class_name || (classObj ? classObj.name : 'Unknown Class')}</td>
                                                     <td>₦{number_format(override.amount)}</td>
                                                     <td>
                                                         <span className={`status-pill ${override.status}`}>

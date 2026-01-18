@@ -13,7 +13,7 @@ class FeeController extends Controller
     public function index()
     {
         $institutionId = auth()->user()->institution_id;
-        $fees = Fee::with(['beneficiaries', 'overrides'])
+        $fees = Fee::with(['beneficiaries', 'overrides.schoolClass'])
             ->where('institution_id', $institutionId)
             ->orderBy('created_at', 'desc')
             ->get()
@@ -33,6 +33,7 @@ class FeeController extends Controller
                     'overrides' => $fee->overrides->map(function($o) {
                         return [
                             'class_id' => $o->class_id,
+                            'class_name' => $o->schoolClass->name ?? 'Unknown Class',
                             'amount' => $o->amount,
                             'status' => $o->status,
                         ];
@@ -77,7 +78,7 @@ class FeeController extends Controller
 
     public function show(Fee $fee)
     {
-        $fee->load(['beneficiaries', 'overrides']);
+        $fee->load(['beneficiaries', 'overrides.schoolClass']);
         $institutionId = auth()->user()->institution_id;
         $accounts = BankAccount::where('institution_id', $institutionId)->get();
         $classes = \App\Models\SchoolClass::where('institution_id', $institutionId)->get();
@@ -102,6 +103,7 @@ class FeeController extends Controller
                 'overrides' => $fee->overrides->map(function($o) {
                     return [
                         'class_id' => $o->class_id,
+                        'class_name' => $o->schoolClass->name ?? 'Unknown Class',
                         'amount' => $o->amount,
                         'status' => $o->status,
                     ];
