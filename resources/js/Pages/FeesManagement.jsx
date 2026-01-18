@@ -6,7 +6,7 @@ import { Plus, MoreVertical, Edit, Trash2, Split, Power, Info, RefreshCcw } from
 import FeeBeneficiariesModal from '../Components/FeeBeneficiariesModal';
 import './FeesManagement.css';
 
-const FeesManagement = ({ fees = [], feeCount = 0 }) => {
+const FeesManagement = ({ fees = [], feeCount = 0, bankAccounts = [] }) => {
     const [showAddModal, setShowAddModal] = useState(false);
     const [modalMode, setModalMode] = useState('add'); // 'add', 'edit', 'set-amount'
     const [editingFee, setEditingFee] = useState(null);
@@ -306,6 +306,7 @@ const FeesManagement = ({ fees = [], feeCount = 0 }) => {
                     <FeeBeneficiariesModal
                         fee={editingFee}
                         onClose={() => setShowBeneficiaryModal(false)}
+                        bankAccounts={bankAccounts}
                     />
                 )}
             </div>

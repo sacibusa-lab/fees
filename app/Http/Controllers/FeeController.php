@@ -6,6 +6,8 @@ use App\Models\Fee;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
+use App\Models\BankAccount;
+
 class FeeController extends Controller
 {
     public function index()
@@ -30,15 +32,20 @@ class FeeController extends Controller
                     'beneficiaries' => $fee->beneficiaries
                 ];
             });
+            
+        // Fetch bank accounts for beneficiary selection
+        $accounts = BankAccount::where('institution_id', $institutionId)->get();
 
         return Inertia::render('FeesManagement', [
             'fees' => $fees,
-            'feeCount' => $fees->count()
+            'feeCount' => $fees->count(),
+            'bankAccounts' => $accounts
         ]);
     }
 
     public function store(Request $request)
     {
+        // ... (Keep existing store logic)
         $institutionId = auth()->user()->institution_id;
         
         $validated = $request->validate([
@@ -63,11 +70,14 @@ class FeeController extends Controller
     public function show(Fee $fee)
     {
         $fee->load('beneficiaries');
+        $institutionId = auth()->user()->institution_id;
+        $accounts = BankAccount::where('institution_id', $institutionId)->get();
+
         return Inertia::render('FeeDetails', [
             'fee' => [
                 'id' => $fee->id,
                 'title' => $fee->title,
-                'revenueCode' => $fee->revenue_code,
+                'revenueCode' => $fee->revenue_code, // raw
                 'revenue_code' => $fee->revenue_code, // raw
                 'cycle' => ucfirst($fee->cycle),
                 'type' => ucfirst($fee->type),
@@ -80,7 +90,8 @@ class FeeController extends Controller
                 'status' => ucfirst($fee->status),
                 'beneficiaries' => $fee->beneficiaries,
                 'created_at' => $fee->created_at->format('M d, Y'),
-            ]
+            ],
+            'bankAccounts' => $accounts
         ]);
     }
 

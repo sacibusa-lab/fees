@@ -5,7 +5,7 @@ import { CreditCard, Activity, Settings, Save, Trash2, ArrowLeft, Info, Split, P
 import FeeBeneficiariesModal from '../Components/FeeBeneficiariesModal';
 import '../Pages/StudentProfile.css'; // Reusing Student Profile CSS
 
-const FeeDetails = ({ fee }) => {
+const FeeDetails = ({ fee, bankAccounts = [] }) => {
     const [activeTab, setActiveTab] = useState('details');
     const [showBeneficiaryModal, setShowBeneficiaryModal] = useState(false);
     const [modalMode, setModalMode] = useState('edit'); // 'edit', 'set-amount', note: we are just reusing the form logic if needed, but here we can just do inline forms or modals
@@ -269,6 +269,7 @@ const FeeDetails = ({ fee }) => {
                     <FeeBeneficiariesModal
                         fee={{ ...fee, id: fee.id }} // pass fee object with id
                         onClose={() => setShowBeneficiaryModal(false)}
+                        bankAccounts={bankAccounts}
                     />
                 )}
             </div>

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useForm } from '@inertiajs/react';
 import { Trash2, Plus, AlertCircle, Save } from 'lucide-react';
 
-const FeeBeneficiariesModal = ({ fee, onClose }) => {
+const FeeBeneficiariesModal = ({ fee, onClose, bankAccounts = [] }) => {
     // Transform existing beneficiaries or init with blank
     // specific logic: if beneficiaries exist, calculate their nominal amount from percentage
     const initialBeneficiaries = fee.beneficiaries && fee.beneficiaries.length > 0
@@ -42,6 +42,22 @@ const FeeBeneficiariesModal = ({ fee, onClose }) => {
         }
 
         setData('beneficiaries', newBen);
+    };
+
+    // Helper to find account details
+    const handleAccountSelect = (index, accountId) => {
+        const selectedAccount = bankAccounts.find(acc => acc.id == accountId);
+        if (selectedAccount) {
+            const newBen = [...data.beneficiaries];
+            newBen[index] = {
+                ...newBen[index],
+                bank_account_id: selectedAccount.id,
+                account_name: selectedAccount.account_name,
+                account_number: selectedAccount.account_number,
+                bank_name: selectedAccount.bank_name
+            };
+            setData('beneficiaries', newBen);
+        }
     };
 
     const totalAmount = data.beneficiaries.reduce((sum, b) => sum + (parseFloat(b.amount) || 0), 0);
@@ -121,30 +137,46 @@ const FeeBeneficiariesModal = ({ fee, onClose }) => {
                             <div key={index} style={{
                                 display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 120px 40px', gap: '12px', marginBottom: '12px', alignItems: 'start'
                             }}>
-                                <input
-                                    type="text"
-                                    value={ben.account_name}
-                                    onChange={e => updateBeneficiary(index, 'account_name', e.target.value)}
-                                    placeholder="Account Name"
-                                    required
-                                    style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ddd' }}
-                                />
-                                <input
-                                    type="text"
-                                    value={ben.account_number}
-                                    onChange={e => updateBeneficiary(index, 'account_number', e.target.value)}
-                                    placeholder="0000000000"
-                                    required
-                                    style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ddd' }}
-                                />
-                                <input
-                                    type="text"
-                                    value={ben.bank_name}
-                                    onChange={e => updateBeneficiary(index, 'bank_name', e.target.value)}
-                                    placeholder="Bank Name"
-                                    required
-                                    style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ddd' }}
-                                />
+                                {/* Account Selection Dropdown - Replaces manual input if accounts exist */}
+                                <div style={{ gridColumn: '1 / span 3', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+                                    {bankAccounts.length > 0 ? (
+                                        <select
+                                            onChange={(e) => handleAccountSelect(index, e.target.value)}
+                                            style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ddd', gridColumn: 'span 3', marginBottom: '8px' }}
+                                            value={ben.bank_account_id || ''}
+                                        >
+                                            <option value="">-- Select Bank Account --</option>
+                                            {bankAccounts.map(acc => (
+                                                <option key={acc.id} value={acc.id}>
+                                                    {acc.bank_name} - {acc.account_name} ({acc.account_number})
+                                                </option>
+                                            ))}
+                                        </select>
+                                    ) : null}
+
+                                    {/* Read-only fields populated by selection */}
+                                    <input
+                                        type="text"
+                                        value={ben.account_name}
+                                        readOnly
+                                        placeholder="Account Name"
+                                        style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #eee', background: '#f9f9f9', color: '#666' }}
+                                    />
+                                    <input
+                                        type="text"
+                                        value={ben.account_number}
+                                        readOnly
+                                        placeholder="Account Number"
+                                        style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #eee', background: '#f9f9f9', color: '#666' }}
+                                    />
+                                    <input
+                                        type="text"
+                                        value={ben.bank_name}
+                                        readOnly
+                                        placeholder="Bank Name"
+                                        style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #eee', background: '#f9f9f9', color: '#666' }}
+                                    />
+                                </div>
                                 <div style={{ position: 'relative' }}>
                                     <input
                                         type="number"
