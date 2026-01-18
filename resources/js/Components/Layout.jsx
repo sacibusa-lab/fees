@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
+import { usePage } from '@inertiajs/react';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import './Layout.css';
 
 const Layout = ({ children }) => {
-    // Determine initial title from children or default
+    const { institution } = usePage().props;
     const [pageTitle, setPageTitle] = useState('Portal');
 
     return (
         <div className="layout">
-            <Sidebar portalId="PGN677" institutionName="St. Augustine's College" />
+            <Sidebar institution={institution} />
 
             <div className="main-content">
                 <Header title={pageTitle} />

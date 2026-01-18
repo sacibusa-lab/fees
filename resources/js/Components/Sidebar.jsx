@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import './Sidebar.css';
 
-const Sidebar = ({ portalId, institutionName }) => {
+const Sidebar = ({ institution }) => {
     const currentPath = window.location.pathname;
 
     const [studentsOpen, setStudentsOpen] = useState(currentPath.startsWith('/students'));
@@ -38,9 +38,9 @@ const Sidebar = ({ portalId, institutionName }) => {
                             <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z" />
                         </svg>
                     </div>
-                    <span className="logo-text">Fees</span>
+                    <span className="logo-text">{institution?.name || 'Fees'}</span>
                 </div>
-                <div className="portal-id">Portal ID: {portalId}</div>
+                <div className="portal-id">Portal ID: {institution?.portal_id || 'N/A'}</div>
                 <button className="verify-payment-btn">
                     <span>✓</span> Verify Payment
                 </button>
@@ -149,12 +149,16 @@ const Sidebar = ({ portalId, institutionName }) => {
             {/* Institution Info */}
             <div className="sidebar-footer">
                 <div className="institution-info">
-                    <div className="institution-avatar">
-                        {institutionName?.charAt(0) || 'S'}
-                    </div>
+                    {institution?.logo ? (
+                        <img src={institution.logo} alt="Institution Logo" className="institution-avatar" style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }} />
+                    ) : (
+                        <div className="institution-avatar">
+                            {institution?.name?.charAt(0) || 'S'}
+                        </div>
+                    )}
                     <div className="institution-details">
-                        <div className="institution-name">{institutionName || 'St. Augustine\'s College'}</div>
-                        <div className="institution-role">Chinweike Nweke</div>
+                        <div className="institution-name">{institution?.name || 'Institution'}</div>
+                        <div className="institution-role">{institution?.email || 'Admin'}</div>
                     </div>
                     <ChevronDown size={16} />
                 </div>
