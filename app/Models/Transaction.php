@@ -9,6 +9,7 @@ class Transaction extends Model
     protected $fillable = [
         'institution_id',
         'student_id',
+        'fee_id',
         'reference',
         'gateway_reference',
         'amount',
@@ -33,5 +34,10 @@ class Transaction extends Model
     public function student()
     {
         return $this->belongsTo(Student::class);
+    }
+
+    public function fee()
+    {
+        return $this->belongsTo(Fee::class);
     }
 }

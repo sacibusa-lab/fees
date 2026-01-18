@@ -11,15 +11,30 @@ class StudentController extends Controller
 {
     public function index()
     {
-        $students = Student::with(['schoolClass', 'subClass', 'institution'])->latest()->get();
-        $classes = SchoolClass::all();
-        $subClasses = \App\Models\SubClass::all();
+        $institutionId = auth()->user()->institution_id;
         
-        // Fetch current session for context (assuming single active session)
-        $currentSession = \App\Models\Session::where('is_current', true)->first();
+        $students = Student::where('institution_id', $institutionId)
+            ->with(['schoolClass', 'subClass', 'institution'])
+            ->latest()
+            ->get();
+            
+        $classes = SchoolClass::where('institution_id', $institutionId)->get();
+        $subClasses = \App\Models\SubClass::whereHas('schoolClass', function($q) use ($institutionId) {
+            $q->where('institution_id', $institutionId);
+        })->get();
+        
+        // Fetch main bank account for student profile
+        $mainAccount = \App\Models\BankAccount::where('institution_id', $institutionId)
+            ->where('is_active', true)
+            ->first();
+
+        // Fetch current session for context
+        $currentSession = \App\Models\Session::where('institution_id', $institutionId)
+            ->where('is_current', true)
+            ->first();
 
         // Map to match the frontend expected format
-        $formattedStudents = $students->map(function ($student) use ($currentSession) {
+        $formattedStudents = $students->map(function ($student) use ($currentSession, $mainAccount) {
             return [
                 'id' => $student->id,
                 'name' => $student->name,
@@ -35,18 +50,17 @@ class StudentController extends Controller
                 // Extra fields for Details Modal
                 'school_name' => $student->institution->name ?? 'N/A',
                 'added_on' => $student->created_at->format('M d, Y, h:i A'),
-                'session_added' => $currentSession ? $currentSession->name : 'N/A', // approximate
+                'session_added' => $currentSession ? $currentSession->name : 'N/A',
                 'academic_history' => [
                     ['class' => $student->schoolClass->name ?? 'N/A', 'session' => $currentSession ? $currentSession->name : 'N/A']
                 ],
-                // Mocking account numbers for now as VirtualAccount model is not yet established
-                'account_numbers' => [
+                'account_numbers' => $mainAccount ? [
                     [
-                        'number' => '7722665489',
-                        'name' => 'ST AUGUSTINES COLLEGE IBUSA',
-                        'bank' => 'Globus Bank'
+                        'number' => $mainAccount->account_number,
+                        'name' => $mainAccount->account_name,
+                        'bank' => $mainAccount->bank_name
                     ]
-                ]
+                ] : []
             ];
         });
 

@@ -11,7 +11,8 @@ class ClassController extends Controller
 {
     public function index()
     {
-        $classes = SchoolClass::with('category')->get();
+        $institutionId = auth()->user()->institution_id;
+        $classes = SchoolClass::where('institution_id', $institutionId)->with('category')->get();
 
         $formattedClasses = $classes->map(function ($class) {
             return [
@@ -28,7 +29,10 @@ class ClassController extends Controller
 
     public function subClasses()
     {
-        $subClasses = SubClass::with('schoolClass')->get();
+        $institutionId = auth()->user()->institution_id;
+        $subClasses = SubClass::whereHas('schoolClass', function($q) use ($institutionId) {
+            $q->where('institution_id', $institutionId);
+        })->with('schoolClass')->get();
 
         $formattedSubClasses = $subClasses->map(function ($subClass) {
             return [

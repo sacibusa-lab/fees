@@ -19,6 +19,17 @@ const Dashboard = ({ stats, chartData }) => {
                 <div className="stats-grid">
                     <div className="stat-card">
                         <div className="stat-header">
+                            <span className="stat-label">TOTAL STUDENTS</span>
+                            <Users size={20} className="stat-icon green" />
+                        </div>
+                        <div className="stat-value">{stats.totalStudents.toLocaleString()}</div>
+                        <div className="stat-change positive">
+                            <span>Active</span>
+                        </div>
+                    </div>
+
+                    <div className="stat-card">
+                        <div className="stat-header">
                             <span className="stat-label">TOTAL FEES RECEIVED</span>
                             <CreditCard size={20} className="stat-icon pink" />
                         </div>
@@ -63,8 +74,8 @@ const Dashboard = ({ stats, chartData }) => {
                             <AreaChart data={chartData}>
                                 <defs>
                                     <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#E91E63" stopOpacity={0.3} />
-                                        <stop offset="95%" stopColor="#E91E63" stopOpacity={0} />
+                                        <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3} />
+                                        <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
                                     </linearGradient>
                                 </defs>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#E0E0E0" />
@@ -74,8 +85,8 @@ const Dashboard = ({ stats, chartData }) => {
                                 <Area
                                     type="monotone"
                                     dataKey="amount"
-                                    stroke="#E91E63"
-                                    strokeWidth={2}
+                                    stroke="#3B82F6"
+                                    strokeWidth={3}
                                     fill="url(#colorValue)"
                                 />
                             </AreaChart>
@@ -83,28 +94,40 @@ const Dashboard = ({ stats, chartData }) => {
                     </div>
 
                     <div className="income-card">
-                        <h3>Income Summary</h3>
-                        <div className="breakdown">
-                            <div className="breakdown-item">
-                                <span>1st Term</span>
-                                <div className="progress-container">
-                                    <div className="progress-bar" style={{ width: '70%', background: '#E91E63' }}></div>
-                                </div>
-                                <span className="breakdown-amount">70%</span>
+                        <h3>Income (Current Session)</h3>
+
+                        <div className="gross-transaction-section">
+                            <span className="gross-label">Gross Transaction</span>
+                            <div className="gross-value-row">
+                                <span className="gross-amount">₦{stats.gross_transaction.amount.toLocaleString()}</span>
+                                <span className="gross-count">({stats.gross_transaction.count})</span>
                             </div>
-                            <div className="breakdown-item">
-                                <span>2nd Term</span>
-                                <div className="progress-container">
-                                    <div className="progress-bar" style={{ width: '24%', background: '#4CAF50' }}></div>
+                        </div>
+
+                        <div className="breakdown-section">
+                            <h4 className="breakdown-title">Breakdown</h4>
+                            <div className="breakdown-list">
+                                <div className="breakdown-item">
+                                    <span className="term-label">First Term</span>
+                                    <div className="term-values">
+                                        <span className="term-amount">₦{stats.term_breakdown.first.amount.toLocaleString()}</span>
+                                        <span className="term-count">({stats.term_breakdown.first.count})</span>
+                                    </div>
                                 </div>
-                                <span className="breakdown-amount success">24%</span>
-                            </div>
-                            <div className="breakdown-item">
-                                <span>3rd Term</span>
-                                <div className="progress-container">
-                                    <div className="progress-bar" style={{ width: '0%', background: '#FFC107' }}></div>
+                                <div className="breakdown-item">
+                                    <span className="term-label">Second Term</span>
+                                    <div className="term-values">
+                                        <span className="term-amount green">₦{stats.term_breakdown.second.amount.toLocaleString()}</span>
+                                        <span className="term-count">({stats.term_breakdown.second.count})</span>
+                                    </div>
                                 </div>
-                                <span className="breakdown-amount">0%</span>
+                                <div className="breakdown-item">
+                                    <span className="term-label">Third Term</span>
+                                    <div className="term-values">
+                                        <span className="term-amount green">₦{stats.term_breakdown.third.amount.toLocaleString()}</span>
+                                        <span className="term-count">({stats.term_breakdown.third.count})</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>

@@ -16,8 +16,8 @@ class SettingsController extends Controller
 
     public function global()
     {
-        // For now assuming single tenant/first institution
-        $institution = Institution::first();
+        $institutionId = auth()->user()->institution_id;
+        $institution = Institution::find($institutionId);
         return Inertia::render('Settings/Global', [
             'institution' => $institution
         ]);
@@ -38,7 +38,8 @@ class SettingsController extends Controller
             $validated['logo'] = '/storage/' . $path;
         }
 
-        $institution = Institution::first();
+        $institutionId = auth()->user()->institution_id;
+        $institution = Institution::find($institutionId);
         $institution->update($validated);
 
         return redirect()->back()->with('success', 'Global settings updated successfully.');

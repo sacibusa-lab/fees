@@ -68,5 +68,7 @@ Route::middleware(['auth'])->group(function () {
     });
 
     Route::get('/payments/overview', [PaymentController::class, 'overview'])->name('payments.overview');
+    Route::get('/payments/transactions', [PaymentController::class, 'transactions'])->name('payments.transactions');
+    Route::get('/payments/transactions/{transaction}', [PaymentController::class, 'show'])->name('payments.transactions.show');
     Route::get('/academic-sessions', [AcademicSessionController::class, 'index'])->name('academic-sessions.index');
 });

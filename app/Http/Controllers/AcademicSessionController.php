@@ -12,17 +12,20 @@ class AcademicSessionController extends Controller
 {
     public function index()
     {
-        // Mock data to match screenshot for visual verification first
-        // Ideally fetch from DB: Session::all()
+        $institutionId = auth()->user()->institution_id;
         
-        $sessions = [
-            [
-                'id' => 1,
-                'year' => '2025/2026',
-                'term' => 'First Term',
-                'status' => 'active', // active, inactive
-            ]
-        ];
+        $sessions = \App\Models\Session::where('institution_id', $institutionId)
+            ->orderBy('is_current', 'desc')
+            ->orderBy('name', 'desc')
+            ->get()
+            ->map(function ($session) {
+                return [
+                    'id' => $session->id,
+                    'year' => $session->name, // Assuming name stores '2025/2026'
+                    'term' => 'All Terms', // Adjust if you have term column
+                    'status' => $session->is_current ? 'active' : 'inactive',
+                ];
+            });
 
         return Inertia::render('AcademicSessions/Index', [
             'sessions' => $sessions
