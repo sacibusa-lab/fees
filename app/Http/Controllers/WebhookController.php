@@ -28,7 +28,9 @@ class WebhookController extends Controller
 
         Log::info('Paystack Webhook Received', [
             'event' => $event,
-            'reference' => $data['reference'] ?? null
+            'reference' => $data['reference'] ?? null,
+            'body' => $body,
+            'headers' => $request->headers->all()
         ]);
 
         // Handle different event types
@@ -120,6 +122,11 @@ class WebhookController extends Controller
                 'paid_at' => now()
             ]
         );
+
+        if ($studentId) {
+            \App\Models\Student::where('id', $studentId)->update(['payment_status' => 'paid']);
+            Log::info("Student payment status updated to paid", ['student_id' => $studentId]);
+        }
 
         Log::info('Payment successful and processed', [
             'reference' => $reference, 
