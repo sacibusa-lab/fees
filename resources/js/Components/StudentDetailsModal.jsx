@@ -41,6 +41,14 @@ const StudentDetailsModal = ({ show, onClose, student }) => {
                             <span className="info-value">{student.class_name}</span>
                         </div>
                         <div className="info-row">
+                            <span className="info-label">Email</span>
+                            <span className="info-value full-width">{student.email || 'N/A'}</span>
+                        </div>
+                        <div className="info-row">
+                            <span className="info-label">Phone</span>
+                            <span className="info-value full-width">{student.phone || 'N/A'}</span>
+                        </div>
+                        <div className="info-row">
                             <span className="info-label">School Name:</span>
                             <span className="info-value full-width">{student.school_name}</span>
                         </div>

@@ -17,6 +17,8 @@ const AddStudentModal = ({ show, onClose, classes = [], subClasses = [] }) => {
         sub_class_id: '',
         auto_reg: false,
         admission_number: '',
+        phone: '',
+        email: '',
     });
 
     // Multiple Student (CSV) Form
@@ -146,6 +148,30 @@ const AddStudentModal = ({ show, onClose, classes = [], subClasses = [] }) => {
                                 ))}
                             </select>
                             {singleErrors.sub_class_id && <span className="error-msg">{singleErrors.sub_class_id}</span>}
+                        </div>
+
+                        <div className="form-group">
+                            <label>Phone Number</label>
+                            <input
+                                type="text"
+                                placeholder="Student or Parent phone"
+                                value={singleData.phone}
+                                onChange={e => setSingleData('phone', e.target.value)}
+                                className={singleErrors.phone ? 'error-input' : ''}
+                            />
+                            {singleErrors.phone && <span className="error-msg">{singleErrors.phone}</span>}
+                        </div>
+
+                        <div className="form-group">
+                            <label>Email Address</label>
+                            <input
+                                type="email"
+                                placeholder="For virtual account generation"
+                                value={singleData.email}
+                                onChange={e => setSingleData('email', e.target.value)}
+                                className={singleErrors.email ? 'error-input' : ''}
+                            />
+                            {singleErrors.email && <span className="error-msg">{singleErrors.email}</span>}
                         </div>
 
                         <div className="form-checkbox-group">

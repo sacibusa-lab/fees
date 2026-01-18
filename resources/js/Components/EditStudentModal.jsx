@@ -12,6 +12,8 @@ const EditStudentModal = ({ show, onClose, student, classes = [], subClasses = [
         gender: '',
         class_id: '',
         sub_class_id: '',
+        phone: '',
+        email: '',
     });
 
     useEffect(() => {
@@ -21,6 +23,8 @@ const EditStudentModal = ({ show, onClose, student, classes = [], subClasses = [
                 gender: student.gender || '',
                 class_id: student.class_id || '',
                 sub_class_id: student.sub_class_id || '',
+                phone: student.phone || '',
+                email: student.email || '',
             });
         }
     }, [student]);
@@ -111,6 +115,30 @@ const EditStudentModal = ({ show, onClose, student, classes = [], subClasses = [
                             ))}
                         </select>
                         {errors.sub_class_id && <span className="error-msg">{errors.sub_class_id}</span>}
+                    </div>
+
+                    <div className="form-group">
+                        <label>Phone Number</label>
+                        <input
+                            type="text"
+                            placeholder="Student or Parent phone"
+                            value={data.phone}
+                            onChange={e => setData('phone', e.target.value)}
+                            className={errors.phone ? 'error-input' : ''}
+                        />
+                        {errors.phone && <span className="error-msg">{errors.phone}</span>}
+                    </div>
+
+                    <div className="form-group">
+                        <label>Email Address</label>
+                        <input
+                            type="email"
+                            placeholder="For virtual account generation"
+                            value={data.email}
+                            onChange={e => setData('email', e.target.value)}
+                            className={errors.email ? 'error-input' : ''}
+                        />
+                        {errors.email && <span className="error-msg">{errors.email}</span>}
                     </div>
 
                     <div className="modal-footer-actions mt-6">

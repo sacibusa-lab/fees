@@ -147,9 +147,18 @@ const StudentProfile = ({ student, classes, subClasses }) => {
                                     </div>
 
                                     <div className="form-group">
+                                        <label>Email Address</label>
+                                        <input type="text" value={student.email || 'N/A'} disabled className="disabled-input" />
+                                    </div>
+
+                                    <div className="form-group">
+                                        <label>Student Phone</label>
+                                        <input type="text" value={student.phone || 'N/A'} disabled className="disabled-input" />
+                                    </div>
+
+                                    <div className="form-group">
                                         <label>Guardian Phone</label>
-                                        <input type="text" value={student.phone} disabled className="disabled-input" />
-                                        <span className="help-text">Contact admin to change</span>
+                                        <input type="text" value={student.guardian_phone || 'N/A'} disabled className="disabled-input" />
                                     </div>
                                 </div>
 

@@ -70,7 +70,9 @@ class StudentController extends Controller
                 'sub_class_name' => $student->subClass->name ?? 'N/A',
                 'sub_class_id' => $student->sub_class_id,
                 'gender' => $student->gender,
-                'phone' => $student->guardian_phone ?? 'N/A',
+                'phone' => $student->phone ?? 'N/A',
+                'guardian_phone' => $student->guardian_phone ?? 'N/A',
+                'email' => $student->email,
                 'payment_status' => $student->payment_status,
                 'avatar' => $student->avatar,
                 // Extra fields for Details Modal
@@ -99,6 +101,8 @@ class StudentController extends Controller
             'gender' => 'required|string|in:Male,Female',
             'class_id' => 'required|exists:classes,id',
             'sub_class_id' => 'required|exists:sub_classes,id',
+            'phone' => 'nullable|string|max:20',
+            'email' => 'nullable|email|max:255',
         ]);
 
         $student->update([
@@ -106,6 +110,8 @@ class StudentController extends Controller
             'gender' => $validated['gender'],
             'class_id' => $validated['class_id'],
             'sub_class_id' => $validated['sub_class_id'],
+            'phone' => $validated['phone'] ?? $student->phone,
+            'email' => $validated['email'] ?? $student->email,
         ]);
 
         return redirect()->back()->with('success', 'Student updated successfully');
@@ -184,9 +190,9 @@ class StudentController extends Controller
         $callback = function() {
             $file = fopen('php://output', 'w');
             // Headers matches the columns we expect
-            fputcsv($file, ['Full Name', 'Admission Number', 'Gender (Male/Female)']);
+            fputcsv($file, ['Full Name', 'Admission Number', 'Gender (Male/Female)', 'Phone', 'Email']);
             // Example row
-            fputcsv($file, ['John Doe', 'ADM/2026/001', 'Male']);
+            fputcsv($file, ['John Doe', 'ADM/2026/001', 'Male', '08012345678', 'john@example.com']);
             fclose($file);
         };
 
@@ -222,7 +228,9 @@ class StudentController extends Controller
                     'class_id' => $targetClassId,
                     'sub_class_id' => $targetSubClassId,
                     'gender' => isset($row[2]) ? trim($row[2]) : null,
-                    'guardian_phone' => null, // Not in CSV anymore
+                    'phone' => isset($row[3]) ? trim($row[3]) : null,
+                    'email' => isset($row[4]) ? trim($row[4]) : null,
+                    'guardian_phone' => null, // Legacy field
                     'institution_id' => auth()->user()->institution_id,
                     'payment_status' => 'pending'
                 ]
@@ -243,6 +251,8 @@ class StudentController extends Controller
             'sub_class_id' => 'required|exists:sub_classes,id',
             'auto_reg' => 'boolean',
             'admission_number' => 'nullable|string|unique:students,admission_number',
+            'phone' => 'nullable|string|max:20',
+            'email' => 'nullable|email|max:255',
         ]);
 
         if ($request->boolean('auto_reg')) {
@@ -258,6 +268,8 @@ class StudentController extends Controller
              'class_id' => $validated['class_id'],
              'sub_class_id' => $validated['sub_class_id'],
              'admission_number' => $validated['admission_number'],
+             'phone' => $validated['phone'] ?? null,
+             'email' => $validated['email'] ?? null,
              'institution_id' => auth()->user()->institution_id,
              'status' => 'active',
              'payment_status' => 'pending',
@@ -305,7 +317,8 @@ class StudentController extends Controller
             'sub_class_name' => $student->subClass->name ?? 'N/A',
             'sub_class_id' => $student->sub_class_id,
             'gender' => $student->gender,
-            'phone' => $student->guardian_phone ?? 'N/A',
+            'phone' => $student->phone ?? 'N/A',
+            'guardian_phone' => $student->guardian_phone ?? 'N/A',
             'payment_status' => $student->payment_status,
             'avatar' => $student->avatar,
             'school_name' => $student->institution->name ?? 'N/A',
