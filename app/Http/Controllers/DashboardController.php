@@ -44,9 +44,7 @@ class DashboardController extends Controller
 
         foreach ($transactions as $transaction) {
             $fee = $transaction->fee;
-            if (!$fee) continue;
-
-            $title = strtolower($fee->title ?? '');
+            $title = strtolower($fee->title ?? 'General Payment');
             
             if (str_contains($title, '1st') || str_contains($title, 'first')) {
                 $termData['first']['amount'] += $transaction->amount;

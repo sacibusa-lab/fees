@@ -131,12 +131,48 @@ class WebhookController extends Controller
             return;
         }
 
+        // 3. Resolve fee_id
+        $feeId = null;
+        try {
+            // Find current session
+            $session = \App\Models\Session::where('institution_id', $institutionId)
+                ->where('is_current', true)
+                ->first();
+
+            if ($session) {
+                // Find a relevant active fee
+                $feeQuery = \App\Models\Fee::where('institution_id', $institutionId)
+                    ->where('session_id', $session->id)
+                    ->where('status', 'active');
+
+                if ($studentId) {
+                    $student = \App\Models\Student::find($studentId);
+                    if ($student && $student->class_id) {
+                        // Check if there's a fee specifically for this class
+                        $classFee = (clone $feeQuery)->where('class_id', $student->class_id)->first();
+                        if ($classFee) {
+                            $feeId = $classFee->id;
+                        }
+                    }
+                }
+
+                if (!$feeId) {
+                    // Fallback to the first active fee (e.g., General fees)
+                    $fallbackFee = $feeQuery->whereNull('class_id')->first() ?? $feeQuery->first();
+                    $feeId = $fallbackFee->id ?? null;
+                }
+            }
+        } catch (\Exception $e) {
+            Log::error('Error resolving fee for transaction', ['error' => $e->getMessage()]);
+        }
+
         // Update or create transaction
         Transaction::updateOrCreate(
             ['reference' => $reference],
             [
                 'institution_id' => $institutionId,
                 'student_id' => $studentId,
+                'fee_id' => $feeId,
                 'amount' => $amount,
                 'status' => 'success',
                 'payment_method' => 'paystack',
