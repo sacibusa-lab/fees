@@ -166,26 +166,56 @@ const StudentProfile = ({ student, classes, subClasses }) => {
                     {/* ACCOUNTS TAB */}
                     {activeTab === 'accounts' && (
                         <div className="content-card">
-                            <div className="card-header">
-                                <h3>Virtual Accounts</h3>
-                                <p>Dedicated accounts for fee payments.</p>
+                            <div className="card-header flex-between">
+                                <div>
+                                    <h3>Virtual Accounts</h3>
+                                    <p>Dedicated accounts for student fee payments.</p>
+                                </div>
+                                {!student.has_vaccount && (
+                                    <button
+                                        className="btn-generate-va"
+                                        onClick={() => router.post(`/students/${student.id}/virtual-account`)}
+                                        disabled={processing}
+                                    >
+                                        <CreditCard size={18} /> Generate Virtual Account
+                                    </button>
+                                )}
                             </div>
+
                             <div className="accounts-list">
-                                {student.account_numbers.map((acc, idx) => (
-                                    <div key={idx} className="account-item">
-                                        <div className="bank-logo">
-                                            {acc.bank.charAt(0)}
-                                        </div>
-                                        <div className="account-details">
-                                            <h4>{acc.bank}</h4>
-                                            <div className="account-number-row">
-                                                <span className="acc-num">{acc.number}</span>
-                                                <span className="acc-name">{acc.name}</span>
+                                {student.account_numbers.length > 0 ? (
+                                    student.account_numbers.map((acc, idx) => (
+                                        <div key={idx} className={`account-item ${acc.is_dva ? 'dva-item' : ''}`}>
+                                            <div className="bank-logo">
+                                                {acc.bank.charAt(0)}
+                                            </div>
+                                            <div className="account-details">
+                                                <div className="account-header">
+                                                    <h4>{acc.bank}</h4>
+                                                    <span className={`acc-pill ${acc.is_dva ? 'dva' : 'regular'}`}>
+                                                        {acc.is_dva ? 'Dedicated' : 'Regular'}
+                                                    </span>
+                                                </div>
+                                                <div className="account-number-row">
+                                                    <span className="acc-num">{acc.number}</span>
+                                                    <span className="acc-name">{acc.name}</span>
+                                                </div>
                                             </div>
                                         </div>
+                                    ))
+                                ) : (
+                                    <div className="empty-state">
+                                        <CreditCard size={48} />
+                                        <p>No payment accounts associated with this student.</p>
                                     </div>
-                                ))}
+                                )}
                             </div>
+
+                            {student.has_vaccount && (
+                                <div className="va-notice">
+                                    <p>Payments to this dedicated account are automatically verified and credited to the student.</p>
+                                </div>
+                            )}
                         </div>
                     )}
 

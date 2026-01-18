@@ -57,6 +57,7 @@ Route::middleware(['auth'])->group(function () {
         // Wildcard routes LAST (Model Binding)
         Route::get('/{student}', [StudentController::class, 'show'])->name('students.show');
         Route::put('/{student}', [StudentController::class, 'update'])->name('students.update');
+        Route::post('/{student}/virtual-account', [StudentController::class, 'generateVirtualAccount'])->name('students.virtual-account');
         Route::delete('/{student}', [StudentController::class, 'destroy'])->name('students.destroy');
     });
 

@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Student extends Model
 {
-    protected $fillable = ['institution_id', 'class_id', 'sub_class_id', 'admission_number', 'name', 'gender', 'payment_status', 'avatar'];
+    protected $fillable = ['institution_id', 'class_id', 'sub_class_id', 'admission_number', 'name', 'gender', 'email', 'phone', 'payment_status', 'avatar'];
 
     public function institution(): BelongsTo
     {
@@ -22,5 +22,10 @@ class Student extends Model
     public function subClass(): BelongsTo
     {
         return $this->belongsTo(SubClass::class, 'sub_class_id');
+    }
+
+    public function virtualAccount()
+    {
+        return $this->hasOne(StudentVirtualAccount::class);
     }
 }

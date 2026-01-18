@@ -21,4 +21,9 @@ class Institution extends Model
     {
         return $this->hasMany(Session::class);
     }
+
+    public function virtualAccounts(): HasMany
+    {
+        return $this->hasMany(StudentVirtualAccount::class);
+    }
 }

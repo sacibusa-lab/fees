@@ -4,17 +4,27 @@ namespace App\Http\Controllers;
 
 use App\Models\Student;
 use App\Models\SchoolClass;
+use App\Models\StudentVirtualAccount;
+use App\Services\Payment\PaystackProvider;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Log;
 
 class StudentController extends Controller
 {
+    protected $paystack;
+
+    public function __construct(PaystackProvider $paystack)
+    {
+        $this->paystack = $paystack;
+    }
+
     public function index()
     {
         $institutionId = auth()->user()->institution_id;
         
         $students = Student::where('institution_id', $institutionId)
-            ->with(['schoolClass', 'subClass', 'institution'])
+            ->with(['schoolClass', 'subClass', 'institution', 'virtualAccount'])
             ->latest()
             ->get();
             
@@ -35,6 +45,22 @@ class StudentController extends Controller
 
         // Map to match the frontend expected format
         $formattedStudents = $students->map(function ($student) use ($currentSession, $mainAccount) {
+            $accountNumbers = $student->virtualAccount ? [
+                [
+                    'number' => $student->virtualAccount->account_number,
+                    'name' => $student->virtualAccount->account_name,
+                    'bank' => $student->virtualAccount->bank_name,
+                    'is_dva' => true
+                ]
+            ] : ($mainAccount ? [
+                [
+                    'number' => $mainAccount->account_number,
+                    'name' => $mainAccount->account_name,
+                    'bank' => $mainAccount->bank_name,
+                    'is_dva' => false
+                ]
+            ] : []);
+
             return [
                 'id' => $student->id,
                 'name' => $student->name,
@@ -54,13 +80,8 @@ class StudentController extends Controller
                 'academic_history' => [
                     ['class' => $student->schoolClass->name ?? 'N/A', 'session' => $currentSession ? $currentSession->name : 'N/A']
                 ],
-                'account_numbers' => $mainAccount ? [
-                    [
-                        'number' => $mainAccount->account_number,
-                        'name' => $mainAccount->account_name,
-                        'bank' => $mainAccount->bank_name
-                    ]
-                ] : []
+                'account_numbers' => $accountNumbers,
+                'has_vaccount' => (bool)$student->virtualAccount
             ];
         });
 
@@ -202,7 +223,7 @@ class StudentController extends Controller
                     'sub_class_id' => $targetSubClassId,
                     'gender' => isset($row[2]) ? trim($row[2]) : null,
                     'guardian_phone' => null, // Not in CSV anymore
-                    'institution_id' => 1,
+                    'institution_id' => auth()->user()->institution_id,
                     'payment_status' => 'pending'
                 ]
             );
@@ -237,7 +258,7 @@ class StudentController extends Controller
              'class_id' => $validated['class_id'],
              'sub_class_id' => $validated['sub_class_id'],
              'admission_number' => $validated['admission_number'],
-             'institution_id' => 1, // Hardcoded for now
+             'institution_id' => auth()->user()->institution_id,
              'status' => 'active',
              'payment_status' => 'pending',
         ]);
@@ -247,16 +268,38 @@ class StudentController extends Controller
 
     public function show(Student $student)
     {
-        $student->load(['schoolClass', 'subClass', 'institution']);
+        $student->load(['schoolClass', 'subClass', 'institution', 'virtualAccount']);
         
-        // Fetch current session for context
-        $currentSession = \App\Models\Session::where('is_current', true)->first();
+        $currentSession = \App\Models\Session::where('institution_id', $student->institution_id)
+            ->where('is_current', true)
+            ->first();
 
-        // Format student data similar to index but single
+        $mainAccount = \App\Models\BankAccount::where('institution_id', $student->institution_id)
+            ->where('is_active', true)
+            ->first();
+
+        // Account numbers priority: 1. Student DVA, 2. Institution Main Account
+        $accountNumbers = $student->virtualAccount ? [
+            [
+                'number' => $student->virtualAccount->account_number,
+                'name' => $student->virtualAccount->account_name,
+                'bank' => $student->virtualAccount->bank_name,
+                'is_dva' => true
+            ]
+        ] : ($mainAccount ? [
+            [
+                'number' => $mainAccount->account_number,
+                'name' => $mainAccount->account_name,
+                'bank' => $mainAccount->bank_name,
+                'is_dva' => false
+            ]
+        ] : []);
+
         $formattedStudent = [
             'id' => $student->id,
             'name' => $student->name,
             'admission_number' => $student->admission_number,
+            'email' => $student->email,
             'class_name' => $student->schoolClass->name ?? 'N/A',
             'class_id' => $student->class_id,
             'sub_class_name' => $student->subClass->name ?? 'N/A',
@@ -271,20 +314,73 @@ class StudentController extends Controller
             'academic_history' => [
                 ['class' => $student->schoolClass->name ?? 'N/A', 'session' => $currentSession->name ?? 'N/A']
             ],
-             'account_numbers' => [
-                [
-                    'number' => '7722665489',
-                    'name' => 'ST AUGUSTINES COLLEGE IBUSA',
-                    'bank' => 'Globus Bank'
-                ]
-            ]
+            'account_numbers' => $accountNumbers,
+            'has_vaccount' => (bool)$student->virtualAccount
         ];
 
         return Inertia::render('StudentProfile', [
             'student' => $formattedStudent,
-            'classes' => SchoolClass::all(),
-            'subClasses' => \App\Models\SubClass::all()
+            'classes' => SchoolClass::where('institution_id', $student->institution_id)->get(),
+            'subClasses' => \App\Models\SubClass::whereHas('schoolClass', function($q) use ($student) {
+                $q->where('institution_id', $student->institution_id);
+            })->get()
         ]);
+    }
+
+    public function generateVirtualAccount(Student $student)
+    {
+        $institutionId = auth()->user()->institution_id;
+        
+        if ($student->institution_id !== $institutionId) {
+            abort(403);
+        }
+
+        if ($student->virtualAccount) {
+            return back()->with('error', 'Student already has a virtual account');
+        }
+
+        if (!$student->email) {
+            return back()->with('error', 'Student must have an email address to generate a virtual account');
+        }
+
+        // Split name for Paystack
+        $nameParts = explode(' ', $student->name, 2);
+        $firstName = $nameParts[0];
+        $lastName = $nameParts[1] ?? 'Student';
+
+        // 1. Create or Find Paystack Customer
+        $customerResult = $this->paystack->createCustomer([
+            'email' => $student->email,
+            'first_name' => $firstName,
+            'last_name' => $lastName,
+            'phone' => $student->phone
+        ]);
+
+        if (!$customerResult['status']) {
+            return back()->with('error', $customerResult['message']);
+        }
+
+        $customerCode = $customerResult['customer_code'];
+
+        // 2. Assign Dedicated Virtual Account
+        $dvaResult = $this->paystack->createDedicatedAccount($customerCode);
+
+        if (!$dvaResult['status']) {
+            return back()->with('error', $dvaResult['message']);
+        }
+
+        // 3. Store DVA details
+        StudentVirtualAccount::create([
+            'student_id' => $student->id,
+            'institution_id' => $institutionId,
+            'bank_name' => $dvaResult['bank_name'],
+            'account_number' => $dvaResult['account_number'],
+            'account_name' => $dvaResult['account_name'],
+            'customer_code' => $customerCode,
+            'account_slug' => $dvaResult['account_slug']
+        ]);
+
+        return back()->with('success', 'Virtual Account generated successfully');
     }
 
     public function destroy(Student $student)

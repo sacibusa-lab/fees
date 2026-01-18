@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use App\Models\Transaction;
+use App\Models\StudentVirtualAccount;
 
 class WebhookController extends Controller
 {
@@ -13,7 +14,7 @@ class WebhookController extends Controller
      */
     public function paystack(Request $request)
     {
-        // Verify the webhook signature
+        // ... (verify signature logic remains same)
         $signature = $request->header('x-paystack-signature');
         $body = $request->getContent();
         
@@ -47,6 +48,10 @@ class WebhookController extends Controller
             case 'transfer.failed':
                 $this->handleTransferFailed($data);
                 break;
+
+            case 'dedicatedaccount.assign.success':
+                Log::info('DVA Assigned successfully', ['data' => $data]);
+                break;
                 
             default:
                 Log::info('Unhandled Paystack event: ' . $event);
@@ -71,23 +76,56 @@ class WebhookController extends Controller
      */
     private function handleChargeSuccess($data)
     {
-        $reference = $data['reference'];
-        $amount = $data['amount'] / 100; // Paystack sends amount in kobo
+        $reference = $data['reference'] ?? null;
+        $amount = $data['amount'] / 100;
         $status = $data['status'];
+        $customerCode = $data['customer']['customer_code'] ?? null;
+        
+        $studentId = null;
+        $institutionId = null;
+
+        // 1. Try to find student via Dedicated Virtual Account (DVA)
+        if ($customerCode) {
+            $va = StudentVirtualAccount::where('customer_code', $customerCode)->first();
+            if ($va) {
+                $studentId = $va->student_id;
+                $institutionId = $va->institution_id;
+            }
+        }
+
+        // 2. Fallback to reference lookup if not DVA or VA not found
+        if (!$studentId && $reference) {
+            $existingTransaction = Transaction::where('reference', $reference)->first();
+            if ($existingTransaction) {
+                $studentId = $existingTransaction->student_id;
+                $institutionId = $existingTransaction->institution_id;
+            }
+        }
+
+        if (!$institutionId) {
+            Log::warning('Could not resolve institution for webhook', ['data' => $data]);
+            return;
+        }
 
         // Update or create transaction
         Transaction::updateOrCreate(
             ['reference' => $reference],
             [
+                'institution_id' => $institutionId,
+                'student_id' => $studentId,
                 'amount' => $amount,
                 'status' => 'success',
                 'payment_method' => 'paystack',
-                'metadata' => json_encode($data),
+                'metadata' => $data,
                 'paid_at' => now()
             ]
         );
 
-        Log::info('Payment successful', ['reference' => $reference, 'amount' => $amount]);
+        Log::info('Payment successful and processed', [
+            'reference' => $reference, 
+            'student_id' => $studentId, 
+            'institution_id' => $institutionId
+        ]);
     }
 
     /**

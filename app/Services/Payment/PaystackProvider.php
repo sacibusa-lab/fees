@@ -177,4 +177,64 @@ class PaystackProvider implements PaymentGatewayInterface
             ];
         }
     }
+
+    public function createCustomer(array $data): array
+    {
+        try {
+            $response = Http::withToken($this->secretKey)->post("{$this->baseUrl}/customer", [
+                'email' => $data['email'],
+                'first_name' => $data['first_name'],
+                'last_name' => $data['last_name'],
+                'phone' => $data['phone'] ?? null,
+            ]);
+
+            if ($response->successful()) {
+                return [
+                    'status' => true,
+                    'customer_code' => $response->json()['data']['customer_code'],
+                    'data' => $response->json()['data']
+                ];
+            }
+
+            Log::error('Paystack Customer Creation Failed', ['response' => $response->body()]);
+            return [
+                'status' => false,
+                'message' => $response->json()['message'] ?? 'Failed to create customer'
+            ];
+        } catch (\Exception $e) {
+            Log::error('Paystack Customer Exception', ['error' => $e->getMessage()]);
+            return ['status' => false, 'message' => 'Service error'];
+        }
+    }
+
+    public function createDedicatedAccount(string $customerCode): array
+    {
+        try {
+            $response = Http::withToken($this->secretKey)->post("{$this->baseUrl}/dedicated_account", [
+                'customer' => $customerCode,
+                'preferred_bank' => 'wema-bank' // Common default for DVA
+            ]);
+
+            if ($response->successful()) {
+                $data = $response->json()['data'];
+                return [
+                    'status' => true,
+                    'bank_name' => $data['bank']['name'],
+                    'account_number' => $data['account_number'],
+                    'account_name' => $data['account_name'],
+                    'account_slug' => $data['bank']['slug'] ?? null,
+                    'data' => $data
+                ];
+            }
+
+            Log::error('Paystack DVA Creation Failed', ['response' => $response->body()]);
+            return [
+                'status' => false,
+                'message' => $response->json()['message'] ?? 'Failed to create dedicated account'
+            ];
+        } catch (\Exception $e) {
+            Log::error('Paystack DVA Exception', ['error' => $e->getMessage()]);
+            return ['status' => false, 'message' => 'Service error'];
+        }
+    }
 }
