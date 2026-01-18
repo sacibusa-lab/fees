@@ -15,4 +15,4 @@ use App\Http\Controllers\WebhookController;
 */
 
 // Paystack Webhook (no CSRF protection needed)
-Route::post('/webhook/paystack', [WebhookController::class, 'paystack'])->name('webhook.paystack');
+Route::post('/webhook/paystack', [WebhookController::class, 'handlePaystack'])->name('webhook.paystack');

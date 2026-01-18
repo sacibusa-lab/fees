@@ -12,6 +12,7 @@ import {
     ChevronDown,
     Settings
 } from 'lucide-react';
+import VerifyPaymentModal from './VerifyPaymentModal';
 import './Sidebar.css';
 
 const Sidebar = ({ institution }) => {
@@ -20,6 +21,7 @@ const Sidebar = ({ institution }) => {
     const [studentsOpen, setStudentsOpen] = useState(currentPath.startsWith('/students'));
     const [paymentsOpen, setPaymentsOpen] = useState(currentPath.startsWith('/payments'));
     const [businessOpen, setBusinessOpen] = useState(currentPath.startsWith('/business'));
+    const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false);
 
     const handleLogout = () => {
         router.post('/logout');
@@ -40,10 +42,18 @@ const Sidebar = ({ institution }) => {
                     <span className="logo-text">{institution?.name || 'Fees'}</span>
                 </div>
                 <div className="portal-id">Portal ID: {institution?.portal_id || 'N/A'}</div>
-                <button className="verify-payment-btn">
+                <button
+                    className="verify-payment-btn"
+                    onClick={() => setIsVerifyModalOpen(true)}
+                >
                     <span>✓</span> Verify Payment
                 </button>
             </div>
+
+            <VerifyPaymentModal
+                isOpen={isVerifyModalOpen}
+                onClose={() => setIsVerifyModalOpen(false)}
+            />
 
             {/* Navigation */}
             <nav className="sidebar-nav">

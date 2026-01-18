@@ -5,11 +5,13 @@ import { TrendingUp, Users, School, CreditCard, ArrowUpRight, Search, Filter, Do
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import './Dashboard.css';
 
-const Dashboard = ({ stats, chartData }) => {
+const Dashboard = ({ stats = {}, chartData = [] }) => {
     // Statistically, we can use usePage or pass titles down, 
     // but for now we'll stick to a simple Head component.
 
     const recentTransactions = []; // Will be passed from controller in next step
+
+    if (!stats) return <Layout><div style={{ padding: '2rem' }}>Loading dashboard data...</div></Layout>;
 
     return (
         <Layout>
@@ -22,7 +24,7 @@ const Dashboard = ({ stats, chartData }) => {
                             <span className="stat-label">TOTAL STUDENTS</span>
                             <Users size={20} className="stat-icon green" />
                         </div>
-                        <div className="stat-value">{stats.totalStudents.toLocaleString()}</div>
+                        <div className="stat-value">{(stats?.totalStudents || 0).toLocaleString()}</div>
                         <div className="stat-change positive">
                             <span>Active</span>
                         </div>
@@ -33,7 +35,7 @@ const Dashboard = ({ stats, chartData }) => {
                             <span className="stat-label">TOTAL FEES RECEIVED</span>
                             <CreditCard size={20} className="stat-icon pink" />
                         </div>
-                        <div className="stat-value">₦{stats.totalReceived.toLocaleString()}</div>
+                        <div className="stat-value">₦{(stats?.totalReceived || 0).toLocaleString()}</div>
                         <div className="stat-change positive">
                             <span>12%</span>
                             <ArrowUpRight size={14} />
@@ -45,7 +47,7 @@ const Dashboard = ({ stats, chartData }) => {
                             <span className="stat-label">EXPECTED REVENUE</span>
                             <Users size={20} className="stat-icon blue" />
                         </div>
-                        <div className="stat-value">₦{stats.expected.toLocaleString()}</div>
+                        <div className="stat-value">₦{(stats?.expected || 0).toLocaleString()}</div>
                         <div className="stat-change positive">
                             <span>5%</span>
                             <ArrowUpRight size={14} />
@@ -57,7 +59,7 @@ const Dashboard = ({ stats, chartData }) => {
                             <span className="stat-label">DEFAULTERS</span>
                             <School size={20} className="stat-icon purple" />
                         </div>
-                        <div className="stat-value">{stats.defaulters}</div>
+                        <div className="stat-value">{(stats?.defaulters || 0).toLocaleString()}</div>
                         <div className="stat-change">
                             <span>Stable</span>
                         </div>
@@ -99,8 +101,8 @@ const Dashboard = ({ stats, chartData }) => {
                         <div className="gross-transaction-section">
                             <span className="gross-label">Gross Transaction</span>
                             <div className="gross-value-row">
-                                <span className="gross-amount">₦{stats.gross_transaction.amount.toLocaleString()}</span>
-                                <span className="gross-count">({stats.gross_transaction.count})</span>
+                                <span className="gross-amount">₦{(stats?.gross_transaction?.amount || 0).toLocaleString()}</span>
+                                <span className="gross-count">({stats?.gross_transaction?.count || 0})</span>
                             </div>
                         </div>
 
@@ -110,22 +112,22 @@ const Dashboard = ({ stats, chartData }) => {
                                 <div className="breakdown-item">
                                     <span className="term-label">First Term</span>
                                     <div className="term-values">
-                                        <span className="term-amount">₦{stats.term_breakdown.first.amount.toLocaleString()}</span>
-                                        <span className="term-count">({stats.term_breakdown.first.count})</span>
+                                        <span className="term-amount">₦{(stats?.term_breakdown?.first?.amount || 0).toLocaleString()}</span>
+                                        <span className="term-count">({stats?.term_breakdown?.first?.count || 0})</span>
                                     </div>
                                 </div>
                                 <div className="breakdown-item">
                                     <span className="term-label">Second Term</span>
                                     <div className="term-values">
-                                        <span className="term-amount green">₦{stats.term_breakdown.second.amount.toLocaleString()}</span>
-                                        <span className="term-count">({stats.term_breakdown.second.count})</span>
+                                        <span className="term-amount green">₦{(stats?.term_breakdown?.second?.amount || 0).toLocaleString()}</span>
+                                        <span className="term-count">({stats?.term_breakdown?.second?.count || 0})</span>
                                     </div>
                                 </div>
                                 <div className="breakdown-item">
                                     <span className="term-label">Third Term</span>
                                     <div className="term-values">
-                                        <span className="term-amount green">₦{stats.term_breakdown.third.amount.toLocaleString()}</span>
-                                        <span className="term-count">({stats.term_breakdown.third.count})</span>
+                                        <span className="term-amount green">₦{(stats?.term_breakdown?.third?.amount || 0).toLocaleString()}</span>
+                                        <span className="term-count">({stats?.term_breakdown?.third?.count || 0})</span>
                                     </div>
                                 </div>
                             </div>

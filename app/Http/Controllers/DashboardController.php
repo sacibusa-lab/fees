@@ -43,7 +43,10 @@ class DashboardController extends Controller
         ];
 
         foreach ($transactions as $transaction) {
-            $title = strtolower($transaction->fee->title ?? '');
+            $fee = $transaction->fee;
+            if (!$fee) continue;
+
+            $title = strtolower($fee->title ?? '');
             
             if (str_contains($title, '1st') || str_contains($title, 'first')) {
                 $termData['first']['amount'] += $transaction->amount;

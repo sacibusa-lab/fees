@@ -9,6 +9,7 @@
     left: 0;
     top: 0;
     overflow-y: auto;
+    z-index: 100;
 }
 
 .sidebar-header {

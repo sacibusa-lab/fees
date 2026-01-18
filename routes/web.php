@@ -71,4 +71,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/payments/transactions', [PaymentController::class, 'transactions'])->name('payments.transactions');
     Route::get('/payments/transactions/{transaction}', [PaymentController::class, 'show'])->name('payments.transactions.show');
     Route::get('/academic-sessions', [AcademicSessionController::class, 'index'])->name('academic-sessions.index');
+
+    // API-like routes for components
+    Route::get('/api/payments/verify', [PaymentController::class, 'verifyStatus']);
 });

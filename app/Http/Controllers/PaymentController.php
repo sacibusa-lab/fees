@@ -169,4 +169,49 @@ class PaymentController extends Controller
             'transaction' => $details
         ]);
     }
+
+    public function verifyStatus(Request $request)
+    {
+        $query = $request->query('query');
+        $institutionId = auth()->user()->institution_id;
+
+        if (!$query) {
+            return response()->json(['message' => 'Please provide a reference or registration number.'], 400);
+        }
+
+        // 1. Try to find by transaction reference
+        $transaction = \App\Models\Transaction::where('institution_id', $institutionId)
+            ->where('reference', $query)
+            ->with(['student', 'fee.session'])
+            ->first();
+
+        // 2. If not found, try to find by student registration number
+        if (!$transaction) {
+            $student = \App\Models\Student::where('institution_id', $institutionId)
+                ->where('admission_number', $query)
+                ->first();
+
+            if ($student) {
+                $transaction = \App\Models\Transaction::where('student_id', $student->id)
+                    ->with(['student', 'fee.session'])
+                    ->orderBy('created_at', 'desc')
+                    ->first();
+            }
+        }
+
+        if (!$transaction) {
+            return response()->json(['message' => 'No matching transaction found.'], 404);
+        }
+
+        return response()->json([
+            'student_name' => $transaction->student->name ?? 'N/A',
+            'fee_title' => $transaction->fee->title ?? 'N/A',
+            'session' => $transaction->fee->session->name ?? 'N/A',
+            'term' => $transaction->fee->cycle ?? 'N/A',
+            'reference' => $transaction->reference,
+            'date' => $transaction->created_at->format('M d, Y'),
+            'amount' => '₦' . number_format($transaction->amount, 2),
+            'status' => ucfirst($transaction->status),
+        ]);
+    }
 }
