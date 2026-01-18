@@ -82,9 +82,29 @@ class DashboardController extends Controller
             ['name' => 'Third Term', 'amount' => (float) $termData['third']['amount']],
         ];
 
+        // Fetch recent successful transactions for the dashboard table
+        $recentTransactions = Transaction::where('institution_id', $institutionId)
+            ->where('status', 'success')
+            ->with(['student', 'fee'])
+            ->orderBy('paid_at', 'desc')
+            ->limit(10)
+            ->get()
+            ->map(function ($t) {
+                return [
+                    'id' => $t->id,
+                    'payer' => $t->student->name ?? 'External Payee',
+                    'fee' => $t->fee->title ?? 'General Payment',
+                    'payment_method' => ucfirst($t->payment_method),
+                    'amount' => $t->amount,
+                    'status' => ucfirst($t->status),
+                    'date' => $t->paid_at->format('M d, Y h:i A'),
+                ];
+            });
+
         return Inertia::render('Dashboard', [
             'stats' => $stats,
-            'chartData' => $chartData
+            'chartData' => $chartData,
+            'recentTransactions' => $recentTransactions
         ]);
     }
 }

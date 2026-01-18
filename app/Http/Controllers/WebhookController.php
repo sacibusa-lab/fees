@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use App\Models\Transaction;
 use App\Models\StudentVirtualAccount;
+use App\Models\WebhookEvent;
 
 class WebhookController extends Controller
 {
@@ -33,30 +34,51 @@ class WebhookController extends Controller
             'headers' => $request->headers->all()
         ]);
 
-        // Handle different event types
-        switch ($event) {
-            case 'charge.success':
-                $this->handleChargeSuccess($data);
-                break;
-                
-            case 'charge.failed':
-                $this->handleChargeFailed($data);
-                break;
-                
-            case 'transfer.success':
-                $this->handleTransferSuccess($data);
-                break;
-                
-            case 'transfer.failed':
-                $this->handleTransferFailed($data);
-                break;
+        // Log the event to database for monitoring
+        $webhookLog = WebhookEvent::create([
+            'event_type' => $event,
+            'reference' => $data['reference'] ?? null,
+            'payload' => $data,
+            'status' => 'pending'
+        ]);
 
-            case 'dedicatedaccount.assign.success':
-                Log::info('DVA Assigned successfully', ['data' => $data]);
-                break;
-                
-            default:
-                Log::info('Unhandled Paystack event: ' . $event);
+        try {
+            // Handle different event types
+            switch ($event) {
+                case 'charge.success':
+                    $this->handleChargeSuccess($data, $webhookLog);
+                    break;
+                    
+                case 'charge.failed':
+                    $this->handleChargeFailed($data, $webhookLog);
+                    break;
+                    
+                case 'transfer.success':
+                    $this->handleTransferSuccess($data, $webhookLog);
+                    break;
+                    
+                case 'transfer.failed':
+                    $this->handleTransferFailed($data, $webhookLog);
+                    break;
+
+                case 'dedicatedaccount.assign.success':
+                    Log::info('DVA Assigned successfully', ['data' => $data]);
+                    $webhookLog->update(['status' => 'processed', 'processed_at' => now()]);
+                    break;
+                    
+                default:
+                    Log::info('Unhandled Paystack event: ' . $event);
+                    $webhookLog->update(['status' => 'processed', 'processed_at' => now()]);
+            }
+        } catch (\Exception $e) {
+            Log::error('Error processing webhook', [
+                'event' => $event,
+                'error' => $e->getMessage()
+            ]);
+            $webhookLog->update([
+                'status' => 'failed',
+                'error_message' => $e->getMessage()
+            ]);
         }
 
         return response()->json(['message' => 'Webhook received'], 200);
@@ -126,6 +148,14 @@ class WebhookController extends Controller
         if ($studentId) {
             \App\Models\Student::where('id', $studentId)->update(['payment_status' => 'paid']);
             Log::info("Student payment status updated to paid", ['student_id' => $studentId]);
+        }
+
+        if ($institutionId && isset($webhookLog)) {
+            $webhookLog->update([
+                'institution_id' => $institutionId,
+                'status' => 'processed',
+                'processed_at' => now()
+            ]);
         }
 
         Log::info('Payment successful and processed', [

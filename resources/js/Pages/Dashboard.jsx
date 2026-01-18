@@ -5,11 +5,9 @@ import { TrendingUp, Users, School, CreditCard, ArrowUpRight, Search, Filter, Do
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import './Dashboard.css';
 
-const Dashboard = ({ stats = {}, chartData = [] }) => {
+const Dashboard = ({ stats = {}, chartData = [], recentTransactions = [] }) => {
     // Statistically, we can use usePage or pass titles down, 
     // but for now we'll stick to a simple Head component.
-
-    const recentTransactions = []; // Will be passed from controller in next step
 
     if (!stats) return <Layout><div style={{ padding: '2rem' }}>Loading dashboard data...</div></Layout>;
 
@@ -155,9 +153,27 @@ const Dashboard = ({ stats = {}, chartData = [] }) => {
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr>
-                                    <td colSpan="7" style={{ textAlign: 'center', padding: '2rem' }}>No recent transactions found.</td>
-                                </tr>
+                                {recentTransactions.length > 0 ? (
+                                    recentTransactions.map((tx, idx) => (
+                                        <tr key={tx.id}>
+                                            <td>{idx + 1}</td>
+                                            <td> {tx.payer}</td>
+                                            <td>{tx.fee}</td>
+                                            <td>{tx.payment_method}</td>
+                                            <td>₦{tx.amount.toLocaleString()}</td>
+                                            <td>
+                                                <span className={`status-pill ${tx.status.toLowerCase()}`}>
+                                                    {tx.status}
+                                                </span>
+                                            </td>
+                                            <td>{tx.date}</td>
+                                        </tr>
+                                    ))
+                                ) : (
+                                    <tr>
+                                        <td colSpan="7" style={{ textAlign: 'center', padding: '2rem' }}>No recent transactions found.</td>
+                                    </tr>
+                                )}
                             </tbody>
                         </table>
                     </div>

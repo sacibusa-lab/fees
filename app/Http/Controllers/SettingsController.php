@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\Institution;
+use App\Models\WebhookEvent;
 use Illuminate\Support\Facades\Artisan;
 
 class SettingsController extends Controller
@@ -68,6 +69,30 @@ class SettingsController extends Controller
         return Inertia::render('Settings/Api', [
             'paystack_public_key' => config('services.paystack.public_key'),
             'paystack_secret_key' => $this->maskKey(config('services.paystack.secret_key')),
+        ]);
+    }
+
+    public function webhooks()
+    {
+        $institutionId = auth()->user()->institution_id;
+        $webhooks = WebhookEvent::where('institution_id', $institutionId)
+            ->latest()
+            ->limit(50)
+            ->get()
+            ->map(function ($hook) {
+                return [
+                    'id' => $hook->id,
+                    'event_type' => $hook->event_type,
+                    'reference' => $hook->reference,
+                    'payload' => $hook->payload,
+                    'status' => $hook->status,
+                    'error_message' => $hook->error_message,
+                    'date' => $hook->created_at->format('M d, Y h:i A'),
+                ];
+            });
+
+        return Inertia::render('Settings/Webhooks', [
+            'webhooks' => $webhooks
         ]);
     }
 

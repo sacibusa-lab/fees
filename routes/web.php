@@ -67,6 +67,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/global', [App\Http\Controllers\SettingsController::class, 'updateGlobal'])->name('settings.global.update');
         Route::get('/roles', [App\Http\Controllers\SettingsController::class, 'roles'])->name('settings.roles');
         Route::get('/api', [App\Http\Controllers\SettingsController::class, 'api'])->name('settings.api');
+        Route::get('/webhooks', [App\Http\Controllers\SettingsController::class, 'webhooks'])->name('settings.webhooks');
         Route::post('/api', [App\Http\Controllers\SettingsController::class, 'updateApi'])->name('settings.api.update');
     });
 
