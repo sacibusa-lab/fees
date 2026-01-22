@@ -1,172 +1,183 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Head } from '@inertiajs/react';
 import Layout from '../Components/Layout';
-import { TrendingUp, Users, School, CreditCard, ArrowUpRight, Search, Filter, Download } from 'lucide-react';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { Bell, Wallet, PieChart, CreditCard, Users, Settings } from 'lucide-react';
+// Using LineChart for the curved lines as shown in screenshot
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import './Dashboard.css';
 
-const Dashboard = ({ stats = {}, chartData = [], recentTransactions = [], userName = 'Nwayei' }) => {
-    // Determine greeting based on time of day
-    const hour = new Date().getHours();
-    const greeting = hour < 12 ? 'Good Morning' : (hour < 18 ? 'Good Afternoon' : 'Good Evening');
+const Dashboard = ({ stats, chartData, userName, recentTransactions }) => {
+    // Custom SVG Progress Circle for 53%
+    const ProgressCircle = ({ percent }) => {
+        const radius = 30;
+        const circumference = 2 * Math.PI * radius;
+        const offset = circumference - (percent / 100) * circumference;
 
-    if (!stats) return <Layout><div style={{ padding: '2rem' }}>Loading dashboard data...</div></Layout>;
+        return (
+            <div style={{ position: 'relative', width: '80px', height: '80px' }}>
+                <svg width="80" height="80" viewBox="0 0 80 80">
+                    <circle cx="40" cy="40" r="30" fill="none" stroke="#334155" strokeWidth="8" />
+                    <circle
+                        cx="40" cy="40" r="30" fill="none" stroke="#f97316" strokeWidth="8"
+                        strokeDasharray={circumference}
+                        strokeDashoffset={offset}
+                        strokeLinecap="round"
+                        transform="rotate(-90 40 40)"
+                    />
+                </svg>
+                <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold', fontSize: '1.2rem' }}>
+                    {percent}%
+                </div>
+            </div>
+        );
+    };
 
     return (
         <Layout>
             <Head title="Dashboard" />
             <div className="dashboard">
-                <h1 className="dashboard-greeting">{greeting} {userName} !</h1>
-                {/* Stats Cards */}
-                <div className="stats-grid">
-                    <div className="stat-card">
-                        <div className="stat-header">
-                            <span className="stat-label">TOTAL FEES</span>
-                            <ArrowUpRight size={14} className="trend-arrow" />
-                        </div>
-                        <div className="stat-value">{(stats?.revenueCodes || 0).toLocaleString()}</div>
-                        <div className="stat-footer">
-                            <span className="footer-percentage">+ 0%</span>
-                            <TrendingUp size={14} />
-                        </div>
+                {/* Header Row */}
+                <div className="dashboard-header-row">
+                    <div className="session-title">
+                        {stats.session ? `Session ${stats.session}` : 'Session 2022/2023'}
+                        <span className="session-subtitle">Academic Session</span>
                     </div>
-
-                    <div className="stat-card">
-                        <div className="stat-header">
-                            <span className="stat-label">TOTAL STUDENTS</span>
-                            <ArrowUpRight size={14} className="trend-arrow" />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                        <div className="notification-bell">
+                            <Bell size={20} />
+                            <span className="notification-dot"></span>
                         </div>
-                        <div className="stat-value">{(stats?.totalStudents || 0).toLocaleString()}</div>
-                        <div className="stat-footer">
-                            <span className="footer-percentage">+ 0%</span>
-                            <TrendingUp size={14} />
-                        </div>
-                    </div>
-
-                    <div className="stat-card">
-                        <div className="stat-header">
-                            <span className="stat-label">SCHOOLS</span>
-                            <ArrowUpRight size={14} className="trend-arrow" />
-                        </div>
-                        <div className="stat-value">{(stats?.totalSchools || 0).toLocaleString()}</div>
-                        <div className="stat-footer">
-                            <span className="footer-percentage">+ 0%</span>
-                            <TrendingUp size={14} />
-                        </div>
-                    </div>
-
-                    <div className="stat-card">
-                        <div className="stat-header">
-                            <span className="stat-label pink">ADMIN ACCOUNTS</span>
-                            <ArrowUpRight size={14} className="trend-arrow pink" />
-                        </div>
-                        <div className="stat-value pink">{(stats?.adminAccounts || 0).toLocaleString()}</div>
-                        <div className="stat-footer pink">
-                            <span className="footer-percentage">+ 0%</span>
-                            <TrendingUp size={14} />
+                        <div className="user-greeting">
+                            Hi, {userName || 'User'}
                         </div>
                     </div>
                 </div>
 
-                {/* Charts Section */}
-                <div className="charts-section">
-                    <div className="chart-card">
+                {/* Metrics Cards Row */}
+                <div className="metrics-row">
+                    {/* Dark Card - Term Progress */}
+                    <div className="metric-card dark">
+                        <div className="term-info">
+                            <div className="term-title">{stats.current_term}</div>
+                            <div className="term-subtitle">Fee Collection Progress</div>
+                            <div className="term-date">Today: {new Date().toLocaleDateString('en-GB')}</div>
+                        </div>
+                        <ProgressCircle percent={stats.collection_progress} />
+                    </div>
+
+                    {/* Expected Revenue */}
+                    <div className="metric-card white">
+                        <div className="revenue-icon orange">
+                            <Wallet size={24} />
+                        </div>
+                        <div className="revenue-details">
+                            <span className="revenue-amount">
+                                {stats.revenue?.currency} {(stats.revenue?.expected || 0).toLocaleString()}
+                            </span>
+                            <span className="revenue-label">Expected Revenue</span>
+                        </div>
+                    </div>
+
+                    {/* Generated Revenue */}
+                    <div className="metric-card white">
+                        <div className="revenue-icon red">
+                            <CreditCard size={24} />
+                        </div>
+                        <div className="revenue-details">
+                            <span className="revenue-amount">
+                                {stats.revenue?.currency} {(stats.revenue?.generated || 0).toLocaleString()}
+                            </span>
+                            <span className="revenue-label">Generated Revenue</span>
+                        </div>
+                    </div>
+
+                    {/* Outstanding Payment - Full Card */}
+                    <div className="metric-card white">
+                        <div className="revenue-icon orange">
+                            <PieChart size={24} />
+                        </div>
+                        <div className="revenue-details">
+                            <span className="revenue-amount">
+                                {stats.revenue?.currency} {(stats.revenue?.outstanding || 0).toLocaleString()}
+                            </span>
+                            <span className="revenue-label">Outstanding Payment</span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Main Content Grid: Chart + Sidebars */}
+                <div className="main-content-grid">
+                    {/* Financial Report Chart */}
+                    <div className="financial-chart-card">
                         <div className="chart-header">
-                            <h3>Payment Chart (Current Session)</h3>
+                            <h3>Financial Report</h3>
+                            <div className="chart-legend">
+                                <div className="legend-item"><span className="dot blue"></span> Paid</div>
+                                <div className="legend-item"><span className="dot red"></span> Outstanding</div>
+                            </div>
                         </div>
-                        <ResponsiveContainer width="100%" height={300}>
-                            <AreaChart data={chartData}>
-                                <defs>
-                                    <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3} />
-                                        <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
-                                    </linearGradient>
-                                </defs>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#E0E0E0" />
-                                <XAxis dataKey="name" stroke="#757575" />
-                                <YAxis stroke="#757575" tickFormatter={(value) => `₦${value / 1000}k`} />
-                                <Tooltip />
-                                <Area
-                                    type="monotone"
-                                    dataKey="amount"
-                                    stroke="#3B82F6"
-                                    strokeWidth={3}
-                                    fill="url(#colorValue)"
-                                />
-                            </AreaChart>
-                        </ResponsiveContainer>
+
+                        <div style={{ width: '100%', height: 350 }}>
+                            <ResponsiveContainer>
+                                <LineChart data={chartData}>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} dy={10} />
+                                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} tickFormatter={val => `${val / 1000}k`} />
+                                    <Tooltip
+                                        contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                                        formatter={(value) => new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' }).format(value)}
+                                    />
+                                    <Line type="monotone" dataKey="paid" name="Paid" stroke="#3b82f6" strokeWidth={3} dot={false} activeDot={{ r: 6 }} />
+                                    <Line type="monotone" dataKey="outstanding" name="Outstanding" stroke="#ef4444" strokeWidth={3} dot={false} activeDot={{ r: 6 }} />
+                                </LineChart>
+                            </ResponsiveContainer>
+                        </div>
                     </div>
 
-                    <div className="income-card">
-                        <h3>Income (Current Session)</h3>
-
-                        <div className="gross-transaction-section">
-                            <span className="gross-label">Gross Transaction</span>
-                            <div className="gross-value-row">
-                                <span className="gross-amount">₦{(stats?.gross_transaction?.amount || 0).toLocaleString()}</span>
-                                <span className="gross-count">({stats?.gross_transaction?.count || 0})</span>
-                            </div>
+                    {/* Sidebar Columns */}
+                    <div className="sidebar-column">
+                        <div className="side-card student-card">
+                            <h3>{(stats.total_students || 0).toLocaleString()}</h3>
+                            <p>Total Students</p>
                         </div>
 
-                        <div className="breakdown-section">
-                            <h4 className="breakdown-title">Breakdown</h4>
-                            <div className="breakdown-list">
-                                <div className="breakdown-item">
-                                    <span className="term-label">First Term</span>
-                                    <div className="term-values">
-                                        <span className="term-amount">₦{(stats?.term_breakdown?.first?.amount || 0).toLocaleString()}</span>
-                                        <span className="term-count">({stats?.term_breakdown?.first?.count || 0})</span>
-                                    </div>
-                                </div>
-                                <div className="breakdown-item">
-                                    <span className="term-label">Second Term</span>
-                                    <div className="term-values">
-                                        <span className="term-amount green">₦{(stats?.term_breakdown?.second?.amount || 0).toLocaleString()}</span>
-                                        <span className="term-count">({stats?.term_breakdown?.second?.count || 0})</span>
-                                    </div>
-                                </div>
-                                <div className="breakdown-item">
-                                    <span className="term-label">Third Term</span>
-                                    <div className="term-values">
-                                        <span className="term-amount green">₦{(stats?.term_breakdown?.third?.amount || 0).toLocaleString()}</span>
-                                        <span className="term-count">({stats?.term_breakdown?.third?.count || 0})</span>
-                                    </div>
-                                </div>
-                            </div>
+                        <div className="side-card config-card">
+                            <h4>Fees</h4>
+                            <p>setting up and customizing fees for your School</p>
+                        </div>
+
+                        <div className="side-card config-card">
+                            <h4>Bank Accounts</h4>
+                            <p>setting up and managing bank account information</p>
                         </div>
                     </div>
                 </div>
 
-                {/* Completed Transactions (Mock for now) */}
-                <div className="transactions-section">
-                    <div className="section-header">
-                        <h3>Completed Transactions</h3>
-                    </div>
-
+                {/* Recent Transactions Table */}
+                <div className="recent-transactions-section">
+                    <h3>Recent Transactions</h3>
                     <div className="table-container">
-                        <table>
+                        <table className="transactions-table">
                             <thead>
                                 <tr>
-                                    <th>S/N</th>
                                     <th>Payer</th>
-                                    <th>Fee</th>
-                                    <th>Payment Mode</th>
+                                    <th>Fee Type</th>
                                     <th>Amount</th>
+                                    <th>Method</th>
                                     <th>Status</th>
                                     <th>Date</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {recentTransactions.length > 0 ? (
-                                    recentTransactions.map((tx, idx) => (
+                                {recentTransactions && recentTransactions.length > 0 ? (
+                                    recentTransactions.map((tx) => (
                                         <tr key={tx.id}>
-                                            <td>{idx + 1}</td>
-                                            <td> {tx.payer}</td>
+                                            <td>{tx.payer}</td>
                                             <td>{tx.fee}</td>
+                                            <td>₦{parseFloat(tx.amount).toLocaleString()}</td>
                                             <td>{tx.payment_method}</td>
-                                            <td>₦{tx.amount.toLocaleString()}</td>
                                             <td>
-                                                <span className={`status-pill ${tx.status.toLowerCase()}`}>
+                                                <span className={`status-badge ${tx.status.toLowerCase()}`}>
                                                     {tx.status}
                                                 </span>
                                             </td>
@@ -175,7 +186,7 @@ const Dashboard = ({ stats = {}, chartData = [], recentTransactions = [], userNa
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan="7" style={{ textAlign: 'center', padding: '2rem' }}>No recent transactions found.</td>
+                                        <td colSpan="6" className="no-data">No recent transactions found</td>
                                     </tr>
                                 )}
                             </tbody>

@@ -39,6 +39,14 @@ const SessionsIndex = ({ sessions = [] }) => {
         });
     };
 
+    const handleSetTerm = (session, term) => {
+        router.post(`/academic-sessions/${session.id}/set-term`, {
+            term: term
+        }, {
+            onSuccess: () => setActiveDropdown(null),
+        });
+    };
+
     const handleStartNextTerm = (paymentAction) => {
         router.post(`/academic-sessions/${currentActionSession.id}/next-term`, {
             payment_action: paymentAction
@@ -47,9 +55,11 @@ const SessionsIndex = ({ sessions = [] }) => {
         });
     };
 
-    const handleSaveNewSession = (year) => {
+    const handleSaveNewSession = (year, startDate, endDate) => {
         router.post('/academic-sessions', {
-            year: year
+            year: year,
+            start_date: startDate,
+            end_date: endDate
         }, {
             onSuccess: () => setIsNewSessionModalOpen(false),
         });
@@ -75,7 +85,9 @@ const SessionsIndex = ({ sessions = [] }) => {
                             <tr>
                                 <th>S/N</th>
                                 <th>Year</th>
-                                <th>Term</th>
+                                <th>Active Term</th>
+                                <th>Start Date</th>
+                                <th>End Date</th>
                                 <th>Status</th>
                                 <th></th>
                             </tr>
@@ -85,7 +97,17 @@ const SessionsIndex = ({ sessions = [] }) => {
                                 <tr key={session.id}>
                                     <td>{index + 1}</td>
                                     <td>{session.year}</td>
-                                    <td>{session.term}</td>
+                                    <td>
+                                        <div className="term-display">
+                                            <span className="current-term-tag">{session.term}</span>
+                                        </div>
+                                    </td>
+                                    <td className="text-sm text-gray-600">
+                                        {session.start_date || '-'}
+                                    </td>
+                                    <td className="text-sm text-gray-600">
+                                        {session.end_date || '-'}
+                                    </td>
                                     <td>
                                         <span className={`status-badge ${session.status}`}>
                                             <span className="status-dot"></span>
@@ -102,12 +124,47 @@ const SessionsIndex = ({ sessions = [] }) => {
 
                                         {activeDropdown === session.id && (
                                             <div className="action-dropdown shadow-lg">
+                                                <div className="dropdown-section-label">Switch Term</div>
+                                                <button className={`dropdown-item ${session.term === '1st Term' ? 'selected' : ''}`} onClick={() => handleSetTerm(session, '1st Term')}>
+                                                    <CheckCircle size={14} className={session.term === '1st Term' ? 'visible' : 'hidden'} />
+                                                    <span>1st Term</span>
+                                                </button>
+                                                <button className={`dropdown-item ${session.term === '2nd Term' ? 'selected' : ''}`} onClick={() => handleSetTerm(session, '2nd Term')}>
+                                                    <CheckCircle size={14} className={session.term === '2nd Term' ? 'visible' : 'hidden'} />
+                                                    <span>2nd Term</span>
+                                                </button>
+                                                <button className={`dropdown-item ${session.term === '3rd Term' ? 'selected' : ''}`} onClick={() => handleSetTerm(session, '3rd Term')}>
+                                                    <CheckCircle size={14} className={session.term === '3rd Term' ? 'visible' : 'hidden'} />
+                                                    <span>3rd Term</span>
+                                                </button>
+
+                                                <div className="dropdown-divider"></div>
+
                                                 <button
                                                     className="dropdown-item"
                                                     onClick={() => handleNextTermClick(session)}
                                                 >
                                                     <ArrowRight size={14} />
-                                                    <span>Next Term</span>
+                                                    <span>Start Next Term</span>
+                                                </button>
+
+
+                                                {/* Edit Dates Action - Simple Prompt for now */}
+                                                <button
+                                                    className="dropdown-item"
+                                                    onClick={() => {
+                                                        const start = prompt("Enter Start Date (YYYY-MM-DD)", session.start_date || '');
+                                                        if (start) {
+                                                            const end = prompt("Enter End Date (YYYY-MM-DD)", session.end_date || '');
+                                                            if (end) {
+                                                                router.put(`/academic-sessions/${session.id}`, { start_date: start, end_date: end });
+                                                            }
+                                                        }
+                                                        setActiveDropdown(null);
+                                                    }}
+                                                >
+                                                    <CheckCircle size={14} />
+                                                    <span>Update Dates</span>
                                                 </button>
 
                                                 {session.status === 'inactive' && (
@@ -116,7 +173,7 @@ const SessionsIndex = ({ sessions = [] }) => {
                                                         onClick={() => handleToggleStatus(session)}
                                                     >
                                                         <CheckCircle size={14} color="#10b981" />
-                                                        <span>Make Active</span>
+                                                        <span>Make Session Active</span>
                                                     </button>
                                                 )}
                                             </div>
@@ -126,19 +183,11 @@ const SessionsIndex = ({ sessions = [] }) => {
                             ))}
                             {sessions.length === 0 && (
                                 <tr>
-                                    <td colSpan="5" className="empty-state">No sessions found.</td>
+                                    <td colSpan="7" className="empty-state">No sessions found.</td>
                                 </tr>
                             )}
                         </tbody>
                     </table>
-
-                    <div className="table-pagination">
-                        <button className="page-nav-btn disabled">« Previous</button>
-                        <div className="page-numbers">
-                            <button className="page-num-btn active">1</button>
-                        </div>
-                        <button className="page-nav-btn disabled">Next »</button>
-                    </div>
                 </div>
 
                 {/* Modals */}

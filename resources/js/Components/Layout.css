@@ -12,9 +12,10 @@
 
 .content {
     flex: 1;
-    padding: var(--spacing-xl);
+    padding: 0;
     background: var(--background);
     overflow-y: auto;
+    transition: background var(--transition-normal);
 }
 
 @media (max-width: 768px) {

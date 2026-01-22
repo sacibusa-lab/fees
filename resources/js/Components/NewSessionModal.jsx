@@ -6,6 +6,12 @@ const NewSessionModal = ({ isOpen, onClose, onSave }) => {
     if (!isOpen) return null;
 
     const [sessionYear, setSessionYear] = useState('2026/2027');
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
+
+    const handleSave = () => {
+        onSave(sessionYear, startDate, endDate);
+    };
 
     return (
         <div className="new-session-modal-overlay" onClick={onClose}>
@@ -20,6 +26,7 @@ const NewSessionModal = ({ isOpen, onClose, onSave }) => {
                     <h2 className="modal-title">Next Session</h2>
 
                     <div className="form-group">
+                        <label className="input-label">Session Year</label>
                         <input
                             type="text"
                             className="session-input"
@@ -29,7 +36,28 @@ const NewSessionModal = ({ isOpen, onClose, onSave }) => {
                         />
                     </div>
 
-                    <button className="save-session-btn" onClick={() => onSave(sessionYear)}>
+                    <div className="form-group-row" style={{ display: 'flex', gap: '16px', marginTop: '16px' }}>
+                        <div className="form-group" style={{ flex: 1 }}>
+                            <label className="input-label" style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', fontWeight: 600, color: '#475569' }}>Start Date</label>
+                            <input
+                                type="date"
+                                className="session-input"
+                                value={startDate}
+                                onChange={(e) => setStartDate(e.target.value)}
+                            />
+                        </div>
+                        <div className="form-group" style={{ flex: 1 }}>
+                            <label className="input-label" style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', fontWeight: 600, color: '#475569' }}>End Date</label>
+                            <input
+                                type="date"
+                                className="session-input"
+                                value={endDate}
+                                onChange={(e) => setEndDate(e.target.value)}
+                            />
+                        </div>
+                    </div>
+
+                    <button className="save-session-btn" onClick={handleSave} style={{ marginTop: '24px' }}>
                         Save
                     </button>
                 </div>

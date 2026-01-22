@@ -207,13 +207,19 @@ class PaystackProvider implements PaymentGatewayInterface
         }
     }
 
-    public function createDedicatedAccount(string $customerCode): array
+    public function createDedicatedAccount(string $customerCode, ?string $splitCode = null): array
     {
         try {
-            $response = Http::withToken($this->secretKey)->post("{$this->baseUrl}/dedicated_account", [
+            $payload = [
                 'customer' => $customerCode,
                 'preferred_bank' => 'wema-bank' // Common default for DVA
-            ]);
+            ];
+
+            if ($splitCode) {
+                $payload['split_code'] = $splitCode;
+            }
+
+            $response = Http::withToken($this->secretKey)->post("{$this->baseUrl}/dedicated_account", $payload);
 
             if ($response->successful()) {
                 $data = $response->json()['data'];
@@ -234,6 +240,85 @@ class PaystackProvider implements PaymentGatewayInterface
             ];
         } catch (\Exception $e) {
             Log::error('Paystack DVA Exception', ['error' => $e->getMessage()]);
+            return ['status' => false, 'message' => 'Service error'];
+        }
+    }
+
+    public function createSplitGroup(array $data): array
+    {
+        try {
+            // Data: name, type, currency, subaccounts (array of {subaccount, share})
+            $response = Http::withToken($this->secretKey)->post("{$this->baseUrl}/split", [
+                'name' => $data['name'],
+                'type' => $data['type'] ?? 'percentage',
+                'currency' => $data['currency'] ?? 'NGN',
+                'subaccounts' => $data['subaccounts'],
+                'bearer_type' => $data['bearer_type'] ?? 'account',
+            ]);
+
+            if ($response->successful()) {
+                return [
+                    'status' => true,
+                    'split_code' => $response->json()['data']['split_code'],
+                    'data' => $response->json()['data']
+                ];
+            }
+
+            Log::error('Paystack Split Creation Failed', ['response' => $response->body()]);
+            return [
+                'status' => false,
+                'message' => $response->json()['message'] ?? 'Failed to create split group'
+            ];
+        } catch (\Exception $e) {
+            Log::error('Paystack Split Exception', ['error' => $e->getMessage()]);
+            return ['status' => false, 'message' => 'Service error'];
+        }
+    }
+
+    public function updateSplitGroup(string $splitCode, array $data): array
+    {
+        try {
+            $response = Http::withToken($this->secretKey)->put("{$this->baseUrl}/split/{$splitCode}", [
+                'name' => $data['name'],
+                'active' => $data['active'] ?? true,
+                'bearer_type' => $data['bearer_type'] ?? 'account',
+            ]);
+
+            if ($response->successful()) {
+                return [
+                    'status' => true,
+                    'data' => $response->json()['data']
+                ];
+            }
+
+            Log::error('Paystack Split Update Failed', ['response' => $response->body()]);
+            return [
+                'status' => false,
+                'message' => $response->json()['message'] ?? 'Failed to update split group'
+            ];
+        } catch (\Exception $e) {
+            Log::error('Paystack Split Update Exception', ['error' => $e->getMessage()]);
+            return ['status' => false, 'message' => 'Service error'];
+        }
+    }
+
+    public function addOrUpdateSplitSubaccount(string $splitCode, array $subaccountData): array
+    {
+        try {
+            // subaccountData: subaccount, share
+            $response = Http::withToken($this->secretKey)->post("{$this->baseUrl}/split/{$splitCode}/subaccount/add", $subaccountData);
+
+            if ($response->successful()) {
+                return ['status' => true, 'message' => 'Subaccount added/updated'];
+            }
+
+            Log::error('Paystack Split Subaccount Add Failed', ['response' => $response->body()]);
+            return [
+                'status' => false,
+                'message' => $response->json()['message'] ?? 'Failed to add subaccount to split'
+            ];
+        } catch (\Exception $e) {
+            Log::error('Paystack Split Subaccount Add Exception', ['error' => $e->getMessage()]);
             return ['status' => false, 'message' => 'Service error'];
         }
     }

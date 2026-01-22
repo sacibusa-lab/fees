@@ -80,6 +80,7 @@ class BankAccountController extends Controller
         BankAccount::create([
             'institution_id' => $institutionId,
             'bank_name' => $validated['bank_name'],
+            'bank_code' => $validated['bank_code'],
             'account_name' => $validated['account_name'],
             'account_number' => $validated['account_number'],
             'sub_account_code' => $subAccountCode,

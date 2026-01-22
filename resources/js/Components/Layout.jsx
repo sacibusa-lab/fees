@@ -23,7 +23,7 @@ const Layout = ({ children }) => {
             if (institution.secondary_color) {
                 root.style.setProperty('--secondary', institution.secondary_color);
             }
-            if (institution.sidebar_color) {
+            if (institution.sidebar_color && institution.sidebar_color.toLowerCase() !== '#ffffff' && institution.sidebar_color.toLowerCase() !== 'white') {
                 root.style.setProperty('--sidebar-bg', institution.sidebar_color);
             }
         }

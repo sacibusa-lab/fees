@@ -15,14 +15,20 @@ const FeeDetails = ({ fee, bankAccounts = [], classes = [] }) => {
 
     // Reuse the form logic from FeesManagement, simplified for single fee update
     const { data, setData, put, processing, errors } = useForm({
-        title: fee.title,
-        revenue_code: fee.revenueCode,
-        cycle: fee.cycle.toLowerCase(),
-        type: fee.type.toLowerCase(),
-        payee_allowed: fee.payeeAllowed.toLowerCase(),
-        amount: fee.raw_amount,
-        charge_bearer: fee.chargeBear.toLowerCase(),
-        status: fee.status.toLowerCase()
+        title: fee?.title || '',
+        revenue_code: fee?.revenueCode || '',
+        cycle: (fee?.cycle || 'termly').toLowerCase().replace(' ', '-'),
+        type: (fee?.type || 'compulsory').toLowerCase(),
+        payee_allowed: (fee?.payeeAllowed || 'students').toLowerCase(),
+        amount: fee?.raw_amount || 0,
+        first_term_amount: fee?.first_term_amount || '',
+        second_term_amount: fee?.second_term_amount || '',
+        third_term_amount: fee?.third_term_amount || '',
+        first_term_active: fee?.first_term_active !== undefined ? fee.first_term_active : true,
+        second_term_active: fee?.second_term_active !== undefined ? fee.second_term_active : true,
+        third_term_active: fee?.third_term_active !== undefined ? fee.third_term_active : true,
+        charge_bearer: (fee?.chargeBear || 'self').toLowerCase(),
+        status: (fee?.status || 'active').toLowerCase()
     });
 
     const handleUpdate = (e) => {
@@ -39,7 +45,7 @@ const FeeDetails = ({ fee, bankAccounts = [], classes = [] }) => {
     };
 
     const handleToggleStatus = () => {
-        router.put(`/fees/${fee.id}/toggle-status`);
+        router.post(`/fees/${fee.id}/toggle-status`);
     };
 
     return (
@@ -54,7 +60,7 @@ const FeeDetails = ({ fee, bankAccounts = [], classes = [] }) => {
                     </Link>
 
                     <div className="profile-summary">
-                        <div className="profile-avatar-large" style={{ background: '#e3f2fd', color: '#1565c0' }}>
+                        <div className="profile-avatar-large">
                             <CreditCard size={32} />
                         </div>
                         <div className="profile-info-primary">
@@ -138,21 +144,96 @@ const FeeDetails = ({ fee, bankAccounts = [], classes = [] }) => {
                                         />
                                     </div>
 
+
                                     <div className="form-group">
-                                        <label>Amount (₦)</label>
+                                        <label>Default Amount (₦)</label>
                                         <input
                                             type="number"
                                             value={data.amount}
                                             onChange={e => setData('amount', e.target.value)}
                                             className={errors.amount ? 'error' : ''}
                                         />
+                                        <small style={{ color: '#666', fontSize: '0.85em', display: 'block', marginTop: '4px' }}>
+                                            Used when term-specific amounts are not set
+                                        </small>
                                     </div>
+
+                                    <div className="form-group">
+                                        <label>1st Term Amount (₦)</label>
+                                        <input
+                                            type="number"
+                                            value={data.first_term_amount}
+                                            onChange={e => setData('first_term_amount', e.target.value)}
+                                            placeholder="Leave blank to use default"
+                                            className={errors.first_term_amount ? 'error' : ''}
+                                        />
+                                    </div>
+
+                                    <div className="form-group">
+                                        <label>2nd Term Amount (₦)</label>
+                                        <input
+                                            type="number"
+                                            value={data.second_term_amount}
+                                            onChange={e => setData('second_term_amount', e.target.value)}
+                                            placeholder="Leave blank to use default"
+                                            className={errors.second_term_amount ? 'error' : ''}
+                                        />
+                                    </div>
+
+                                    <div className="form-group">
+                                        <label>3rd Term Amount (₦)</label>
+                                        <input
+                                            type="number"
+                                            value={data.third_term_amount}
+                                            onChange={e => setData('third_term_amount', e.target.value)}
+                                            placeholder="Leave blank to use default"
+                                            className={errors.third_term_amount ? 'error' : ''}
+                                        />
+                                    </div>
+
+                                    <div className="form-group" style={{ marginTop: '10px' }}>
+                                        <label style={{ marginBottom: '10px', display: 'block', fontWeight: '600' }}>Term Activation</label>
+                                        <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+                                            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={data.first_term_active}
+                                                    onChange={e => setData('first_term_active', e.target.checked)}
+                                                    style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                                                />
+                                                <span>1st Term</span>
+                                            </label>
+                                            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={data.second_term_active}
+                                                    onChange={e => setData('second_term_active', e.target.checked)}
+                                                    style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                                                />
+                                                <span>2nd Term</span>
+                                            </label>
+                                            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={data.third_term_active}
+                                                    onChange={e => setData('third_term_active', e.target.checked)}
+                                                    style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                                                />
+                                                <span>3rd Term</span>
+                                            </label>
+                                        </div>
+                                        <small style={{ color: '#666', fontSize: '0.85em', display: 'block', marginTop: '6px' }}>
+                                            Select which terms this fee should be included in payment schedules
+                                        </small>
+                                    </div>
+
 
                                     <div className="form-group">
                                         <label>Cycle</label>
                                         <select value={data.cycle} onChange={e => setData('cycle', e.target.value)}>
                                             <option value="termly">Termly</option>
                                             <option value="annually">Annually</option>
+                                            <option value="one-time">One-time</option>
                                         </select>
                                     </div>
 

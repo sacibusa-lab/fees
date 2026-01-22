@@ -28,4 +28,9 @@ class Student extends Model
     {
         return $this->hasOne(StudentVirtualAccount::class);
     }
+
+    public function adjustments()
+    {
+        return $this->hasMany(StudentAdjustment::class);
+    }
 }

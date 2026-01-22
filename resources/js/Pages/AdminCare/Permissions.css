@@ -1,0 +1,149 @@
+.permissions-container {
+    padding: var(--spacing-xl, 32px);
+}
+
+.permissions-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.permissions-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: white;
+}
+
+.permissions-card {
+    background-color: #1e293b;
+    border-radius: 8px;
+    overflow-x: auto;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.permissions-table {
+    width: 100%;
+    border-collapse: collapse;
+    color: #e2e8f0;
+}
+
+.permissions-table th,
+.permissions-table td {
+    padding: 16px 20px;
+    border-bottom: 1px solid #334155;
+    text-align: left;
+}
+
+.permissions-table th {
+    background-color: #0f172a;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    color: #94a3b8;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.module-header {
+    min-width: 200px;
+}
+
+.role-header {
+    text-align: center !important;
+    min-width: 120px;
+}
+
+.group-header-row td {
+    background-color: #334155;
+    font-weight: 700;
+    color: #f8fafc;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+    padding: 10px 20px;
+}
+
+.permission-name {
+    font-size: 0.95rem;
+}
+
+.checkbox-cell {
+    text-align: center !important;
+}
+
+/* Switch Toggle Styling */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #475569;
+    transition: .3s;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .3s;
+}
+
+input:checked+.slider {
+    background-color: #10b981;
+    /* Green */
+}
+
+input:focus+.slider {
+    box-shadow: 0 0 1px #10b981;
+}
+
+input:checked+.slider:before {
+    transform: translateX(20px);
+}
+
+.slider.round {
+    border-radius: 34px;
+}
+
+.slider.round:before {
+    border-radius: 50%;
+}
+
+.btn-save {
+    background-color: #6366f1;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: none;
+    transition: all 0.2s;
+}
+
+.btn-save:disabled {
+    background-color: #94a3b8;
+    cursor: not-allowed;
+}

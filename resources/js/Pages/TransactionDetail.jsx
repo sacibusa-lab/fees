@@ -71,10 +71,6 @@ const TransactionDetail = ({ transaction }) => {
                                 <span className="info-value price">{transaction_info.amount}</span>
                             </div>
                             <div className="info-item">
-                                <span className="info-label">Fee Incurred</span>
-                                <span className="info-value">{transaction_info.fee_incurred}</span>
-                            </div>
-                            <div className="info-item">
                                 <span className="info-label">Payment Gateway</span>
                                 <span className="info-value">{transaction_info.gateway}</span>
                             </div>
@@ -94,10 +90,7 @@ const TransactionDetail = ({ transaction }) => {
                                 <span className="info-label">Virtual Account Type</span>
                                 <span className="info-value">{transaction_info.virtual_account_type}</span>
                             </div>
-                            <div className="info-item">
-                                <span className="info-label">Method of Payment</span>
-                                <span className="info-value">{transaction_info.method_of_payment}</span>
-                            </div>
+                            {/* Removed redundant Method of Payment */}
                             <div className="info-item">
                                 <span className="info-label">Started On</span>
                                 <span className="info-value">{transaction_info.started_on}</span>
@@ -105,10 +98,6 @@ const TransactionDetail = ({ transaction }) => {
                             <div className="info-item">
                                 <span className="info-label">Completed On</span>
                                 <span className="info-value">{transaction_info.completed_on}</span>
-                            </div>
-                            <div className="info-item">
-                                <span className="info-label">Settlement Status</span>
-                                <span className="info-value">{transaction_info.settlement_status}</span>
                             </div>
                         </div>
                     </div>

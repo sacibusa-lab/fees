@@ -1,0 +1,109 @@
+.admin-roles-container {
+    padding: var(--spacing-xl, 32px);
+}
+
+.roles-page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.roles-page-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: white;
+}
+
+.btn-add-new {
+    background-color: #6366f1;
+    /* Indigo-500 matching screenshot sorta */
+    color: white;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background-color 0.2s;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-add-new:hover {
+    background-color: #4f46e5;
+}
+
+.roles-table-card {
+    background-color: #1e293b;
+    /* Dark slate background */
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.roles-table {
+    width: 100%;
+    border-collapse: collapse;
+    color: #e2e8f0;
+    /* Light text */
+}
+
+.roles-table th {
+    text-align: left;
+    padding: 16px 24px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #94a3b8;
+    /* Muted text */
+    border-bottom: 1px solid #334155;
+}
+
+.roles-table td {
+    padding: 20px 24px;
+    border-bottom: 1px solid #334155;
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.roles-table tr:last-child td {
+    border-bottom: none;
+}
+
+.roles-table tr:hover {
+    background-color: #334155;
+    /* Slightly lighter row on hover */
+}
+
+.actions-cell {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.action-btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: opacity 0.2s;
+}
+
+.action-btn:hover {
+    opacity: 0.8;
+}
+
+.btn-edit {
+    background-color: #6366f1;
+    color: white;
+}
+
+.btn-delete {
+    background-color: #ef4444;
+    /* Red-500 */
+    color: white;
+}

@@ -22,6 +22,12 @@ const FeesManagement = ({ fees = [], feeCount = 0, bankAccounts = [], classes = 
         type: 'compulsory',
         payee_allowed: 'students',
         amount: '',
+        first_term_amount: '',
+        second_term_amount: '',
+        third_term_amount: '',
+        first_term_active: true,
+        second_term_active: true,
+        third_term_active: true,
         charge_bearer: 'self',
         status: 'active'
     });
@@ -52,14 +58,20 @@ const FeesManagement = ({ fees = [], feeCount = 0, bankAccounts = [], classes = 
 
     const setFormData = (fee) => {
         setData({
-            title: fee.title,
-            revenue_code: fee.revenueCode,
-            cycle: fee.cycle.toLowerCase(),
-            type: fee.type.toLowerCase(),
-            payee_allowed: fee.payeeAllowed.toLowerCase(),
-            amount: fee.raw_amount,
-            charge_bearer: fee.chargeBear.toLowerCase(),
-            status: fee.status.toLowerCase()
+            title: fee?.title || '',
+            revenue_code: fee?.revenueCode || '',
+            cycle: (fee?.cycle || 'termly').toLowerCase().replace(' ', '-'),
+            type: (fee?.type || 'compulsory').toLowerCase(),
+            payee_allowed: (fee?.payeeAllowed || 'students').toLowerCase(),
+            amount: fee?.raw_amount || 0,
+            first_term_amount: fee?.first_term_amount || '',
+            second_term_amount: fee?.second_term_amount || '',
+            third_term_amount: fee?.third_term_amount || '',
+            first_term_active: fee?.first_term_active !== undefined ? fee.first_term_active : true,
+            second_term_active: fee?.second_term_active !== undefined ? fee.second_term_active : true,
+            third_term_active: fee?.third_term_active !== undefined ? fee.third_term_active : true,
+            charge_bearer: (fee?.chargeBear || 'self').toLowerCase(),
+            status: (fee?.status || 'active').toLowerCase()
         });
     };
 
@@ -100,7 +112,7 @@ const FeesManagement = ({ fees = [], feeCount = 0, bankAccounts = [], classes = 
     };
 
     const handleToggleStatus = (fee) => {
-        router.put(`/fees/${fee.id}/toggle-status`);
+        router.post(`/fees/${fee.id}/toggle-status`);
         setActiveDropdown(null);
     };
 
@@ -232,6 +244,7 @@ const FeesManagement = ({ fees = [], feeCount = 0, bankAccounts = [], classes = 
                                             <select value={data.cycle} onChange={e => setData('cycle', e.target.value)}>
                                                 <option value="termly">Termly</option>
                                                 <option value="annually">Annually</option>
+                                                <option value="one-time">One-time</option>
                                             </select>
                                         </div>
 
@@ -252,7 +265,19 @@ const FeesManagement = ({ fees = [], feeCount = 0, bankAccounts = [], classes = 
                                         </div>
 
                                         <div className="input-group">
-                                            <label>Amount (₦) *</label>
+                                            <label>Target Class (Optional)</label>
+                                            <select value={data.class_id || ''} onChange={e => setData('class_id', e.target.value)}>
+                                                <option value="">All Classes</option>
+                                                {classes.map(c => (
+                                                    <option key={c.id} value={c.id}>{c.name}</option>
+                                                ))}
+                                            </select>
+                                            <small style={{ color: '#666', fontSize: '0.85em' }}>Leave empty to apply to all classes</small>
+                                        </div>
+
+
+                                        <div className="input-group">
+                                            <label>Default Amount (₦) *</label>
                                             <input
                                                 type="number"
                                                 value={data.amount}
@@ -261,6 +286,74 @@ const FeesManagement = ({ fees = [], feeCount = 0, bankAccounts = [], classes = 
                                                 required
                                             />
                                             {errors.amount && <span className="error-msg">{errors.amount}</span>}
+                                            <small style={{ color: '#666', fontSize: '0.85em' }}>Used when term-specific amounts are not set</small>
+                                        </div>
+
+                                        <div className="input-group">
+                                            <label>1st Term Amount (₦)</label>
+                                            <input
+                                                type="number"
+                                                value={data.first_term_amount}
+                                                onChange={e => setData('first_term_amount', e.target.value)}
+                                                placeholder="Leave blank to use default"
+                                            />
+                                            {errors.first_term_amount && <span className="error-msg">{errors.first_term_amount}</span>}
+                                        </div>
+
+                                        <div className="input-group">
+                                            <label>2nd Term Amount (₦)</label>
+                                            <input
+                                                type="number"
+                                                value={data.second_term_amount}
+                                                onChange={e => setData('second_term_amount', e.target.value)}
+                                                placeholder="Leave blank to use default"
+                                            />
+                                            {errors.second_term_amount && <span className="error-msg">{errors.second_term_amount}</span>}
+                                        </div>
+
+                                        <div className="input-group">
+                                            <label>3rd Term Amount (₦)</label>
+                                            <input
+                                                type="number"
+                                                value={data.third_term_amount}
+                                                onChange={e => setData('third_term_amount', e.target.value)}
+                                                placeholder="Leave blank to use default"
+                                            />
+                                            {errors.third_term_amount && <span className="error-msg">{errors.third_term_amount}</span>}
+                                        </div>
+
+
+                                        <div className="input-group" style={{ gridColumn: 'span 2', marginTop: '10px' }}>
+                                            <label style={{ marginBottom: '10px', display: 'block', fontWeight: '600' }}>Term Activation</label>
+                                            <div className="term-checkbox-group">
+                                                <label className="term-checkbox-label">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={data.first_term_active}
+                                                        onChange={e => setData('first_term_active', e.target.checked)}
+                                                    />
+                                                    <span>1st Term</span>
+                                                </label>
+                                                <label className="term-checkbox-label">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={data.second_term_active}
+                                                        onChange={e => setData('second_term_active', e.target.checked)}
+                                                    />
+                                                    <span>2nd Term</span>
+                                                </label>
+                                                <label className="term-checkbox-label">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={data.third_term_active}
+                                                        onChange={e => setData('third_term_active', e.target.checked)}
+                                                    />
+                                                    <span>3rd Term</span>
+                                                </label>
+                                            </div>
+                                            <small>
+                                                Select which terms this fee should be included in payment schedules
+                                            </small>
                                         </div>
 
                                         <div className="input-group">

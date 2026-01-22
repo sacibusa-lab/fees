@@ -4,7 +4,7 @@ import Layout from '../Components/Layout';
 import { User, CreditCard, Activity, Settings, Save, Trash2, ArrowLeft } from 'lucide-react';
 import './StudentProfile.css';
 
-const StudentProfile = ({ student, classes, subClasses }) => {
+const StudentProfile = ({ student, classes, subClasses, paymentActivity = [], allTransactions = [], currentSessionName = 'N/A' }) => {
     const [activeTab, setActiveTab] = useState('profile');
 
     // Form for editing
@@ -140,7 +140,12 @@ const StudentProfile = ({ student, classes, subClasses }) => {
                                             value={data.sub_class_id}
                                             onChange={e => setData('sub_class_id', e.target.value)}
                                         >
-                                            {subClasses.map(sc => (
+                                            <option value="">Select Subclass</option>
+                                            {subClasses.filter(sc =>
+                                                !data.class_id ||
+                                                sc.class_id == data.class_id ||
+                                                !sc.class_id // Global subclasses
+                                            ).map(sc => (
                                                 <option key={sc.id} value={sc.id}>{sc.name}</option>
                                             ))}
                                         </select>
@@ -230,15 +235,87 @@ const StudentProfile = ({ student, classes, subClasses }) => {
 
                     {/* ACTIVITY TAB */}
                     {activeTab === 'activity' && (
-                        <div className="content-card">
-                            <div className="card-header">
+                        <div className="content-card no-padding">
+                            <div className="card-header activity-header">
                                 <h3>Payment Activity</h3>
-                                <p>Recent transactions and fee records.</p>
+                                <p>Summary of termly fee payments.</p>
                             </div>
-                            <div className="empty-state">
-                                <Activity size={48} />
-                                <p>No recent payment activity found.</p>
+
+                            {paymentActivity.length > 0 ? (
+                                <div className="activity-table-container">
+                                    <table className="activity-table">
+                                        <thead>
+                                            <tr>
+                                                <th>S/N</th>
+                                                <th>{currentSessionName} SESSION</th>
+                                                <th>Amount Paid</th>
+                                                <th>Date Of Payment</th>
+                                                <th>Method</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {paymentActivity.map((item) => (
+                                                <tr key={item.sn}>
+                                                    <td>{item.sn}</td>
+                                                    <td>
+                                                        <div className="term-status-cell">
+                                                            <span className="term-name">{item.term}</span>
+                                                            <span className={`status-badge-term ${item.status.toLowerCase()}`}>
+                                                                {item.status}
+                                                            </span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="amount-cell">{item.paid_formatted}</td>
+                                                    <td>{item.date}</td>
+                                                    <td>{item.method}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            ) : (
+                                <div className="empty-state">
+                                    <Activity size={48} />
+                                    <p>No recent payment activity found.</p>
+                                </div>
+                            )}
+
+                            {/* TRANSACTION HISTORY */}
+                            <div className="card-header activity-header transaction-history-header">
+                                <h3>Transaction History</h3>
+                                <p>Detailed record of all payments in the current session.</p>
                             </div>
+
+                            {allTransactions.length > 0 ? (
+                                <div className="activity-table-container">
+                                    <table className="activity-table history-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Reference</th>
+                                                <th>Fee(s)</th>
+                                                <th>Amount</th>
+                                                <th>Date</th>
+                                                <th>Method</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {allTransactions.map((tx) => (
+                                                <tr key={tx.id}>
+                                                    <td className="tx-ref">{tx.reference}</td>
+                                                    <td className="tx-fees">{tx.fees}</td>
+                                                    <td className="tx-amount">{tx.amount}</td>
+                                                    <td className="tx-date">{tx.date}</td>
+                                                    <td>{tx.method}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            ) : (
+                                <div className="empty-state">
+                                    <p>No transactions found for this session.</p>
+                                </div>
+                            )}
                         </div>
                     )}
 

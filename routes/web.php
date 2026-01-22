@@ -65,20 +65,43 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/', [App\Http\Controllers\SettingsController::class, 'index'])->name('settings.index');
         Route::get('/global', [App\Http\Controllers\SettingsController::class, 'global'])->name('settings.global');
         Route::post('/global', [App\Http\Controllers\SettingsController::class, 'updateGlobal'])->name('settings.global.update');
-        Route::get('/roles', [App\Http\Controllers\SettingsController::class, 'roles'])->name('settings.roles');
         Route::get('/api', [App\Http\Controllers\SettingsController::class, 'api'])->name('settings.api');
         Route::get('/webhooks', [App\Http\Controllers\SettingsController::class, 'webhooks'])->name('settings.webhooks');
         Route::post('/api', [App\Http\Controllers\SettingsController::class, 'updateApi'])->name('settings.api.update');
     });
 
+    // Admin Care Routes
+    Route::prefix('admin-care')->group(function () {
+        Route::get('/all-admins', [App\Http\Controllers\AdminCareController::class, 'index'])->name('admin-care.admins');
+        Route::post('/all-admins', [App\Http\Controllers\AdminCareController::class, 'storeAdmin'])->name('admin-care.admins.store');
+        Route::get('/roles', [App\Http\Controllers\AdminCareController::class, 'roles'])->name('admin-care.roles');
+        Route::post('/roles', [App\Http\Controllers\AdminCareController::class, 'storeRole'])->name('admin-care.roles.store');
+        Route::put('/roles/{role}', [App\Http\Controllers\AdminCareController::class, 'updateRole'])->name('admin-care.roles.update');
+        Route::delete('/roles/{role}', [App\Http\Controllers\AdminCareController::class, 'deleteRole'])->name('admin-care.roles.delete');
+        Route::get('/permissions', [App\Http\Controllers\AdminCareController::class, 'permissions'])->name('admin-care.permissions');
+        Route::post('/permissions', [App\Http\Controllers\AdminCareController::class, 'updatePermissions'])->name('admin-care.permissions.update');
+    });
+
+    // Profile Routes
+    Route::get('/profile', [App\Http\Controllers\ProfileController::class, 'edit'])->name('profile.edit');
+    Route::put('/profile', [App\Http\Controllers\ProfileController::class, 'update'])->name('profile.update');
+
     Route::get('/payments/overview', [PaymentController::class, 'overview'])->name('payments.overview');
+    Route::get('/payments/schedule', [PaymentController::class, 'schedule'])->name('payments.schedule');
+    Route::get('/payments/schedule/preview', [PaymentController::class, 'getSchedulePreview'])->name('payments.schedule.preview');
+    Route::get('/payments/schedule/download', [PaymentController::class, 'downloadSchedulePdf'])->name('payments.schedule.download');
+    Route::get('/payments/schedule/export', [PaymentController::class, 'exportSchedule'])->name('payments.schedule.export');
+    Route::post('/payments/schedule/bulk-modify', [PaymentController::class, 'bulkModifyAmount'])->name('payments.schedule.bulk-modify');
+    Route::post('/payments/schedule/bulk-mark-paid', [PaymentController::class, 'bulkMarkPaid'])->name('payments.schedule.bulk-mark-paid');
     Route::get('/payments/transactions', [PaymentController::class, 'transactions'])->name('payments.transactions');
     Route::get('/payments/transactions/{transaction}', [PaymentController::class, 'show'])->name('payments.transactions.show');
     Route::get('/academic-sessions', [AcademicSessionController::class, 'index'])->name('academic-sessions.index');
     Route::post('/academic-sessions', [AcademicSessionController::class, 'store'])->name('academic-sessions.store');
+    Route::post('/academic-sessions/{session}/set-term', [AcademicSessionController::class, 'setTerm'])->name('academic-sessions.set-term');
     Route::post('/academic-sessions/{session}/next-term', [AcademicSessionController::class, 'nextTerm'])->name('academic-sessions.next-term');
     Route::put('/academic-sessions/{session}/toggle-status', [AcademicSessionController::class, 'toggleStatus'])->name('academic-sessions.toggle-status');
 
     // API-like routes for components
     Route::get('/api/payments/verify', [PaymentController::class, 'verifyStatus']);
+    Route::get('/api/payments/class-detail/{classId}', [PaymentController::class, 'classDetails']);
 });

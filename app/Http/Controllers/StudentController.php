@@ -9,6 +9,9 @@ use App\Services\Payment\PaystackProvider;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Log;
+use App\Models\Fee;
+use App\Models\Transaction;
+use App\Models\Session;
 
 class StudentController extends Controller
 {
@@ -29,9 +32,10 @@ class StudentController extends Controller
             ->get();
             
         $classes = SchoolClass::where('institution_id', $institutionId)->get();
-        $subClasses = \App\Models\SubClass::whereHas('schoolClass', function($q) use ($institutionId) {
-            $q->where('institution_id', $institutionId);
-        })->get();
+        // Fetch global subclasses scoped to this institution
+        $subClasses = \App\Models\SubClass::where('institution_id', $institutionId)
+            ->whereNull('class_id')
+            ->get();
         
         // Fetch main bank account for student profile
         $mainAccount = \App\Models\BankAccount::where('institution_id', $institutionId)
@@ -331,12 +335,105 @@ class StudentController extends Controller
             'has_vaccount' => (bool)$student->virtualAccount
         ];
 
+        // Calculate Payment Activity for current session terms
+        $paymentActivity = [];
+        if ($currentSession) {
+            foreach (['1st Term', '2nd Term', '3rd Term'] as $index => $term) {
+                // 1. Get fees for this term
+                $fees = Fee::where('institution_id', $student->institution_id)
+                    ->where('session_id', $currentSession->id)
+                    ->where('status', 'active')
+                    ->with('overrides')
+                    ->where(function($q) use ($term) {
+                         $termColumn = match($term) {
+                             '1st Term' => 'first_term_active',
+                             '2nd Term' => 'second_term_active',
+                             '3rd Term' => 'third_term_active',
+                             default => null
+                         };
+                         if ($termColumn) $q->where($termColumn, true);
+                    })
+                    ->get();
+
+                $expected = 0;
+                foreach ($fees as $fee) {
+                    // Check if fee is class-specific and matches
+                    if ($fee->class_id && $fee->class_id != $student->class_id) {
+                        continue;
+                    }
+
+                    $override = $fee->overrides->where('class_id', $student->class_id)->first();
+                    $expected += ($override && $override->status === 'active') ? $override->amount : $fee->getAmountForTerm($term);
+                }
+
+                // 2. Get payments for this term
+                $transactions = Transaction::where('institution_id', $student->institution_id)
+                    ->where('student_id', $student->id)
+                    ->where('status', 'success')
+                    ->where('metadata->session_id', $currentSession->id)
+                    ->where('metadata->term', $term)
+                    ->get();
+                
+                $paid = $transactions->sum('amount');
+                $lastPayment = $transactions->sortByDesc('paid_at')->first();
+
+                // 3. Determine status
+                $status = 'Pending';
+                if ($paid >= $expected && $expected > 0) {
+                    $status = 'Paid';
+                } elseif ($paid > 0) {
+                    $status = 'Partial';
+                }
+
+                $paymentActivity[] = [
+                    'sn' => $index + 1,
+                    'term' => $term,
+                    'status' => $status,
+                    'date' => $lastPayment ? $lastPayment->paid_at->format('M d, Y') : '-',
+                    'method' => $lastPayment ? ucfirst($lastPayment->channel ?? 'Manual') : '-',
+                    'expected' => $expected,
+                    'paid' => $paid,
+                    'paid_formatted' => '₦' . number_format($paid, 2)
+                ];
+            }
+        }
+
+        // 4. Detailed Transaction History for this session
+        $allTransactions = [];
+        if ($currentSession) {
+            $allTransactions = Transaction::where('institution_id', $student->institution_id)
+                ->where('student_id', $student->id)
+                ->where('status', 'success')
+                ->where('metadata->session_id', (int)$currentSession->id)
+                ->orderBy('paid_at', 'desc')
+                ->get()
+                ->map(function($t) {
+                    $feeList = $t->metadata['fees'] ?? [];
+                    if (empty($feeList) && $t->fee) {
+                        $feeList = [$t->fee->title];
+                    }
+
+                    return [
+                        'id' => $t->id,
+                        'reference' => $t->reference,
+                        'amount' => '₦' . number_format($t->amount, 2),
+                        'date' => $t->paid_at ? $t->paid_at->format('M d, Y h:i A') : $t->created_at->format('M d, Y h:i A'),
+                        'method' => ucfirst($t->channel ?? 'Manual'),
+                        'fees' => implode(', ', $feeList),
+                        'term' => $t->metadata['term'] ?? 'N/A'
+                    ];
+                });
+        }
+
         return Inertia::render('StudentProfile', [
             'student' => $formattedStudent,
             'classes' => SchoolClass::where('institution_id', $student->institution_id)->get(),
-            'subClasses' => \App\Models\SubClass::whereHas('schoolClass', function($q) use ($student) {
-                $q->where('institution_id', $student->institution_id);
-            })->get()
+            'subClasses' => \App\Models\SubClass::where('institution_id', $student->institution_id)
+                ->whereNull('class_id')
+                ->get(),
+            'paymentActivity' => $paymentActivity,
+            'allTransactions' => $allTransactions,
+            'currentSessionName' => $currentSession ? $currentSession->name : 'N/A'
         ]);
     }
 
@@ -382,8 +479,31 @@ class StudentController extends Controller
 
         $customerCode = $customerResult['customer_code'];
 
+        // 3a. Resolve Split Code for this student
+        // We look for the first active compulsory fee for their class that has a split_code
+        $splitCode = null;
+        try {
+            $session = Session::where('institution_id', $institutionId)->where('is_current', true)->first();
+            if ($session) {
+                // Find a fee that has a split code. Usually Tuition or a generic fee.
+                $feeWithSplit = Fee::where('institution_id', $institutionId)
+                    ->where('session_id', $session->id)
+                    ->where('status', 'active')
+                    ->whereNotNull('paystack_split_code')
+                    ->where(function($q) use ($student) {
+                        $q->where('class_id', $student->class_id)
+                          ->orWhereNull('class_id');
+                    })
+                    ->first();
+                
+                $splitCode = $feeWithSplit->paystack_split_code ?? null;
+            }
+        } catch (\Exception $e) {
+            Log::error("Error resolving split code for DVA", ['error' => $e->getMessage()]);
+        }
+
         // 2. Assign Dedicated Virtual Account
-        $dvaResult = $this->paystack->createDedicatedAccount($customerCode);
+        $dvaResult = $this->paystack->createDedicatedAccount($customerCode, $splitCode);
 
         if (!$dvaResult['status']) {
             return back()->with('error', $dvaResult['message']);

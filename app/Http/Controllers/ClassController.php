@@ -30,16 +30,23 @@ class ClassController extends Controller
     public function subClasses()
     {
         $institutionId = auth()->user()->institution_id;
-        $subClasses = SubClass::whereHas('schoolClass', function($q) use ($institutionId) {
-            $q->where('institution_id', $institutionId);
-        })->with('schoolClass')->get();
+        
+        // Get all global subclasses for this institution
+        $subClasses = SubClass::where('institution_id', $institutionId)
+            ->whereNull('class_id')
+            ->get();
 
-        $formattedSubClasses = $subClasses->map(function ($subClass) {
+        $formattedSubClasses = $subClasses->map(function ($subClass) use ($institutionId) {
+            // Count students across ALL classes in this institution
+            $studentCount = \App\Models\Student::where('institution_id', $institutionId)
+                ->where('sub_class_id', $subClass->id)
+                ->count();
+
             return [
                 'id' => $subClass->id,
                 'name' => $subClass->name,
-                'class_name' => $subClass->schoolClass->name ?? 'N/A',
-                'student_count' => $subClass->schoolClass->students()->where('sub_class_id', $subClass->id)->count(),
+                'class_name' => 'All Classes', // Global subclass
+                'student_count' => $studentCount,
             ];
         });
 
@@ -50,13 +57,25 @@ class ClassController extends Controller
 
     public function store(Request $request)
     {
+        $institutionId = auth()->user()->institution_id;
+        
         $validated = $request->validate([
-            'class_id' => 'required|exists:classes,id',
             'name' => 'required|string|max:255',
         ]);
 
+        // Check for duplicate subclass name in this institution
+        $existing = SubClass::where('institution_id', $institutionId)
+            ->whereNull('class_id')
+            ->where('name', $validated['name'])
+            ->first();
+
+        if ($existing) {
+            return redirect()->back()->withErrors(['name' => 'A subclass with this name already exists.']);
+        }
+
         SubClass::create([
-            'class_id' => $validated['class_id'],
+            'institution_id' => $institutionId,
+            'class_id' => null, // Global subclass
             'name' => $validated['name'],
         ]);
 

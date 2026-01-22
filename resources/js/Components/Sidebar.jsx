@@ -11,6 +11,7 @@ import {
     LogOut,
     ChevronDown,
     Settings,
+    Shield,
     X
 } from 'lucide-react';
 import VerifyPaymentModal from './VerifyPaymentModal';
@@ -22,6 +23,7 @@ const Sidebar = ({ institution, isOpen, onClose }) => {
     const [studentsOpen, setStudentsOpen] = useState(currentPath.startsWith('/students'));
     const [paymentsOpen, setPaymentsOpen] = useState(currentPath.startsWith('/payments'));
     const [businessOpen, setBusinessOpen] = useState(currentPath.startsWith('/business'));
+    const [adminCareOpen, setAdminCareOpen] = useState(currentPath.startsWith('/admin-care'));
     const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false);
 
     const handleLogout = () => {
@@ -118,6 +120,10 @@ const Sidebar = ({ institution, isOpen, onClose }) => {
                                 <span className="dot"></span>
                                 Overview
                             </Link>
+                            <Link href="/payments/schedule" className={`nav-subitem ${isActive('/payments/schedule') ? 'active' : ''}`} onClick={onClose}>
+                                <span className="dot"></span>
+                                Payment Schedule
+                            </Link>
                             <Link href="/payments/transactions" className={`nav-subitem ${isActive('/payments/transactions') ? 'active' : ''}`} onClick={onClose}>
                                 <span className="dot"></span>
                                 Transactions
@@ -143,13 +149,37 @@ const Sidebar = ({ institution, isOpen, onClose }) => {
                     </button>
                     {businessOpen && (
                         <div className="nav-submenu">
-                            <Link href="/business/profile" className={`nav-subitem ${isActive('/business/profile') ? 'active' : ''}`} onClick={onClose}>
-                                <span className="dot"></span>
-                                Business Profile
-                            </Link>
                             <Link href="/business/bank-accounts" className={`nav-subitem ${isActive('/business/bank-accounts') ? 'active' : ''}`} onClick={onClose}>
                                 <span className="dot"></span>
                                 Bank Accounts
+                            </Link>
+                        </div>
+                    )}
+                </div>
+
+                {/* Admin Care */}
+                <div className="nav-section">
+                    <button
+                        className={`nav-item nav-section-header ${adminCareOpen ? 'open' : ''}`}
+                        onClick={() => setAdminCareOpen(!adminCareOpen)}
+                    >
+                        <Shield size={18} />
+                        <span>Admin Care</span>
+                        <ChevronDown size={16} className="chevron" />
+                    </button>
+                    {adminCareOpen && (
+                        <div className="nav-submenu">
+                            <Link href="/admin-care/all-admins" className={`nav-subitem ${isActive('/admin-care/all-admins') ? 'active' : ''}`} onClick={onClose}>
+                                <span className="dot"></span>
+                                All Admins
+                            </Link>
+                            <Link href="/admin-care/roles" className={`nav-subitem ${isActive('/admin-care/roles') ? 'active' : ''}`} onClick={onClose}>
+                                <span className="dot"></span>
+                                Admin Role
+                            </Link>
+                            <Link href="/admin-care/permissions" className={`nav-subitem ${isActive('/admin-care/permissions') ? 'active' : ''}`} onClick={onClose}>
+                                <span className="dot"></span>
+                                Role Permission
                             </Link>
                         </div>
                     )}
@@ -163,7 +193,7 @@ const Sidebar = ({ institution, isOpen, onClose }) => {
 
             {/* Institution Info */}
             <div className="sidebar-footer">
-                <div className="institution-info">
+                <Link href="/profile" className="institution-info" style={{ textDecoration: 'none', color: 'inherit' }}>
                     {institution?.logo ? (
                         <img src={institution.logo} alt="Institution Logo" className="institution-avatar" style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }} />
                     ) : (
@@ -175,8 +205,7 @@ const Sidebar = ({ institution, isOpen, onClose }) => {
                         <div className="institution-name">{institution?.name || 'Institution'}</div>
                         <div className="institution-role">{institution?.email || 'Admin'}</div>
                     </div>
-                    <ChevronDown size={16} />
-                </div>
+                </Link>
 
                 <button className="logout-btn" onClick={handleLogout}>
                     <LogOut size={18} />

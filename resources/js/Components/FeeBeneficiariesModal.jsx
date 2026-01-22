@@ -54,7 +54,8 @@ const FeeBeneficiariesModal = ({ fee, onClose, bankAccounts = [] }) => {
                 bank_account_id: selectedAccount.id,
                 account_name: selectedAccount.account_name,
                 account_number: selectedAccount.account_number,
-                bank_name: selectedAccount.bank_name
+                bank_name: selectedAccount.bank_name,
+                bank_code: selectedAccount.bank_code
             };
             setData('beneficiaries', newBen);
         }

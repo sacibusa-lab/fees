@@ -9,7 +9,6 @@ const SettingsLayout = ({ children, title }) => {
 
     const menuItems = [
         { name: 'Global Settings', href: '/settings/global', icon: Globe },
-        { name: 'Roles & Permissions', href: '/settings/roles', icon: Shield },
         { name: 'API Integration', href: '/settings/api', icon: Database },
         { name: 'Webhooks', href: '/settings/webhooks', icon: CreditCard },
     ];

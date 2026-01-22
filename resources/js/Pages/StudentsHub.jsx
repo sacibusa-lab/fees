@@ -41,7 +41,7 @@ const StudentsHub = ({ initialStudents = [], initialClasses = [], initialSubClas
 
     // Derived State for Sub-class filter (dependent on class filter)
     const availableSubClasses = initialSubClasses.filter(sc =>
-        classFilter ? sc.class_id == classFilter : true
+        !classFilter || sc.class_id == classFilter || !sc.class_id
     );
 
     const filteredStudents = students.filter(student => {
