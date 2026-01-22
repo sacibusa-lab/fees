@@ -12,8 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('sessions', function (Blueprint $table) {
-            $table->date('start_date')->nullable()->after('is_current');
-            $table->date('end_date')->nullable()->after('start_date');
+            if (!Schema::hasColumn('sessions', 'start_date')) {
+                $table->date('start_date')->nullable()->after('is_current');
+            }
+            if (!Schema::hasColumn('sessions', 'end_date')) {
+                $table->date('end_date')->nullable()->after('start_date');
+            }
         });
     }
 

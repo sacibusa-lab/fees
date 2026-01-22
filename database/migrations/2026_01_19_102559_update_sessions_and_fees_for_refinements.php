@@ -12,7 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('sessions', function (Blueprint $table) {
-            $table->string('current_term')->default('First Term')->after('name');
+            if (!Schema::hasColumn('sessions', 'current_term')) {
+                $table->string('current_term')->default('First Term')->after('name');
+            }
         });
 
         // Update fees cycle enum to include one-time
