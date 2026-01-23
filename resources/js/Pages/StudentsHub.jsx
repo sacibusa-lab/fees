@@ -108,10 +108,29 @@ const StudentsHub = ({ initialStudents = [], initialClasses = [], initialSubClas
                         <h1 className="page-heading">Students - <span className="count">{students.length.toLocaleString()}</span></h1>
                         <div className="header-actions">
                             {selectedStudentIds.length > 0 ? (
-                                <button className="btn-promote-action" onClick={() => setShowPromotionModal(true)}>
-                                    <UserPlus size={18} />
-                                    Promote ({selectedStudentIds.length})
-                                </button>
+                                <div style={{ display: 'flex', gap: '10px' }}>
+                                    <button
+                                        className="btn-promote-action"
+                                        onClick={() => {
+                                            if (confirm(`Are you sure you want to delete ${selectedStudentIds.length} students? This action cannot be undone.`)) {
+                                                import('@inertiajs/react').then(({ router }) => {
+                                                    router.delete('/students/bulk-delete', {
+                                                        data: { student_ids: selectedStudentIds },
+                                                        onSuccess: () => setSelectedStudentIds([])
+                                                    });
+                                                });
+                                            }
+                                        }}
+                                        style={{ background: '#ff4d4f', borderColor: '#ff4d4f' }}
+                                    >
+                                        <Trash2 size={18} />
+                                        Delete ({selectedStudentIds.length})
+                                    </button>
+                                    <button className="btn-promote-action" onClick={() => setShowPromotionModal(true)}>
+                                        <UserPlus size={18} />
+                                        Promote ({selectedStudentIds.length})
+                                    </button>
+                                </div>
                             ) : (
                                 <>
                                     <button className="import-btn-outline" onClick={() => setShowAddStudentModal(true)}>
@@ -328,7 +347,15 @@ const StudentsHub = ({ initialStudents = [], initialClasses = [], initialSubClas
                             <ExternalLink size={14} />
                             View Details
                         </button>
-                        <button className="action-item delete" onClick={() => { console.log('Delete', activeDropdown.id); setActiveDropdown(null); }}>
+                        <button className="action-item delete" onClick={() => {
+                            if (confirm('Are you sure you want to delete this student profile?')) {
+                                import('@inertiajs/react').then(({ router }) => {
+                                    router.delete(`/students/${activeDropdown.id}`, {
+                                        onSuccess: () => setActiveDropdown(null)
+                                    });
+                                });
+                            }
+                        }}>
                             <Trash2 size={14} />
                             Delete
                         </button>

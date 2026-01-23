@@ -222,11 +222,10 @@ class StudentController extends Controller
 
         while (($row = fgetcsv($handle)) !== false) {
             // Basic mapping: Name, RegNo, Gender
-            // New CSV format: Name, RegNo, Gender
-            if (count($row) < 2) continue; // Minimum Name and RegNo
+            if (count($row) < 2) continue;
 
-            Student::updateOrCreate(
-                ['admission_number' => trim($row[1])], // Unique key: Reg No
+            $student = Student::updateOrCreate(
+                ['admission_number' => trim($row[1])],
                 [
                     'name' => trim($row[0]),
                     'class_id' => $targetClassId,
@@ -234,11 +233,19 @@ class StudentController extends Controller
                     'gender' => isset($row[2]) ? trim($row[2]) : null,
                     'phone' => isset($row[3]) ? trim($row[3]) : null,
                     'email' => isset($row[4]) ? trim($row[4]) : null,
-                    'guardian_phone' => null, // Legacy field
                     'institution_id' => auth()->user()->institution_id,
                     'payment_status' => 'pending'
                 ]
             );
+
+            // Automate DVA Generation
+            try {
+                if (!$student->virtualAccount) {
+                    $this->processDvaGeneration($student);
+                }
+            } catch (\Exception $e) {
+                Log::error("Failed to auto-generate DVA for student {$student->id} during import: " . $e->getMessage());
+            }
         }
 
         fclose($handle);
@@ -266,7 +273,7 @@ class StudentController extends Controller
              $request->validate(['admission_number' => 'required|string|unique:students,admission_number']);
         }
 
-        Student::create([
+        $student = Student::create([
              'name' => $validated['name'],
              'gender' => $validated['gender'],
              'class_id' => $validated['class_id'],
@@ -279,7 +286,15 @@ class StudentController extends Controller
              'payment_status' => 'pending',
         ]);
 
-        return redirect()->back()->with('success', 'Student added successfully');
+        // Automate DVA Generation
+        try {
+            $this->processDvaGeneration($student);
+        } catch (\Exception $e) {
+            Log::error("Failed to auto-generate DVA for student {$student->id}: " . $e->getMessage());
+            return redirect()->back()->with('warning', 'Student added, but virtual account generation failed: ' . $e->getMessage());
+        }
+
+        return redirect()->back()->with('success', 'Student added and virtual account generated successfully');
     }
 
     public function show(Student $student)
@@ -449,18 +464,33 @@ class StudentController extends Controller
             return back()->with('error', 'Student already has a virtual account');
         }
 
-        // 1. Resolve Email (Paystack requires an email)
+        $result = $this->processDvaGeneration($student);
+
+        if (!$result['status']) {
+            return back()->with('error', $result['message']);
+        }
+
+        return back()->with('success', 'Virtual Account generated successfully');
+    }
+
+    /**
+     * Private helper to handle DVA generation logic
+     */
+    private function processDvaGeneration(Student $student)
+    {
+        $institutionId = $student->institution_id;
+
+        // 1. Resolve Email
         $email = $student->email;
         if (!$email) {
             $portalId = $student->institution->portal_id ?? 'portal';
             $email = strtolower(str_replace([' ', '/', '\\'], '-', $student->admission_number)) . "@{$portalId}.fees.ng";
-            Log::info("Generating VA with placeholder email: {$email}", ['student_id' => $student->id]);
         }
 
-        // 2. Resolve Phone (DVA requires a phone number on the customer)
+        // 2. Resolve Phone
         $phone = $student->phone ?? $student->guardian_phone ?? $student->institution->phone ?? '08000000000';
 
-        // Split name for Paystack
+        // Split name
         $nameParts = explode(' ', $student->name, 2);
         $firstName = $nameParts[0];
         $lastName = $nameParts[1] ?? 'Student';
@@ -474,18 +504,16 @@ class StudentController extends Controller
         ]);
 
         if (!$customerResult['status']) {
-            return back()->with('error', $customerResult['message']);
+            return ['status' => false, 'message' => $customerResult['message']];
         }
 
         $customerCode = $customerResult['customer_code'];
 
-        // 3a. Resolve Split Code for this student
-        // We look for the first active compulsory fee for their class that has a split_code
+        // 4. Resolve Split Code
         $splitCode = null;
         try {
             $session = Session::where('institution_id', $institutionId)->where('is_current', true)->first();
             if ($session) {
-                // Find a fee that has a split code. Usually Tuition or a generic fee.
                 $feeWithSplit = Fee::where('institution_id', $institutionId)
                     ->where('session_id', $session->id)
                     ->where('status', 'active')
@@ -502,14 +530,14 @@ class StudentController extends Controller
             Log::error("Error resolving split code for DVA", ['error' => $e->getMessage()]);
         }
 
-        // 2. Assign Dedicated Virtual Account
+        // 5. Create Dedicated Account
         $dvaResult = $this->paystack->createDedicatedAccount($customerCode, $splitCode);
 
         if (!$dvaResult['status']) {
-            return back()->with('error', $dvaResult['message']);
+            return ['status' => false, 'message' => $dvaResult['message']];
         }
 
-        // 3. Store DVA details
+        // 6. Store DVA details
         StudentVirtualAccount::create([
             'student_id' => $student->id,
             'institution_id' => $institutionId,
@@ -520,7 +548,24 @@ class StudentController extends Controller
             'account_slug' => $dvaResult['account_slug']
         ]);
 
-        return back()->with('success', 'Virtual Account generated successfully');
+        return ['status' => true];
+    }
+
+    public function bulkDelete(Request $request)
+    {
+        $validated = $request->validate([
+            'student_ids' => 'required|array',
+            'student_ids.*' => 'exists:students,id',
+        ]);
+
+        $institutionId = auth()->user()->institution_id;
+
+        // Ensure students belong to this institution
+        $deleted = Student::whereIn('id', $validated['student_ids'])
+            ->where('institution_id', $institutionId)
+            ->delete();
+
+        return redirect()->back()->with('success', "{$deleted} students deleted successfully");
     }
 
     public function destroy(Student $student)
