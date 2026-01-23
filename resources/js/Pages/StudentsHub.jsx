@@ -23,25 +23,10 @@ const StudentsHub = ({ initialStudents = [], initialClasses = [], initialSubClas
     const [showPromotionModal, setShowPromotionModal] = useState(false);
     const [showAddStudentModal, setShowAddStudentModal] = useState(false);
     const [showExportModal, setShowExportModal] = useState(false);
-    const [activeDropdown, setActiveDropdown] = useState(null);
     const [editingStudent, setEditingStudent] = useState(null);
     const [viewingStudent, setViewingStudent] = useState(null);
     const [showGraduationModal, setShowGraduationModal] = useState(false);
 
-    // Close dropdown when clicking outside
-    React.useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (activeDropdown &&
-                !event.target.closest('.student-action-menu') &&
-                !event.target.closest('.actions-cell')
-            ) {
-                setActiveDropdown(null);
-            }
-        };
-
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, [activeDropdown]);
 
     // Derived State for Sub-class filter (dependent on class filter)
     const availableSubClasses = initialSubClasses.filter(sc =>
@@ -145,6 +130,24 @@ const StudentsHub = ({ initialStudents = [], initialClasses = [], initialSubClas
                                         <UserPlus size={18} />
                                         Promote ({selectedStudentIds.length})
                                     </button>
+                                    <button
+                                        className="btn-promote-action"
+                                        onClick={() => {
+                                            if (confirm(`Generate virtual accounts for ${selectedStudentIds.length} students? Students who already have accounts will be skipped.`)) {
+                                                import('@inertiajs/react').then(({ router }) => {
+                                                    router.post('/students/bulk-generate-dva', {
+                                                        student_ids: selectedStudentIds
+                                                    }, {
+                                                        onSuccess: () => setSelectedStudentIds([])
+                                                    });
+                                                });
+                                            }
+                                        }}
+                                        style={{ background: '#00B894', borderColor: '#00B894' }}
+                                    >
+                                        <CreditCard size={18} />
+                                        Generate DVA ({selectedStudentIds.length})
+                                    </button>
                                 </div>
                             ) : (
                                 <>
@@ -226,9 +229,10 @@ const StudentsHub = ({ initialStudents = [], initialClasses = [], initialSubClas
                                         <th>Payer</th>
                                         <th>Reg Number</th>
                                         <th>Class</th>
+                                        <th>Virtual Account</th>
                                         <th>Phone</th>
                                         <th className="status-col">Status</th>
-                                        <th className="actions-col"></th>
+                                        <th className="actions-col">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -254,6 +258,16 @@ const StudentsHub = ({ initialStudents = [], initialClasses = [], initialSubClas
                                             </td>
                                             <td>{student.admission_number}</td>
                                             <td>{student.class_name} ({student.sub_class_name})</td>
+                                            <td>
+                                                {student.has_vaccount ? (
+                                                    <div className="vaccount-info">
+                                                        <span className="account-number">{student.account_numbers[0]?.number}</span>
+                                                        <span className="bank-name">{student.account_numbers[0]?.bank}</span>
+                                                    </div>
+                                                ) : (
+                                                    <span className="no-vaccount">Not Generated</span>
+                                                )}
+                                            </td>
                                             <td>{student.phone}</td>
                                             <td>
                                                 <span className={`status-pill ${getStatusClass(student.payment_status)}`}>
@@ -267,26 +281,35 @@ const StudentsHub = ({ initialStudents = [], initialClasses = [], initialSubClas
                                                 )}
                                             </td>
                                             <td className="actions-cell">
-                                                <button
-                                                    className="row-toggle-btn"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        // Calculate position
-                                                        const rect = e.currentTarget.getBoundingClientRect();
-                                                        // Toggle off if clicking same
-                                                        if (activeDropdown?.id === student.id) {
-                                                            setActiveDropdown(null);
-                                                        } else {
-                                                            setActiveDropdown({
-                                                                id: student.id,
-                                                                top: rect.bottom + window.scrollY + 5,
-                                                                left: rect.left + window.scrollX - 140 // Shift left to align
-                                                            });
-                                                        }
-                                                    }}
-                                                >
-                                                    <MoreVertical size={16} />
-                                                </button>
+                                                <div style={{ display: 'flex', gap: '8px' }}>
+                                                    <button
+                                                        className="icon-action-btn"
+                                                        title="Edit Student"
+                                                        onClick={() => setEditingStudent(student)}
+                                                    >
+                                                        <Edit size={16} color="#4A5568" />
+                                                    </button>
+                                                    <button
+                                                        className="icon-action-btn"
+                                                        title="Delete Student"
+                                                        onClick={() => {
+                                                            if (confirm('Are you sure you want to delete this student profile?')) {
+                                                                import('@inertiajs/react').then(({ router }) => {
+                                                                    router.delete(`/students/${student.id}`);
+                                                                });
+                                                            }
+                                                        }}
+                                                    >
+                                                        <Trash2 size={16} color="#ff4d4f" />
+                                                    </button>
+                                                    <Link
+                                                        href={`/students/${student.id}`}
+                                                        className="icon-action-btn"
+                                                        title="View Profile"
+                                                    >
+                                                        <ExternalLink size={16} color="#D1127B" />
+                                                    </Link>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))}
@@ -356,59 +379,6 @@ const StudentsHub = ({ initialStudents = [], initialClasses = [], initialSubClas
                     selectedStudentIds={selectedStudentIds}
                 />
             </Layout>
-            {
-                activeDropdown && createPortal(
-                    <div
-                        className="student-action-menu fixed-menu"
-                        style={{
-                            top: `${activeDropdown.top}px`,
-                            left: `${activeDropdown.left}px`,
-                            position: 'fixed', // Force fixed
-                            margin: 0,
-                            zIndex: 9999 // Ensure it's on top
-                        }}
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <button className="action-item" onClick={() => {
-                            const student = filteredStudents.find(s => s.id === activeDropdown.id);
-                            setEditingStudent(student);
-                            setActiveDropdown(null);
-                        }}>
-                            <Edit size={14} />
-                            Edit
-                        </button>
-                        <button className="action-item" onClick={() => {
-                            const student = filteredStudents.find(s => s.id === activeDropdown.id);
-                            setViewingStudent(student);
-                            setActiveDropdown(null);
-                        }}>
-                            <ExternalLink size={14} />
-                            View Details
-                        </button>
-                        <button className="action-item delete" onClick={() => {
-                            if (confirm('Are you sure you want to delete this student profile?')) {
-                                import('@inertiajs/react').then(({ router }) => {
-                                    router.delete(`/students/${activeDropdown.id}`, {
-                                        onSuccess: () => setActiveDropdown(null)
-                                    });
-                                });
-                            }
-                        }}>
-                            <Trash2 size={14} />
-                            Delete
-                        </button>
-                        <button className="action-item" onClick={() => { console.log('Payment', activeDropdown.id); setActiveDropdown(null); }}>
-                            <CreditCard size={14} />
-                            Payment Activity
-                        </button>
-                        <button className="action-item" onClick={() => { console.log('Wallet', activeDropdown.id); setActiveDropdown(null); }}>
-                            <Wallet size={14} />
-                            Wallet
-                        </button>
-                    </div>,
-                    document.body
-                )
-            }
         </>
     );
 };

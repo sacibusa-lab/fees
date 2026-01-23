@@ -51,6 +51,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/import', [StudentController::class, 'import'])->name('students.import');
         Route::delete('/bulk-delete', [StudentController::class, 'bulkDelete'])->name('students.bulk-delete');
         Route::post('/bulk-graduate', [StudentController::class, 'bulkGraduate'])->name('students.bulk-graduate');
+        Route::post('/bulk-generate-dva', [StudentController::class, 'bulkGenerateDva'])->name('students.bulk-generate-dva');
 
         // Root resource routes
         Route::get('/', [StudentController::class, 'index'])->name('students.index');

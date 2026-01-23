@@ -609,4 +609,42 @@ class StudentController extends Controller
 
         return redirect()->route('students.index')->with('success', 'Student profile deleted successfully');
     }
+
+    public function bulkGenerateDva(Request $request)
+    {
+        $validated = $request->validate([
+            'student_ids' => 'required|array',
+            'student_ids.*' => 'exists:students,id',
+        ]);
+
+        $institutionId = auth()->user()->institution_id;
+        $students = Student::whereIn('id', $validated['student_ids'])
+            ->where('institution_id', $institutionId)
+            ->whereDoesntHave('virtualAccount')
+            ->get();
+
+        $successCount = 0;
+        $failCount = 0;
+
+        foreach ($students as $student) {
+            try {
+                $result = $this->processDvaGeneration($student);
+                if ($result['status']) {
+                    $successCount++;
+                } else {
+                    $failCount++;
+                }
+            } catch (\Exception $e) {
+                Log::error("Bulk DVA generation failed for student {$student->id}: " . $e->getMessage());
+                $failCount++;
+            }
+        }
+
+        $message = "Virtual accounts generated for {$successCount} students.";
+        if ($failCount > 0) {
+            $message .= " Failed for {$failCount} students.";
+        }
+
+        return redirect()->back()->with($failCount > 0 ? 'warning' : 'success', $message);
+    }
 }
