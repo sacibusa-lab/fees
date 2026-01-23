@@ -6,12 +6,18 @@ import './PromotionModal.css';
 const PromotionModal = ({ show, onClose, selectedStudentIds = [], classes = [] }) => {
     if (!show) return null;
 
-    const { data, setData, post, processing, errors } = useForm({
+    const { data, setData, post, processing, errors, reset } = useForm({
         student_ids: selectedStudentIds,
         target_class_id: '',
-        target_session_id: '', // Ideally fetched or passed
+        target_session_id: '',
         retain_debt: true
     });
+
+    React.useEffect(() => {
+        if (show) {
+            setData('student_ids', selectedStudentIds);
+        }
+    }, [show, selectedStudentIds]);
 
     const isBulk = selectedStudentIds.length > 1;
 

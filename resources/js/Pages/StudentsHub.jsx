@@ -8,14 +8,17 @@ import AddStudentModal from '../Components/AddStudentModal';
 import ExportModal from '../Components/ExportModal';
 import EditStudentModal from '../Components/EditStudentModal';
 import StudentDetailsModal from '../Components/StudentDetailsModal';
+import GraduationModal from '../Components/GraduationModal';
 import './StudentsHub.css';
 
 const StudentsHub = ({ initialStudents = [], initialClasses = [], initialSubClasses = [] }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [classFilter, setClassFilter] = useState('');
     const [subClassFilter, setSubClassFilter] = useState('');
+    const [statusFilter, setStatusFilter] = useState('active');
 
-    const [students] = useState(initialStudents);
+    // Use initialStudents directly to avoid stale state issues after server-side updates
+    const students = initialStudents;
     const [selectedStudentIds, setSelectedStudentIds] = useState([]);
     const [showPromotionModal, setShowPromotionModal] = useState(false);
     const [showAddStudentModal, setShowAddStudentModal] = useState(false);
@@ -23,6 +26,7 @@ const StudentsHub = ({ initialStudents = [], initialClasses = [], initialSubClas
     const [activeDropdown, setActiveDropdown] = useState(null);
     const [editingStudent, setEditingStudent] = useState(null);
     const [viewingStudent, setViewingStudent] = useState(null);
+    const [showGraduationModal, setShowGraduationModal] = useState(false);
 
     // Close dropdown when clicking outside
     React.useEffect(() => {
@@ -54,7 +58,9 @@ const StudentsHub = ({ initialStudents = [], initialClasses = [], initialSubClas
         // Note: clearing class filter should typically clear subclass filter too, handled in UI
         const matchesSubClass = subClassFilter ? student.sub_class_id == subClassFilter : true;
 
-        return matchesSearch && matchesClass && matchesSubClass;
+        const matchesStatus = statusFilter ? (student.status || 'active') === statusFilter : true;
+
+        return matchesSearch && matchesClass && matchesSubClass && matchesStatus;
     });
 
     const getStatusClass = (status) => {
@@ -94,6 +100,7 @@ const StudentsHub = ({ initialStudents = [], initialClasses = [], initialSubClas
             const params = new URLSearchParams();
             if (classFilter) params.append('class_id', classFilter);
             if (subClassFilter) params.append('sub_class_id', subClassFilter);
+            if (statusFilter) params.append('status', statusFilter);
             url += `?${params.toString()}`;
         }
         window.location.href = url;
@@ -105,7 +112,7 @@ const StudentsHub = ({ initialStudents = [], initialClasses = [], initialSubClas
                 <Head title={`Students - ${students.length}`} />
                 <div className="students-page-container">
                     <div className="students-top-bar">
-                        <h1 className="page-heading">Students - <span className="count">{students.length.toLocaleString()}</span></h1>
+                        <h1 className="page-heading">Students - <span className="count">{filteredStudents.length.toLocaleString()}</span></h1>
                         <div className="header-actions">
                             {selectedStudentIds.length > 0 ? (
                                 <div style={{ display: 'flex', gap: '10px' }}>
@@ -125,6 +132,14 @@ const StudentsHub = ({ initialStudents = [], initialClasses = [], initialSubClas
                                     >
                                         <Trash2 size={18} />
                                         Delete ({selectedStudentIds.length})
+                                    </button>
+                                    <button
+                                        className="btn-promote-action"
+                                        onClick={() => setShowGraduationModal(true)}
+                                        style={{ background: '#D1127B', borderColor: '#D1127B' }}
+                                    >
+                                        <Download size={18} style={{ transform: 'rotate(180deg)' }} />
+                                        Graduate ({selectedStudentIds.length})
                                     </button>
                                     <button className="btn-promote-action" onClick={() => setShowPromotionModal(true)}>
                                         <UserPlus size={18} />
@@ -182,6 +197,18 @@ const StudentsHub = ({ initialStudents = [], initialClasses = [], initialSubClas
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                 />
                             </div>
+                            <div className="filter-group">
+                                <select
+                                    value={statusFilter}
+                                    onChange={(e) => setStatusFilter(e.target.value)}
+                                    className="filter-select"
+                                >
+                                    <option value="active">Active Students</option>
+                                    <option value="graduated">Graduated</option>
+                                    <option value="inactive">Inactive</option>
+                                    <option value="">All Statuses</option>
+                                </select>
+                            </div>
                         </div>
 
                         <div className="table-scroll-area">
@@ -233,6 +260,11 @@ const StudentsHub = ({ initialStudents = [], initialClasses = [], initialSubClas
                                                     <span className="pill-dot"></span>
                                                     {student.payment_status}
                                                 </span>
+                                                {student.status === 'graduated' && (
+                                                    <span className="status-pill" style={{ background: '#f0f0f0', color: '#666', marginLeft: '8px' }}>
+                                                        Graduated
+                                                    </span>
+                                                )}
                                             </td>
                                             <td className="actions-cell">
                                                 <button
@@ -316,6 +348,12 @@ const StudentsHub = ({ initialStudents = [], initialClasses = [], initialSubClas
                     show={!!viewingStudent}
                     onClose={() => setViewingStudent(null)}
                     student={viewingStudent}
+                />
+
+                <GraduationModal
+                    show={showGraduationModal}
+                    onClose={() => setShowGraduationModal(false)}
+                    selectedStudentIds={selectedStudentIds}
                 />
             </Layout>
             {

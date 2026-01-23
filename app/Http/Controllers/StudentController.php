@@ -129,18 +129,20 @@ class StudentController extends Controller
             'target_class_id' => 'required|exists:classes,id',
         ]);
 
-        Student::whereIn('id', $validated['student_ids'])->update([
-            'class_id' => $validated['target_class_id'],
-            // Optionally reset sub_class_id if moving to a new class structure
-            // 'sub_class_id' => null 
-        ]);
+        Student::whereIn('id', $validated['student_ids'])
+            ->where('institution_id', Auth::user()->institution_id)
+            ->update([
+                'class_id' => $validated['target_class_id'],
+                'sub_class_id' => null // Reset sub-class when promoting
+            ]);
 
         return redirect()->back()->with('success', 'Students promoted successfully');
     }
 
     public function export(Request $request)
     {
-        $query = Student::with(['schoolClass', 'subClass']);
+        $institutionId = auth()->user()->institution_id;
+        $query = Student::where('institution_id', $institutionId)->with(['schoolClass', 'subClass']);
 
         if ($request->has('class_id') && $request->class_id) {
             $query->where('class_id', $request->class_id);
@@ -148,6 +150,10 @@ class StudentController extends Controller
 
         if ($request->has('sub_class_id') && $request->sub_class_id) {
             $query->where('sub_class_id', $request->sub_class_id);
+        }
+
+        if ($request->has('status') && $request->status) {
+            $query->where('status', $request->status);
         }
 
         $students = $query->get();
@@ -343,6 +349,7 @@ class StudentController extends Controller
             'school_name' => $student->institution->name ?? 'N/A',
             'added_on' => $student->created_at->format('M d, Y, h:i A'),
             'session_added' => $currentSession ? $currentSession->name : 'N/A',
+            'status' => $student->status,
             'academic_history' => [
                 ['class' => $student->schoolClass->name ?? 'N/A', 'session' => $currentSession->name ?? 'N/A']
             ],
@@ -566,6 +573,27 @@ class StudentController extends Controller
             ->delete();
 
         return redirect()->back()->with('success', "{$deleted} students deleted successfully");
+    }
+
+    public function bulkGraduate(Request $request)
+    {
+        $validated = $request->validate([
+            'student_ids' => 'required|array',
+            'student_ids.*' => 'exists:students,id',
+        ]);
+
+        $institutionId = auth()->user()->institution_id;
+
+        // Ensure students belong to this institution
+        $updated = Student::whereIn('id', $validated['student_ids'])
+            ->where('institution_id', $institutionId)
+            ->update([
+                'status' => 'graduated',
+                'class_id' => null,
+                'sub_class_id' => null
+            ]);
+
+        return redirect()->back()->with('success', "{$updated} students graduated successfully");
     }
 
     public function destroy(Student $student)
