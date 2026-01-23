@@ -1,8 +1,11 @@
 import React from 'react';
 import { Bell, User, Menu, Search } from 'lucide-react';
+import { usePage } from '@inertiajs/react';
 import './Header.css';
 
 const Header = ({ title, onMenuButtonClick }) => {
+    const { auth } = usePage().props;
+    const user = auth.user;
     return (
         <header className="header">
             <div className="header-left">
@@ -22,11 +25,17 @@ const Header = ({ title, onMenuButtonClick }) => {
                 </button>
 
                 <div className="user-profile-summary">
-                    <img
-                        src="https://images.unsplash.com/photo-1599566150163-29194dcaad36?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80"
-                        alt="User"
-                        className="user-avatar"
-                    />
+                    {user.avatar ? (
+                        <img
+                            src={`/storage/${user.avatar}`}
+                            alt="User"
+                            className="user-avatar"
+                        />
+                    ) : (
+                        <div className="user-avatar-placeholder">
+                            <User size={20} />
+                        </div>
+                    )}
                 </div>
             </div>
         </header>

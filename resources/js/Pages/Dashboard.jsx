@@ -9,23 +9,23 @@ import './Dashboard.css';
 const Dashboard = ({ stats, chartData, userName, recentTransactions }) => {
     // Custom SVG Progress Circle for 53%
     const ProgressCircle = ({ percent }) => {
-        const radius = 30;
+        const radius = 35;
         const circumference = 2 * Math.PI * radius;
         const offset = circumference - (percent / 100) * circumference;
 
         return (
-            <div style={{ position: 'relative', width: '80px', height: '80px' }}>
-                <svg width="80" height="80" viewBox="0 0 80 80">
-                    <circle cx="40" cy="40" r="30" fill="none" stroke="#334155" strokeWidth="8" />
+            <div style={{ position: 'relative', width: '100px', height: '100px' }}>
+                <svg width="100" height="100" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="35" fill="none" stroke="#d1d5db" strokeWidth="10" />
                     <circle
-                        cx="40" cy="40" r="30" fill="none" stroke="#f97316" strokeWidth="8"
+                        cx="50" cy="50" r="35" fill="none" stroke="#f95416" strokeWidth="10"
                         strokeDasharray={circumference}
                         strokeDashoffset={offset}
                         strokeLinecap="round"
-                        transform="rotate(-90 40 40)"
+                        transform="rotate(-90 50 50)"
                     />
                 </svg>
-                <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold', fontSize: '1.2rem' }}>
+                <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: '800', fontSize: '1.4rem', letterSpacing: '-0.02em' }}>
                     {percent}%
                 </div>
             </div>
@@ -59,7 +59,7 @@ const Dashboard = ({ stats, chartData, userName, recentTransactions }) => {
                     <div className="metric-card dark">
                         <div className="term-info">
                             <div className="term-title">{stats.current_term}</div>
-                            <div className="term-subtitle">Fee Collection Progress</div>
+                            <div className="term-subtitle">Current Term Progress</div>
                             <div className="term-date">Today: {new Date().toLocaleDateString('en-GB')}</div>
                         </div>
                         <ProgressCircle percent={stats.collection_progress} />

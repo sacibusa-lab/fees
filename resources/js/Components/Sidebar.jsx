@@ -43,7 +43,7 @@ const Sidebar = ({ institution, isOpen, onClose }) => {
                 <div className="logo">
                     {institution?.logo ? (
                         <div className="logo-image-container">
-                            <img src={institution.logo} alt="Logo" className="logo-img" />
+                            <img src={`/storage/${institution.logo}`} alt="Logo" className="logo-img" />
                         </div>
                     ) : (
                         <div className="logo-icon">
@@ -195,7 +195,7 @@ const Sidebar = ({ institution, isOpen, onClose }) => {
             <div className="sidebar-footer">
                 <Link href="/profile" className="institution-info" style={{ textDecoration: 'none', color: 'inherit' }}>
                     {institution?.logo ? (
-                        <img src={institution.logo} alt="Institution Logo" className="institution-avatar" style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }} />
+                        <img src={`/storage/${institution.logo}`} alt="Institution Logo" className="institution-avatar" style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }} />
                     ) : (
                         <div className="institution-avatar">
                             {institution?.name?.charAt(0) || 'S'}
