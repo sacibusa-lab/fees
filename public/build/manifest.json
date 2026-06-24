@@ -1,0 +1,631 @@
+{
+  "_FeeClassOverridesModal-BVLa-F_C.js": {
+    "file": "assets/FeeClassOverridesModal-BVLa-F_C.js",
+    "name": "FeeClassOverridesModal",
+    "imports": [
+      "resources/js/app.jsx",
+      "_circle-alert-COv1gaad.js",
+      "_trash-2-sQ7MwQrL.js",
+      "_plus-CGijhukh.js",
+      "_save-4JHLglsg.js",
+      "_Layout-CeE1rDVH.js"
+    ],
+    "css": [
+      "assets/FeeClassOverridesModal-rRNaK7K5.css"
+    ]
+  },
+  "_FeeClassOverridesModal-rRNaK7K5.css": {
+    "file": "assets/FeeClassOverridesModal-rRNaK7K5.css",
+    "src": "_FeeClassOverridesModal-rRNaK7K5.css"
+  },
+  "_Layout-CeE1rDVH.js": {
+    "file": "assets/Layout-CeE1rDVH.js",
+    "name": "Layout",
+    "imports": [
+      "resources/js/app.jsx",
+      "_createLucideIcon-DbW9YTQP.js"
+    ],
+    "css": [
+      "assets/Layout-D1Fft5Hq.css"
+    ]
+  },
+  "_Layout-D1Fft5Hq.css": {
+    "file": "assets/Layout-D1Fft5Hq.css",
+    "src": "_Layout-D1Fft5Hq.css"
+  },
+  "_PromotionModal-Bs-TKksA.css": {
+    "file": "assets/PromotionModal-Bs-TKksA.css",
+    "src": "_PromotionModal-Bs-TKksA.css"
+  },
+  "_Roles-GYLXSs8c.css": {
+    "file": "assets/Roles-GYLXSs8c.css",
+    "src": "_Roles-GYLXSs8c.css"
+  },
+  "_StudentProfile-K4mZBUGd.css": {
+    "file": "assets/StudentProfile-K4mZBUGd.css",
+    "src": "_StudentProfile-K4mZBUGd.css"
+  },
+  "_StudentProfile-zAObkKQ6.js": {
+    "file": "assets/StudentProfile-zAObkKQ6.js",
+    "name": "StudentProfile",
+    "imports": [
+      "_createLucideIcon-DbW9YTQP.js"
+    ],
+    "css": [
+      "assets/StudentProfile-K4mZBUGd.css"
+    ]
+  },
+  "_arrow-left-CtKuVYYH.js": {
+    "file": "assets/arrow-left-CtKuVYYH.js",
+    "name": "arrow-left",
+    "imports": [
+      "_createLucideIcon-DbW9YTQP.js"
+    ]
+  },
+  "_chevron-left-BtV8Ur9G.js": {
+    "file": "assets/chevron-left-BtV8Ur9G.js",
+    "name": "chevron-left",
+    "imports": [
+      "_createLucideIcon-DbW9YTQP.js"
+    ]
+  },
+  "_circle-alert-COv1gaad.js": {
+    "file": "assets/circle-alert-COv1gaad.js",
+    "name": "circle-alert",
+    "imports": [
+      "_createLucideIcon-DbW9YTQP.js"
+    ]
+  },
+  "_circle-check-big-C79YfJuk.js": {
+    "file": "assets/circle-check-big-C79YfJuk.js",
+    "name": "circle-check-big",
+    "imports": [
+      "_createLucideIcon-DbW9YTQP.js"
+    ]
+  },
+  "_circle-x-DvUNL53o.js": {
+    "file": "assets/circle-x-DvUNL53o.js",
+    "name": "circle-x",
+    "imports": [
+      "_createLucideIcon-DbW9YTQP.js"
+    ]
+  },
+  "_createLucideIcon-DbW9YTQP.js": {
+    "file": "assets/createLucideIcon-DbW9YTQP.js",
+    "name": "createLucideIcon",
+    "imports": [
+      "resources/js/app.jsx"
+    ]
+  },
+  "_download-BBI1Phgy.js": {
+    "file": "assets/download-BBI1Phgy.js",
+    "name": "download",
+    "imports": [
+      "_createLucideIcon-DbW9YTQP.js"
+    ]
+  },
+  "_ellipsis-vertical-BEm6oAaW.js": {
+    "file": "assets/ellipsis-vertical-BEm6oAaW.js",
+    "name": "ellipsis-vertical",
+    "imports": [
+      "_createLucideIcon-DbW9YTQP.js"
+    ]
+  },
+  "_eye-off-BGn_jQGS.js": {
+    "file": "assets/eye-off-BGn_jQGS.js",
+    "name": "eye-off",
+    "imports": [
+      "_createLucideIcon-DbW9YTQP.js"
+    ]
+  },
+  "_eye-z4CgsJ8s.js": {
+    "file": "assets/eye-z4CgsJ8s.js",
+    "name": "eye",
+    "imports": [
+      "_createLucideIcon-DbW9YTQP.js"
+    ]
+  },
+  "_info-CPin84M0.js": {
+    "file": "assets/info-CPin84M0.js",
+    "name": "info",
+    "imports": [
+      "_createLucideIcon-DbW9YTQP.js"
+    ]
+  },
+  "_pen-CGOj4xrP.js": {
+    "file": "assets/pen-CGOj4xrP.js",
+    "name": "pen",
+    "imports": [
+      "_createLucideIcon-DbW9YTQP.js"
+    ]
+  },
+  "_plus-CGijhukh.js": {
+    "file": "assets/plus-CGijhukh.js",
+    "name": "plus",
+    "imports": [
+      "_createLucideIcon-DbW9YTQP.js"
+    ]
+  },
+  "_save-4JHLglsg.js": {
+    "file": "assets/save-4JHLglsg.js",
+    "name": "save",
+    "imports": [
+      "_createLucideIcon-DbW9YTQP.js"
+    ]
+  },
+  "_square-pen-DswPiJZg.js": {
+    "file": "assets/square-pen-DswPiJZg.js",
+    "name": "square-pen",
+    "imports": [
+      "_createLucideIcon-DbW9YTQP.js"
+    ]
+  },
+  "_trash-2-sQ7MwQrL.js": {
+    "file": "assets/trash-2-sQ7MwQrL.js",
+    "name": "trash-2",
+    "imports": [
+      "_createLucideIcon-DbW9YTQP.js"
+    ]
+  },
+  "_upload-C89B0lPG.js": {
+    "file": "assets/upload-C89B0lPG.js",
+    "name": "upload",
+    "imports": [
+      "_createLucideIcon-DbW9YTQP.js"
+    ]
+  },
+  "_wallet-C2oqd6tz.js": {
+    "file": "assets/wallet-C2oqd6tz.js",
+    "name": "wallet",
+    "imports": [
+      "_createLucideIcon-DbW9YTQP.js"
+    ]
+  },
+  "resources/js/Pages/AcademicSessions/Index.jsx": {
+    "file": "assets/Index-CzT7HHG8.js",
+    "name": "Index",
+    "src": "resources/js/Pages/AcademicSessions/Index.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.jsx",
+      "_Layout-CeE1rDVH.js",
+      "_createLucideIcon-DbW9YTQP.js",
+      "_ellipsis-vertical-BEm6oAaW.js",
+      "_circle-check-big-C79YfJuk.js"
+    ],
+    "css": [
+      "assets/Index-NB9oU2M-.css"
+    ]
+  },
+  "resources/js/Pages/AdminCare/AllAdmins.jsx": {
+    "file": "assets/AllAdmins-CYNdb1c-.js",
+    "name": "AllAdmins",
+    "src": "resources/js/Pages/AdminCare/AllAdmins.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.jsx",
+      "_Layout-CeE1rDVH.js",
+      "_save-4JHLglsg.js",
+      "_plus-CGijhukh.js",
+      "_info-CPin84M0.js",
+      "_createLucideIcon-DbW9YTQP.js"
+    ],
+    "css": [
+      "assets/AllAdmins-DCF_iQEZ.css",
+      "assets/Roles-GYLXSs8c.css"
+    ]
+  },
+  "resources/js/Pages/AdminCare/Permissions.jsx": {
+    "file": "assets/Permissions-BKDq5nRH.js",
+    "name": "Permissions",
+    "src": "resources/js/Pages/AdminCare/Permissions.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.jsx",
+      "_Layout-CeE1rDVH.js",
+      "_save-4JHLglsg.js",
+      "_createLucideIcon-DbW9YTQP.js"
+    ],
+    "css": [
+      "assets/Permissions-CH56Jy8e.css"
+    ]
+  },
+  "resources/js/Pages/AdminCare/Roles.jsx": {
+    "file": "assets/Roles-Bw4zqSxO.js",
+    "name": "Roles",
+    "src": "resources/js/Pages/AdminCare/Roles.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.jsx",
+      "_Layout-CeE1rDVH.js",
+      "_save-4JHLglsg.js",
+      "_plus-CGijhukh.js",
+      "_pen-CGOj4xrP.js",
+      "_trash-2-sQ7MwQrL.js",
+      "_createLucideIcon-DbW9YTQP.js"
+    ],
+    "css": [
+      "assets/Roles-GYLXSs8c.css"
+    ]
+  },
+  "resources/js/Pages/BankAccounts.jsx": {
+    "file": "assets/BankAccounts-Blz-NUu5.js",
+    "name": "BankAccounts",
+    "src": "resources/js/Pages/BankAccounts.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.jsx",
+      "_Layout-CeE1rDVH.js",
+      "_plus-CGijhukh.js",
+      "_circle-check-big-C79YfJuk.js",
+      "_circle-x-DvUNL53o.js",
+      "_trash-2-sQ7MwQrL.js",
+      "_createLucideIcon-DbW9YTQP.js"
+    ],
+    "css": [
+      "assets/BankAccounts-KO-mEoGo.css"
+    ]
+  },
+  "resources/js/Pages/Business/BankAccounts.jsx": {
+    "file": "assets/BankAccounts-CSku0upG.js",
+    "name": "BankAccounts",
+    "src": "resources/js/Pages/Business/BankAccounts.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.jsx",
+      "_Layout-CeE1rDVH.js",
+      "_info-CPin84M0.js",
+      "_trash-2-sQ7MwQrL.js",
+      "_createLucideIcon-DbW9YTQP.js"
+    ],
+    "css": [
+      "assets/BankAccounts-VQZxMe2g.css"
+    ]
+  },
+  "resources/js/Pages/Business/Settlements.jsx": {
+    "file": "assets/Settlements-D009qVRW.js",
+    "name": "Settlements",
+    "src": "resources/js/Pages/Business/Settlements.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.jsx",
+      "_Layout-CeE1rDVH.js",
+      "_createLucideIcon-DbW9YTQP.js",
+      "_circle-check-big-C79YfJuk.js",
+      "_circle-alert-COv1gaad.js"
+    ],
+    "css": [
+      "assets/Settlements-B72hrAjz.css"
+    ]
+  },
+  "resources/js/Pages/Classes.jsx": {
+    "file": "assets/Classes-BeESq-i3.js",
+    "name": "Classes",
+    "src": "resources/js/Pages/Classes.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.jsx",
+      "_Layout-CeE1rDVH.js",
+      "_ellipsis-vertical-BEm6oAaW.js",
+      "_createLucideIcon-DbW9YTQP.js"
+    ],
+    "css": [
+      "assets/Classes-CKMijZb7.css"
+    ]
+  },
+  "resources/js/Pages/Dashboard.jsx": {
+    "file": "assets/Dashboard-LARSo33m.js",
+    "name": "Dashboard",
+    "src": "resources/js/Pages/Dashboard.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.jsx",
+      "_Layout-CeE1rDVH.js",
+      "_wallet-C2oqd6tz.js",
+      "_createLucideIcon-DbW9YTQP.js"
+    ],
+    "css": [
+      "assets/Dashboard-CG9wHScl.css"
+    ]
+  },
+  "resources/js/Pages/FeeDetails.jsx": {
+    "file": "assets/FeeDetails-BTTKBcmB.js",
+    "name": "FeeDetails",
+    "src": "resources/js/Pages/FeeDetails.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.jsx",
+      "_Layout-CeE1rDVH.js",
+      "_FeeClassOverridesModal-BVLa-F_C.js",
+      "_StudentProfile-zAObkKQ6.js",
+      "_arrow-left-CtKuVYYH.js",
+      "_info-CPin84M0.js",
+      "_createLucideIcon-DbW9YTQP.js",
+      "_save-4JHLglsg.js",
+      "_square-pen-DswPiJZg.js",
+      "_trash-2-sQ7MwQrL.js",
+      "_circle-alert-COv1gaad.js",
+      "_plus-CGijhukh.js"
+    ]
+  },
+  "resources/js/Pages/FeesManagement.jsx": {
+    "file": "assets/FeesManagement-DzByEc2P.js",
+    "name": "FeesManagement",
+    "src": "resources/js/Pages/FeesManagement.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.jsx",
+      "_Layout-CeE1rDVH.js",
+      "_FeeClassOverridesModal-BVLa-F_C.js",
+      "_plus-CGijhukh.js",
+      "_createLucideIcon-DbW9YTQP.js",
+      "_circle-alert-COv1gaad.js",
+      "_trash-2-sQ7MwQrL.js",
+      "_save-4JHLglsg.js"
+    ],
+    "css": [
+      "assets/FeesManagement-D-oJN6s6.css"
+    ]
+  },
+  "resources/js/Pages/Login.jsx": {
+    "file": "assets/Login-BXZp8708.js",
+    "name": "Login",
+    "src": "resources/js/Pages/Login.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.jsx",
+      "_eye-off-BGn_jQGS.js",
+      "_eye-z4CgsJ8s.js",
+      "_createLucideIcon-DbW9YTQP.js"
+    ],
+    "css": [
+      "assets/Login-DI2ptVkd.css"
+    ]
+  },
+  "resources/js/Pages/PaymentSchedule.jsx": {
+    "file": "assets/PaymentSchedule-CgNXlsls.js",
+    "name": "PaymentSchedule",
+    "src": "resources/js/Pages/PaymentSchedule.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.jsx",
+      "_Layout-CeE1rDVH.js",
+      "_download-BBI1Phgy.js",
+      "_createLucideIcon-DbW9YTQP.js"
+    ],
+    "css": [
+      "assets/PaymentSchedule-BAU_aRyu.css"
+    ]
+  },
+  "resources/js/Pages/PaymentsOverview.jsx": {
+    "file": "assets/PaymentsOverview-Dq7ZJJzq.js",
+    "name": "PaymentsOverview",
+    "src": "resources/js/Pages/PaymentsOverview.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.jsx",
+      "_Layout-CeE1rDVH.js",
+      "_arrow-left-CtKuVYYH.js",
+      "_download-BBI1Phgy.js",
+      "_createLucideIcon-DbW9YTQP.js",
+      "_wallet-C2oqd6tz.js",
+      "_circle-check-big-C79YfJuk.js",
+      "_circle-alert-COv1gaad.js"
+    ],
+    "css": [
+      "assets/PaymentsOverview-BbAQrjVy.css",
+      "assets/PromotionModal-Bs-TKksA.css"
+    ]
+  },
+  "resources/js/Pages/Profile.jsx": {
+    "file": "assets/Profile-1k3Y_8iC.js",
+    "name": "Profile",
+    "src": "resources/js/Pages/Profile.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.jsx",
+      "_Layout-CeE1rDVH.js",
+      "_createLucideIcon-DbW9YTQP.js",
+      "_save-4JHLglsg.js"
+    ],
+    "css": [
+      "assets/Profile-DMUOBeGb.css"
+    ]
+  },
+  "resources/js/Pages/Settings/Api.jsx": {
+    "file": "assets/Api-CaTJ-WPe.js",
+    "name": "Api",
+    "src": "resources/js/Pages/Settings/Api.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.jsx",
+      "resources/js/Pages/Settings/SettingsLayout.jsx",
+      "_Layout-CeE1rDVH.js",
+      "_eye-off-BGn_jQGS.js",
+      "_eye-z4CgsJ8s.js",
+      "_save-4JHLglsg.js",
+      "_createLucideIcon-DbW9YTQP.js"
+    ]
+  },
+  "resources/js/Pages/Settings/Global.jsx": {
+    "file": "assets/Global-D6dkpbKd.js",
+    "name": "Global",
+    "src": "resources/js/Pages/Settings/Global.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.jsx",
+      "resources/js/Pages/Settings/SettingsLayout.jsx",
+      "_createLucideIcon-DbW9YTQP.js",
+      "_upload-C89B0lPG.js",
+      "_save-4JHLglsg.js",
+      "_Layout-CeE1rDVH.js"
+    ]
+  },
+  "resources/js/Pages/Settings/Roles.jsx": {
+    "file": "assets/Roles-D9Tubhm5.js",
+    "name": "Roles",
+    "src": "resources/js/Pages/Settings/Roles.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.jsx",
+      "resources/js/Pages/Settings/SettingsLayout.jsx",
+      "_createLucideIcon-DbW9YTQP.js",
+      "_Layout-CeE1rDVH.js"
+    ]
+  },
+  "resources/js/Pages/Settings/SettingsLayout.jsx": {
+    "file": "assets/SettingsLayout-DGq4U3NU.js",
+    "name": "SettingsLayout",
+    "src": "resources/js/Pages/Settings/SettingsLayout.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.jsx",
+      "_Layout-CeE1rDVH.js",
+      "_createLucideIcon-DbW9YTQP.js"
+    ],
+    "css": [
+      "assets/SettingsLayout-CeNYWLI3.css"
+    ]
+  },
+  "resources/js/Pages/Settings/Webhooks.jsx": {
+    "file": "assets/Webhooks-B_hvFNsQ.js",
+    "name": "Webhooks",
+    "src": "resources/js/Pages/Settings/Webhooks.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.jsx",
+      "resources/js/Pages/Settings/SettingsLayout.jsx",
+      "_circle-check-big-C79YfJuk.js",
+      "_circle-x-DvUNL53o.js",
+      "_createLucideIcon-DbW9YTQP.js",
+      "_eye-z4CgsJ8s.js",
+      "_Layout-CeE1rDVH.js"
+    ]
+  },
+  "resources/js/Pages/StudentProfile.jsx": {
+    "file": "assets/StudentProfile-DSYSbaP3.js",
+    "name": "StudentProfile",
+    "src": "resources/js/Pages/StudentProfile.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.jsx",
+      "_Layout-CeE1rDVH.js",
+      "_StudentProfile-zAObkKQ6.js",
+      "_arrow-left-CtKuVYYH.js",
+      "_save-4JHLglsg.js",
+      "_trash-2-sQ7MwQrL.js",
+      "_createLucideIcon-DbW9YTQP.js"
+    ]
+  },
+  "resources/js/Pages/StudentsHub.jsx": {
+    "file": "assets/StudentsHub-s-_F6Xk_.js",
+    "name": "StudentsHub",
+    "src": "resources/js/Pages/StudentsHub.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.jsx",
+      "_Layout-CeE1rDVH.js",
+      "_circle-alert-COv1gaad.js",
+      "_upload-C89B0lPG.js",
+      "_createLucideIcon-DbW9YTQP.js",
+      "_pen-CGOj4xrP.js",
+      "_trash-2-sQ7MwQrL.js",
+      "_download-BBI1Phgy.js",
+      "_square-pen-DswPiJZg.js"
+    ],
+    "dynamicImports": [
+      "resources/js/app.jsx",
+      "resources/js/app.jsx",
+      "resources/js/app.jsx"
+    ],
+    "css": [
+      "assets/StudentsHub-C_IKAEMf.css",
+      "assets/PromotionModal-Bs-TKksA.css"
+    ]
+  },
+  "resources/js/Pages/SubClasses.jsx": {
+    "file": "assets/SubClasses-BpWDl-0G.js",
+    "name": "SubClasses",
+    "src": "resources/js/Pages/SubClasses.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.jsx",
+      "_Layout-CeE1rDVH.js",
+      "_chevron-left-BtV8Ur9G.js",
+      "_plus-CGijhukh.js",
+      "_ellipsis-vertical-BEm6oAaW.js",
+      "_createLucideIcon-DbW9YTQP.js"
+    ],
+    "css": [
+      "assets/SubClasses-C2_W_WYI.css"
+    ]
+  },
+  "resources/js/Pages/TransactionDetail.jsx": {
+    "file": "assets/TransactionDetail-caXfIpzL.js",
+    "name": "TransactionDetail",
+    "src": "resources/js/Pages/TransactionDetail.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.jsx",
+      "_Layout-CeE1rDVH.js",
+      "_chevron-left-BtV8Ur9G.js",
+      "_download-BBI1Phgy.js",
+      "_circle-x-DvUNL53o.js",
+      "_createLucideIcon-DbW9YTQP.js"
+    ],
+    "css": [
+      "assets/TransactionDetail-CSxb-766.css"
+    ]
+  },
+  "resources/js/Pages/Transactions.jsx": {
+    "file": "assets/Transactions-CJWf4obq.js",
+    "name": "Transactions",
+    "src": "resources/js/Pages/Transactions.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.jsx",
+      "_Layout-CeE1rDVH.js",
+      "_createLucideIcon-DbW9YTQP.js"
+    ],
+    "css": [
+      "assets/Transactions-CmQP_sPg.css"
+    ]
+  },
+  "resources/js/app.jsx": {
+    "file": "assets/app-GQHqsw0R.js",
+    "name": "app",
+    "src": "resources/js/app.jsx",
+    "isEntry": true,
+    "isDynamicEntry": true,
+    "dynamicImports": [
+      "resources/js/Pages/AcademicSessions/Index.jsx",
+      "resources/js/Pages/AdminCare/AllAdmins.jsx",
+      "resources/js/Pages/AdminCare/Permissions.jsx",
+      "resources/js/Pages/AdminCare/Roles.jsx",
+      "resources/js/Pages/BankAccounts.jsx",
+      "resources/js/Pages/Business/BankAccounts.jsx",
+      "resources/js/Pages/Business/Settlements.jsx",
+      "resources/js/Pages/Classes.jsx",
+      "resources/js/Pages/Dashboard.jsx",
+      "resources/js/Pages/FeeDetails.jsx",
+      "resources/js/Pages/FeesManagement.jsx",
+      "resources/js/Pages/Login.jsx",
+      "resources/js/Pages/PaymentSchedule.jsx",
+      "resources/js/Pages/PaymentsOverview.jsx",
+      "resources/js/Pages/Profile.jsx",
+      "resources/js/Pages/Settings/Api.jsx",
+      "resources/js/Pages/Settings/Global.jsx",
+      "resources/js/Pages/Settings/Roles.jsx",
+      "resources/js/Pages/Settings/SettingsLayout.jsx",
+      "resources/js/Pages/Settings/Webhooks.jsx",
+      "resources/js/Pages/StudentProfile.jsx",
+      "resources/js/Pages/StudentsHub.jsx",
+      "resources/js/Pages/SubClasses.jsx",
+      "resources/js/Pages/TransactionDetail.jsx",
+      "resources/js/Pages/Transactions.jsx"
+    ],
+    "css": [
+      "assets/app-DpUn7wQv.css"
+    ]
+  }
+}
