@@ -12,7 +12,11 @@ import {
     ChevronDown,
     Settings,
     Shield,
-    X
+    X,
+    GraduationCap,
+    Zap,
+    Package,
+    Archive
 } from 'lucide-react';
 import VerifyPaymentModal from './VerifyPaymentModal';
 import { usePermission } from '../Hooks/usePermission';
@@ -150,6 +154,34 @@ const Sidebar = ({ institution, isOpen, onClose }) => {
                     <Link href="/academic-sessions" className={`nav-item ${isActive('/academic-sessions') ? 'active' : ''}`} onClick={onClose}>
                         <Calendar size={18} />
                         <span>Academic Sessions</span>
+                    </Link>
+                )}
+
+                {can('students.manage') && (
+                    <Link href="/scholarships" className={`nav-item ${isActive('/scholarships') ? 'active' : ''}`} onClick={onClose}>
+                        <GraduationCap size={18} />
+                        <span>Scholarships</span>
+                    </Link>
+                )}
+
+                {can('students.manage') && (
+                    <Link href="/bulk-operations" className={`nav-item ${isActive('/bulk-operations') ? 'active' : ''}`} onClick={onClose}>
+                        <Zap size={18} />
+                        <span>Bulk Ops</span>
+                    </Link>
+                )}
+
+                {can('students.manage') && (
+                    <Link href="/alumni" className={`nav-item ${isActive('/alumni') ? 'active' : ''}`} onClick={onClose}>
+                        <Archive size={18} />
+                        <span>Alumni</span>
+                    </Link>
+                )}
+
+                {can('inventory.manage') && (
+                    <Link href="/inventory" className={`nav-item ${isActive('/inventory') ? 'active' : ''}`} onClick={onClose}>
+                        <Package size={18} />
+                        <span>Inventory</span>
                     </Link>
                 )}
 

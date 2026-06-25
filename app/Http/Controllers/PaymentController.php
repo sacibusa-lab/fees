@@ -524,7 +524,10 @@ class PaymentController extends Controller
         }
 
         $students = $studentsQuery->with(['schoolClass', 'virtualAccount', 'adjustments' => function($q) use ($sessionId, $term) {
-                $q->where('session_id', $sessionId)->where('term', $term);
+                $q->where('session_id', $sessionId)
+                  ->where(function($subQ) use ($term) {
+                      $subQ->where('term', $term)->orWhereNull('term');
+                  });
             }])
             ->orderBy('name', 'asc')
             ->get();

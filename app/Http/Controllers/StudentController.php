@@ -626,4 +626,48 @@ class StudentController extends Controller
 
         return redirect()->back()->with($failCount > 0 ? 'warning' : 'success', $message);
     }
+
+    /**
+     * Bulk move graduated students to the alumni table
+     */
+    public function bulkMoveToAlumni(Request $request)
+    {
+        $validated = $request->validate([
+            'student_ids' => 'required|array',
+            'student_ids.*' => 'exists:students,id',
+        ]);
+
+        $institutionId = auth()->user()->institution_id;
+        $currentTerm = null;
+        $currentSession = \App\Models\Session::where('institution_id', $institutionId)
+            ->where('is_current', true)->first();
+        $currentTerm = $currentSession?->current_term;
+
+        $students = Student::whereIn('id', $validated['student_ids'])
+            ->where('institution_id', $institutionId)
+            ->get();
+
+        $moved = 0;
+
+        foreach ($students as $student) {
+            \App\Models\Alumnus::create([
+                'institution_id' => $institutionId,
+                'original_student_id' => $student->id,
+                'last_class_id' => $student->class_id,
+                'admission_number' => $student->admission_number,
+                'name' => $student->name,
+                'gender' => $student->gender,
+                'email' => $student->email,
+                'phone' => $student->phone,
+                'graduation_year' => now()->format('Y'),
+                'graduation_term' => $currentTerm,
+                'graduated_at' => now(),
+            ]);
+
+            $student->delete();
+            $moved++;
+        }
+
+        return redirect()->back()->with('success', "{$moved} students moved to alumni records.");
+    }
 }

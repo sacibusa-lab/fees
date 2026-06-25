@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('institution_id')->constrained()->onDelete('cascade');
             $table->foreignId('student_id')->constrained()->onDelete('cascade');
             $table->foreignId('session_id')->constrained()->onDelete('cascade');
-            $table->string('term');
+            $table->string('term')->nullable();
             $table->decimal('amount', 12, 2); // Positive for addition, negative for subtraction
             $table->string('description')->nullable();
             $table->timestamps();

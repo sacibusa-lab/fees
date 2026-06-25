@@ -47,6 +47,15 @@ class RolesAndPermissionsSeeder extends Seeder
             'Admin Care' => [
                 ['name' => 'Manage Admins', 'slug' => 'admin-care.manage'],
             ],
+            'Scholarships' => [
+                ['name' => 'Manage Scholarships', 'slug' => 'scholarships.manage'],
+            ],
+            'Alumni' => [
+                ['name' => 'Manage Alumni', 'slug' => 'alumni.manage'],
+            ],
+            'Inventory' => [
+                ['name' => 'Manage Inventory', 'slug' => 'inventory.manage'],
+            ],
         ];
 
         // Upsert permissions (safe to re-run)

@@ -12,6 +12,10 @@ use App\Http\Controllers\BankAccountController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\AcademicSessionController;
 use App\Http\Controllers\SettlementController;
+use App\Http\Controllers\ScholarshipController;
+use App\Http\Controllers\BulkOperationsController;
+use App\Http\Controllers\AlumniController;
+use App\Http\Controllers\InventoryController;
 
 Route::get('/', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
@@ -120,6 +124,45 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/settlements/mark-disbursed', [SettlementController::class, 'markAsDisbursed'])
         ->middleware('permission:payments.manage')
         ->name('settlements.disburse');
+
+    // Scholarships & Bursaries
+    Route::middleware('permission:students.manage')->group(function () {
+        Route::get('/scholarships', [ScholarshipController::class, 'index'])->name('scholarships.index');
+        Route::post('/scholarships', [ScholarshipController::class, 'store'])->name('scholarships.store');
+        Route::post('/scholarships/{scholarship}/update', [ScholarshipController::class, 'update'])->name('scholarships.update');
+        Route::post('/scholarships/{scholarship}/approve', [ScholarshipController::class, 'approve'])->name('scholarships.approve');
+        Route::post('/scholarships/{scholarship}/reject', [ScholarshipController::class, 'reject'])->name('scholarships.reject');
+        Route::delete('/scholarships/{scholarship}', [ScholarshipController::class, 'destroy'])->name('scholarships.destroy');
+    });
+
+    // Bulk Operations Dashboard
+    Route::middleware('permission:students.manage')->group(function () {
+        Route::get('/bulk-operations', [BulkOperationsController::class, 'index'])->name('bulk-operations.index');
+        Route::post('/bulk-operations/promote', [BulkOperationsController::class, 'promote'])->name('bulk-operations.promote');
+        Route::post('/bulk-operations/graduate', [BulkOperationsController::class, 'graduate'])->name('bulk-operations.graduate');
+        Route::post('/bulk-operations/generate-dva', [BulkOperationsController::class, 'generateVirtualAccounts'])->name('bulk-operations.generate-dva');
+        Route::post('/bulk-operations/set-payment-status', [BulkOperationsController::class, 'setPaymentStatus'])->name('bulk-operations.set-payment-status');
+        Route::post('/bulk-operations/apply-fee', [BulkOperationsController::class, 'applyFeeToClass'])->name('bulk-operations.apply-fee');
+    });
+
+    // Alumni Management
+    Route::middleware('permission:students.manage')->group(function () {
+        Route::get('/alumni', [AlumniController::class, 'index'])->name('alumni.index');
+        Route::post('/alumni/{id}/restore', [AlumniController::class, 'restore'])->name('alumni.restore');
+        Route::delete('/alumni/{id}', [AlumniController::class, 'destroy'])->name('alumni.destroy');
+        Route::post('/students/bulk-move-to-alumni', [App\Http\Controllers\StudentController::class, 'bulkMoveToAlumni'])->name('students.bulk-move-to-alumni');
+    });
+
+    // Inventory Management (Storekeeper Module)
+    Route::middleware('permission:inventory.manage')->group(function () {
+        Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory.index');
+        Route::post('/inventory/categories', [InventoryController::class, 'storeCategory'])->name('inventory.categories.store');
+        Route::delete('/inventory/categories/{id}', [InventoryController::class, 'deleteCategory'])->name('inventory.categories.delete');
+        Route::post('/inventory/items', [InventoryController::class, 'storeItem'])->name('inventory.items.store');
+        Route::post('/inventory/items/{id}', [InventoryController::class, 'updateItem'])->name('inventory.items.update');
+        Route::post('/inventory/stock/add', [InventoryController::class, 'addStock'])->name('inventory.stock.add');
+        Route::post('/inventory/stock/issue', [InventoryController::class, 'issueItem'])->name('inventory.stock.issue');
+    });
 
     Route::get('/academic-sessions', [AcademicSessionController::class, 'index'])->name('academic-sessions.index');
     
