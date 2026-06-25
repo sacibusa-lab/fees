@@ -82,19 +82,16 @@ class PaymentController extends Controller
         $totalStudentCount = Student::where('institution_id', $institutionId)->count();
 
         $breakdown = $classes->map(function ($class) use ($institutionId, $activeFees, $currentSession, $term, &$expectedAmount) {
-            $classStudentCount = Student::where('class_id', $class->id)->count();
+            $classStudentIds = Student::where('class_id', $class->id)->pluck('id');
+            $classStudentCount = $classStudentIds->count();
             
             // Calculate total fee for this specific class for the selected term/session
             $classUnitFee = 0;
             foreach ($activeFees as $fee) {
-                // Check if fee is active for this term
                 if (!$fee->isActiveForTerm($term)) continue;
-
                 $override = $fee->overrides->where('class_id', $class->id)->first();
                 if ($override) {
-                    if ($override->status === 'active') {
-                        $classUnitFee += $override->amount;
-                    }
+                    if ($override->status === 'active') $classUnitFee += $override->amount;
                 } else {
                     $classUnitFee += $fee->getAmountForTerm($term);
                 }
@@ -106,33 +103,30 @@ class PaymentController extends Controller
             // Get transactions for this class, session, and term
             $transactionsQuery = Transaction::where('institution_id', $institutionId)
                 ->where('status', 'success')
-                ->whereHas('student', function($q) use ($class) {
-                    $q->where('class_id', $class->id);
-                });
-            
-            // We need to filter transactions by session and term in metadata
-            // Cast to string for reliable JSON comparison across MySQL versions
-            $transactionsQuery->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(metadata, '$.session_id')) = ?", [(string)$currentSession->id])
-                              ->where('metadata->term', $term);
+                ->whereHas('student', fn($q) => $q->where('class_id', $class->id))
+                ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(metadata, '$.session_id')) = ?", [(string)$currentSession->id])
+                ->where('metadata->term', $term);
 
-            // If a specific fee is filtered
             if ($activeFees->count() === 1) {
                 $transactionsQuery->where('fee_id', $activeFees->first()->id);
             }
 
             $classReceived = $transactionsQuery->sum('amount');
-
-            // 1. Unique students who have paid SOMETHING
             $classPayerCount = (clone $transactionsQuery)->distinct('student_id')->count('student_id');
 
-            // 2. Count students who have fully paid the unit fee
-            // This is more complex but we can estimate or precisely count if we query by student
+            // Calculate adjustments (discounts) for this class, session, and term
+            $classDiscount = StudentAdjustment::where('institution_id', $institutionId)
+                ->whereIn('student_id', $classStudentIds)
+                ->where('session_id', $currentSession->id)
+                ->where(function($q) use ($term) {
+                    $q->where('term', $term)->orWhereNull('term');
+                })
+                ->where('amount', '<', 0)
+                ->sum('amount');
+
+            // 2. Count students who have fully paid the unit fee (considering adjustments)
             $classCompletedCount = 0;
-            if ($classUnitFee > 0) {
-                 // Get all unique student IDs for this class
-                 $classStudentIds = Student::where('class_id', $class->id)->pluck('id');
-                 
-                 // Sum payments per student for this context
+            if ($classUnitFee > 0 && $classStudentCount > 0) {
                  $studentPayments = Transaction::where('institution_id', $institutionId)
                     ->where('status', 'success')
                     ->whereIn('student_id', $classStudentIds)
@@ -145,14 +139,32 @@ class PaymentController extends Controller
 
                  $paidTotals = $studentPayments->groupBy('student_id')
                     ->select('student_id', DB::raw('SUM(amount) as total'))
-                    ->get();
+                    ->get()
+                    ->keyBy('student_id');
 
-                 $classCompletedCount = $paidTotals->filter(function($p) use ($classUnitFee) {
-                    return $p->total >= $classUnitFee;
-                 })->count();
+                 // Get per-student adjustments
+                 $studentAdjustments = StudentAdjustment::where('institution_id', $institutionId)
+                    ->whereIn('student_id', $classStudentIds)
+                    ->where('session_id', $currentSession->id)
+                    ->where(function($q) use ($term) {
+                        $q->where('term', $term)->orWhereNull('term');
+                    })
+                    ->select('student_id', DB::raw('SUM(amount) as total'))
+                    ->groupBy('student_id')
+                    ->get()
+                    ->keyBy('student_id');
+
+                 $classCompletedCount = 0;
+                 foreach ($classStudentIds as $sid) {
+                     $paid = (float)($paidTotals[$sid]->total ?? 0);
+                     $adj = (float)($studentAdjustments[$sid]->total ?? 0);
+                     $netDue = $classUnitFee + $adj; // adj is negative for discounts
+                     if ($paid >= $netDue) $classCompletedCount++;
+                 }
             }
 
             $classDebtCount = max(0, $classStudentCount - $classCompletedCount);
+            $netExpected = $classExpected + abs($classDiscount); // discounts reduce what's effectively owed
 
             return [
                 'id' => $class->id,
@@ -160,11 +172,11 @@ class PaymentController extends Controller
                 'flatAmount' => (float) $classUnitFee,
                 'expected' => number_format($classExpected) . ' (' . $classStudentCount . ')',
                 'totalReceived' => number_format($classReceived) . ' (' . $classPayerCount . ')',
-                'completed' => number_format($classReceived * ($classCompletedCount > 0 ? ($classCompletedCount/$classStudentCount) : 0)) . ' (' . $classCompletedCount . ')', // Approximation for value
-                'partPayment' => '0 (0)', // Could be refined
-                'debt' => number_format(max(0, $classExpected - $classReceived)) . ' (' . $classDebtCount . ')',
-                'progress' => (int) ($classExpected > 0 ? ($classReceived / $classExpected) * 100 : 0),
-                'discount' => 0.0,
+                'completed' => number_format($classReceived * ($classCompletedCount > 0 ? ($classCompletedCount/$classStudentCount) : 0)) . ' (' . $classCompletedCount . ')',
+                'partPayment' => '0 (0)',
+                'debt' => number_format(max(0, $classExpected - $classReceived + $classDiscount)) . ' (' . $classDebtCount . ')',
+                'progress' => (int) ($netExpected > 0 ? (($classReceived + abs($classDiscount)) / $netExpected) * 100 : 0),
+                'discount' => abs($classDiscount),
                 'extraCharge' => 0.0,
             ];
         });
@@ -183,14 +195,23 @@ class PaymentController extends Controller
         $totalReceivedAmount = $totalReceivedQuery->sum('amount');
         $totalPayerCount = (clone $totalReceivedQuery)->distinct('student_id')->count('student_id');
 
-        // For summary cards, we use the total unique payer count as the 'completed' figure for now
+        // Calculate total discounts across all students for this session/term
+        $totalDiscount = StudentAdjustment::where('institution_id', $institutionId)
+            ->where('session_id', $currentSession->id)
+            ->where(function($q) use ($term) {
+                $q->where('term', $term)->orWhereNull('term');
+            })
+            ->where('amount', '<', 0)
+            ->sum('amount');
+
         $completedCount = $totalPayerCount;
+        $netDebt = max(0, $expectedAmount - $totalReceivedAmount + $totalDiscount);
 
         $stats = [
             ['label' => 'RECEIVED', 'amount' => '₦' . number_format($totalReceivedAmount), 'count' => $totalPayerCount],
             ['label' => 'EXPECTED', 'amount' => '₦' . number_format($expectedAmount), 'count' => $totalStudentCount],
-            ['label' => 'DEBT', 'amount' => '₦' . number_format(max(0, $expectedAmount - $totalReceivedAmount)), 'count' => max(0, $totalStudentCount - $completedCount)],
-            ['label' => 'DISCOUNT APPLIED', 'amount' => '₦0', 'count' => 0],
+            ['label' => 'DEBT', 'amount' => '₦' . number_format($netDebt), 'count' => max(0, $totalStudentCount - $completedCount)],
+            ['label' => 'DISCOUNT APPLIED', 'amount' => '₦' . number_format(abs($totalDiscount)), 'count' => 0],
             ['label' => 'EXTRA APPLIED', 'amount' => '₦0', 'count' => 0],
         ];
 
