@@ -40,4 +40,9 @@ class Transaction extends Model
     {
         return $this->belongsTo(Fee::class);
     }
+
+    public function webhookEvents()
+    {
+        return $this->hasMany(WebhookEvent::class, 'reference', 'reference');
+    }
 }

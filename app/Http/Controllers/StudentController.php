@@ -107,6 +107,9 @@ class StudentController extends Controller
             'sub_class_id' => 'required|exists:sub_classes,id',
             'phone' => 'nullable|string|max:20',
             'email' => 'nullable|email|max:255',
+            'guardian_name' => 'nullable|string|max:255',
+            'guardian_phone' => 'nullable|string|max:20',
+            'address' => 'nullable|string',
         ]);
 
         $student->update([
@@ -116,6 +119,9 @@ class StudentController extends Controller
             'sub_class_id' => $validated['sub_class_id'],
             'phone' => $validated['phone'] ?? $student->phone,
             'email' => $validated['email'] ?? $student->email,
+            'guardian_name' => $validated['guardian_name'] ?? $student->guardian_name,
+            'guardian_phone' => $validated['guardian_phone'] ?? $student->guardian_phone,
+            'address' => $validated['address'] ?? $student->address,
         ]);
 
         return redirect()->back()->with('success', 'Student updated successfully');
@@ -169,7 +175,7 @@ class StudentController extends Controller
 
         $callback = function() use ($students) {
             $file = fopen('php://output', 'w');
-            fputcsv($file, ['ID', 'Name', 'Admission Number', 'Class', 'Sub Class', 'Gender', 'Guardian Phone', 'Payment Status']);
+            fputcsv($file, ['ID', 'Name', 'Admission Number', 'Class', 'Sub Class', 'Gender', 'Phone', 'Email', 'Guardian Name', 'Guardian Phone', 'Address', 'Payment Status']);
 
             foreach ($students as $student) {
                 fputcsv($file, [
@@ -179,7 +185,11 @@ class StudentController extends Controller
                     $student->schoolClass->name ?? 'N/A',
                     $student->subClass->name ?? 'N/A',
                     $student->gender,
+                    $student->phone ?? 'N/A',
+                    $student->email ?? 'N/A',
+                    $student->guardian_name ?? 'N/A',
                     $student->guardian_phone ?? 'N/A',
+                    $student->address ?? 'N/A',
                     $student->payment_status
                 ]);
             }
@@ -200,9 +210,9 @@ class StudentController extends Controller
         $callback = function() {
             $file = fopen('php://output', 'w');
             // Headers matches the columns we expect
-            fputcsv($file, ['Full Name', 'Admission Number', 'Gender (Male/Female)', 'Phone', 'Email']);
+            fputcsv($file, ['Full Name', 'Admission Number', 'Gender (Male/Female)', 'Phone', 'Email', 'Guardian Name', 'Guardian Phone', 'Address']);
             // Example row
-            fputcsv($file, ['John Doe', 'ADM/2026/001', 'Male', '08012345678', 'john@example.com']);
+            fputcsv($file, ['John Doe', 'ADM/2026/001', 'Male', '08012345678', 'john@example.com', 'Jane Doe', '08098765432', '123 Main Street, City']);
             fclose($file);
         };
 
@@ -239,6 +249,9 @@ class StudentController extends Controller
                     'gender' => isset($row[2]) ? trim($row[2]) : null,
                     'phone' => isset($row[3]) ? trim($row[3]) : null,
                     'email' => isset($row[4]) ? trim($row[4]) : null,
+                    'guardian_name' => isset($row[5]) ? trim($row[5]) : null,
+                    'guardian_phone' => isset($row[6]) ? trim($row[6]) : null,
+                    'address' => isset($row[7]) ? trim($row[7]) : null,
                     'institution_id' => auth()->user()->institution_id,
                     'payment_status' => 'pending'
                 ]
@@ -270,6 +283,9 @@ class StudentController extends Controller
             'admission_number' => 'nullable|string|unique:students,admission_number',
             'phone' => 'nullable|string|max:20',
             'email' => 'nullable|email|max:255',
+            'guardian_name' => 'nullable|string|max:255',
+            'guardian_phone' => 'nullable|string|max:20',
+            'address' => 'nullable|string',
         ]);
 
         if ($request->boolean('auto_reg')) {
@@ -287,6 +303,9 @@ class StudentController extends Controller
              'admission_number' => $validated['admission_number'],
              'phone' => $validated['phone'] ?? null,
              'email' => $validated['email'] ?? null,
+             'guardian_name' => $validated['guardian_name'] ?? null,
+             'guardian_phone' => $validated['guardian_phone'] ?? null,
+             'address' => $validated['address'] ?? null,
              'institution_id' => auth()->user()->institution_id,
              'status' => 'active',
              'payment_status' => 'pending',

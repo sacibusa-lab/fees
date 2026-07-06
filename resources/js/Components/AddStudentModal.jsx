@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useForm } from '@inertiajs/react';
-import { X, Upload, FileText, AlertCircle, Check } from 'lucide-react';
+import { X, Upload, ChevronRight, ChevronLeft, User, Phone } from 'lucide-react';
 import './PromotionModal.css'; // Reusing base modal styles
 import './AddStudentModal.css'; // New styles for tabs and specific form inputs
 
@@ -8,6 +8,7 @@ const AddStudentModal = ({ show, onClose, classes = [], subClasses = [] }) => {
     if (!show) return null;
 
     const [activeTab, setActiveTab] = useState('single'); // 'single' or 'multiple'
+    const [step, setStep] = useState(1); // 1 = Student Info, 2 = Contact Details
 
     // Single Student Form
     const { data: singleData, setData: setSingleData, post: postSingle, processing: singleProcessing, errors: singleErrors, reset: resetSingle } = useForm({
@@ -19,6 +20,9 @@ const AddStudentModal = ({ show, onClose, classes = [], subClasses = [] }) => {
         admission_number: '',
         phone: '',
         email: '',
+        guardian_name: '',
+        guardian_phone: '',
+        address: '',
     });
 
     // Multiple Student (CSV) Form
@@ -31,11 +35,23 @@ const AddStudentModal = ({ show, onClose, classes = [], subClasses = [] }) => {
     // Use all sub-classes globally
     const filteredSubClasses = subClasses;
 
+    const handleNext = () => {
+        // Basic validation before proceeding
+        if (!singleData.name || !singleData.gender || !singleData.class_id || !singleData.sub_class_id) return;
+        if (!singleData.auto_reg && !singleData.admission_number) return;
+        setStep(2);
+    };
+
+    const handleBack = () => {
+        setStep(1);
+    };
+
     const handleSingleSubmit = (e) => {
         e.preventDefault();
         postSingle('/students', {
             onSuccess: () => {
                 resetSingle();
+                setStep(1);
                 onClose();
             }
         });
@@ -56,6 +72,11 @@ const AddStudentModal = ({ show, onClose, classes = [], subClasses = [] }) => {
         setMultiData('file', e.target.files[0]);
     };
 
+    const handleTabSwitch = (tab) => {
+        setActiveTab(tab);
+        setStep(1);
+    };
+
     return (
         <div className="modal-overlay" onClick={onClose}>
             <div className="modal-content add-student-modal" onClick={e => e.stopPropagation()}>
@@ -71,13 +92,13 @@ const AddStudentModal = ({ show, onClose, classes = [], subClasses = [] }) => {
                 <div className="modal-tabs">
                     <button
                         className={`tab-btn ${activeTab === 'single' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('single')}
+                        onClick={() => handleTabSwitch('single')}
                     >
                         Single Student
                     </button>
                     <button
                         className={`tab-btn ${activeTab === 'multiple' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('multiple')}
+                        onClick={() => handleTabSwitch('multiple')}
                     >
                         Multiple Students (CSV)
                     </button>
@@ -85,128 +106,201 @@ const AddStudentModal = ({ show, onClose, classes = [], subClasses = [] }) => {
 
                 {activeTab === 'single' ? (
                     <form onSubmit={handleSingleSubmit} className="student-form">
-                        <div className="form-group">
-                            <label>Full Name</label>
-                            <input
-                                type="text"
-                                placeholder="Student full name"
-                                value={singleData.name}
-                                onChange={e => setSingleData('name', e.target.value)}
-                                className={singleErrors.name ? 'error-input' : ''}
-                            />
-                            {singleErrors.name && <span className="error-msg">{singleErrors.name}</span>}
+                        {/* Step Indicator */}
+                        <div className="step-indicator">
+                            <div className={`step-item ${step === 1 ? 'active' : ''} ${step > 1 ? 'completed' : ''}`}>
+                                <div className="step-circle">
+                                    {step > 1 ? <span className="step-check">&#10003;</span> : <User size={14} />}
+                                </div>
+                                <span className="step-label">Student Info</span>
+                            </div>
+                            <div className="step-line">
+                                <div className={`step-line-fill ${step > 1 ? 'filled' : ''}`}></div>
+                            </div>
+                            <div className={`step-item ${step === 2 ? 'active' : ''}`}>
+                                <div className="step-circle">
+                                    <Phone size={14} />
+                                </div>
+                                <span className="step-label">Contact Details</span>
+                            </div>
                         </div>
 
-                        <div className="form-group">
-                            <label>Gender</label>
-                            <input
-                                type="text"
-                                placeholder="Gender"
-                                value={singleData.gender}
-                                onChange={e => setSingleData('gender', e.target.value)}
-                                // Ideally a select but the request implies text input or specific format
-                                // Let's use select for better UX
-                                className={singleErrors.gender ? 'hidden' : 'hidden'}
-                            />
-                            <select
-                                value={singleData.gender}
-                                onChange={e => setSingleData('gender', e.target.value)}
-                                className={singleErrors.gender ? 'error-input' : ''}
-                            >
-                                <option value="">Gender</option>
-                                <option value="Male">Male</option>
-                                <option value="Female">Female</option>
-                            </select>
-                            {singleErrors.gender && <span className="error-msg">{singleErrors.gender}</span>}
-                        </div>
+                        {/* Step 1: Student Info */}
+                        {step === 1 && (
+                            <div className="step-content">
+                                <div className="form-group">
+                                    <label>Full Name <span className="required">*</span></label>
+                                    <input
+                                        type="text"
+                                        placeholder="Student full name"
+                                        value={singleData.name}
+                                        onChange={e => setSingleData('name', e.target.value)}
+                                        className={singleErrors.name ? 'error-input' : ''}
+                                    />
+                                    {singleErrors.name && <span className="error-msg">{singleErrors.name}</span>}
+                                </div>
 
-                        <div className="form-group">
-                            <label>Class</label>
-                            <select
-                                value={singleData.class_id}
-                                onChange={e => setSingleData('class_id', e.target.value)}
-                                className={singleErrors.class_id ? 'error-input' : ''}
-                            >
-                                <option value="">--Select class--</option>
-                                {classes.map(cls => (
-                                    <option key={cls.id} value={cls.id}>{cls.name}</option>
-                                ))}
-                            </select>
-                            {singleErrors.class_id && <span className="error-msg">{singleErrors.class_id}</span>}
-                        </div>
+                                <div className="form-row">
+                                    <div className="form-group">
+                                        <label>Gender <span className="required">*</span></label>
+                                        <select
+                                            value={singleData.gender}
+                                            onChange={e => setSingleData('gender', e.target.value)}
+                                            className={singleErrors.gender ? 'error-input' : ''}
+                                        >
+                                            <option value="">Select Gender</option>
+                                            <option value="Male">Male</option>
+                                            <option value="Female">Female</option>
+                                        </select>
+                                        {singleErrors.gender && <span className="error-msg">{singleErrors.gender}</span>}
+                                    </div>
 
-                        <div className="form-group">
-                            <label>Subclass</label>
-                            <select
-                                value={singleData.sub_class_id}
-                                onChange={e => setSingleData('sub_class_id', e.target.value)}
-                                className={singleErrors.sub_class_id ? 'error-input' : ''}
-                            >
-                                <option value="">Select Subclass</option>
-                                {filteredSubClasses.map(sc => (
-                                    <option key={sc.id} value={sc.id}>{sc.name}</option>
-                                ))}
-                            </select>
-                            {singleErrors.sub_class_id && <span className="error-msg">{singleErrors.sub_class_id}</span>}
-                        </div>
+                                    <div className="form-group">
+                                        <label>Class <span className="required">*</span></label>
+                                        <select
+                                            value={singleData.class_id}
+                                            onChange={e => setSingleData('class_id', e.target.value)}
+                                            className={singleErrors.class_id ? 'error-input' : ''}
+                                        >
+                                            <option value="">--Select class--</option>
+                                            {classes.map(cls => (
+                                                <option key={cls.id} value={cls.id}>{cls.name}</option>
+                                            ))}
+                                        </select>
+                                        {singleErrors.class_id && <span className="error-msg">{singleErrors.class_id}</span>}
+                                    </div>
+                                </div>
 
-                        <div className="form-group">
-                            <label>Phone Number</label>
-                            <input
-                                type="text"
-                                placeholder="Student or Parent phone"
-                                value={singleData.phone}
-                                onChange={e => setSingleData('phone', e.target.value)}
-                                className={singleErrors.phone ? 'error-input' : ''}
-                            />
-                            {singleErrors.phone && <span className="error-msg">{singleErrors.phone}</span>}
-                        </div>
+                                <div className="form-group">
+                                    <label>Subclass <span className="required">*</span></label>
+                                    <select
+                                        value={singleData.sub_class_id}
+                                        onChange={e => setSingleData('sub_class_id', e.target.value)}
+                                        className={singleErrors.sub_class_id ? 'error-input' : ''}
+                                    >
+                                        <option value="">Select Subclass</option>
+                                        {filteredSubClasses.map(sc => (
+                                            <option key={sc.id} value={sc.id}>{sc.name}</option>
+                                        ))}
+                                    </select>
+                                    {singleErrors.sub_class_id && <span className="error-msg">{singleErrors.sub_class_id}</span>}
+                                </div>
 
-                        <div className="form-group">
-                            <label>Email Address</label>
-                            <input
-                                type="email"
-                                placeholder="For virtual account generation"
-                                value={singleData.email}
-                                onChange={e => setSingleData('email', e.target.value)}
-                                className={singleErrors.email ? 'error-input' : ''}
-                            />
-                            {singleErrors.email && <span className="error-msg">{singleErrors.email}</span>}
-                        </div>
+                                <div className="form-checkbox-group">
+                                    <label className="checkbox-container">
+                                        <input
+                                            type="checkbox"
+                                            checked={singleData.auto_reg}
+                                            onChange={e => setSingleData('auto_reg', e.target.checked)}
+                                        />
+                                        <span className="checkmark"></span>
+                                        Auto generate reg number ?
+                                    </label>
+                                </div>
 
-                        <div className="form-checkbox-group">
-                            <label className="checkbox-container">
-                                <input
-                                    type="checkbox"
-                                    checked={singleData.auto_reg}
-                                    onChange={e => setSingleData('auto_reg', e.target.checked)}
-                                />
-                                <span className="checkmark"></span>
-                                Auto generate reg number ?
-                            </label>
-                        </div>
+                                {!singleData.auto_reg && (
+                                    <div className="form-group">
+                                        <label>Reg Number <span className="required">*</span></label>
+                                        <input
+                                            type="text"
+                                            placeholder="Enter Reg Number"
+                                            value={singleData.admission_number}
+                                            onChange={e => setSingleData('admission_number', e.target.value)}
+                                            className={singleErrors.admission_number ? 'error-input' : ''}
+                                        />
+                                        {singleErrors.admission_number && <span className="error-msg">{singleErrors.admission_number}</span>}
+                                    </div>
+                                )}
 
-                        {!singleData.auto_reg && (
-                            <div className="form-group">
-                                <label>Reg Number</label>
-                                <input
-                                    type="text"
-                                    placeholder="Enter Reg Number"
-                                    value={singleData.admission_number}
-                                    onChange={e => setSingleData('admission_number', e.target.value)}
-                                    className={singleErrors.admission_number ? 'error-input' : ''}
-                                />
-                                {singleErrors.admission_number && <span className="error-msg">{singleErrors.admission_number}</span>}
+                                <div className="step-actions">
+                                    <button
+                                        type="button"
+                                        className="btn-next"
+                                        onClick={handleNext}
+                                    >
+                                        Next <ChevronRight size={18} />
+                                    </button>
+                                </div>
                             </div>
                         )}
 
-                        <button
-                            type="submit"
-                            className="btn-promote full-width mt-6"
-                            disabled={singleProcessing}
-                        >
-                            {singleProcessing ? 'Saving...' : 'Save'}
-                        </button>
+                        {/* Step 2: Contact Details */}
+                        {step === 2 && (
+                            <div className="step-content">
+                                <div className="form-group">
+                                    <label>Phone Number</label>
+                                    <input
+                                        type="text"
+                                        placeholder="Student phone number"
+                                        value={singleData.phone}
+                                        onChange={e => setSingleData('phone', e.target.value)}
+                                        className={singleErrors.phone ? 'error-input' : ''}
+                                    />
+                                    {singleErrors.phone && <span className="error-msg">{singleErrors.phone}</span>}
+                                </div>
+
+                                <div className="form-group">
+                                    <label>Email Address</label>
+                                    <input
+                                        type="email"
+                                        placeholder="For virtual account generation"
+                                        value={singleData.email}
+                                        onChange={e => setSingleData('email', e.target.value)}
+                                        className={singleErrors.email ? 'error-input' : ''}
+                                    />
+                                    {singleErrors.email && <span className="error-msg">{singleErrors.email}</span>}
+                                </div>
+
+                                <div className="form-row">
+                                    <div className="form-group">
+                                        <label>Guardian Name</label>
+                                        <input
+                                            type="text"
+                                            placeholder="Parent or guardian full name"
+                                            value={singleData.guardian_name}
+                                            onChange={e => setSingleData('guardian_name', e.target.value)}
+                                        />
+                                    </div>
+
+                                    <div className="form-group">
+                                        <label>Guardian Phone</label>
+                                        <input
+                                            type="tel"
+                                            placeholder="Parent or guardian phone"
+                                            value={singleData.guardian_phone}
+                                            onChange={e => setSingleData('guardian_phone', e.target.value)}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="form-group">
+                                    <label>Address</label>
+                                    <textarea
+                                        placeholder="Residential address"
+                                        value={singleData.address}
+                                        onChange={e => setSingleData('address', e.target.value)}
+                                        rows={2}
+                                    />
+                                </div>
+
+                                <div className="step-actions">
+                                    <button
+                                        type="button"
+                                        className="btn-back"
+                                        onClick={handleBack}
+                                    >
+                                        <ChevronLeft size={18} /> Back
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        className="btn-promote full-width"
+                                        disabled={singleProcessing}
+                                    >
+                                        {singleProcessing ? 'Saving...' : 'Save Student'}
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </form>
                 ) : (
                     <form onSubmit={handleMultiSubmit} className="student-form">

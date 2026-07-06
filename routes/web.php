@@ -55,9 +55,9 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/classes', [ClassController::class, 'index'])->name('classes.index');
         Route::get('/sub-classes', [ClassController::class, 'subClasses'])->name('sub-classes.index');
         Route::get('/', [StudentController::class, 'index'])->name('students.index');
-        Route::get('/{student}', [StudentController::class, 'show'])->name('students.show');
         Route::get('/export', [StudentController::class, 'export'])->name('students.export');
         Route::get('/template', [StudentController::class, 'downloadTemplate'])->name('students.template');
+        Route::get('/{student}', [StudentController::class, 'show'])->name('students.show');
 
         Route::middleware('permission:students.manage')->group(function () {
             Route::put('/classes/{schoolClass}', [ClassController::class, 'update'])->name('classes.update');

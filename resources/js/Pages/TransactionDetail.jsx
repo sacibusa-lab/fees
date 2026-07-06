@@ -7,7 +7,7 @@ import './TransactionDetail.css';
 const TransactionDetail = ({ transaction }) => {
     const [activeTab, setActiveTab] = useState('payment_history');
 
-    const { transaction_info, fee_info, student_info, payment_history, beneficiaries } = transaction;
+    const { transaction_info, fee_info, student_info, payment_history, beneficiaries, webhook_events } = transaction;
 
     const getStatusClass = (status) => {
         switch (status?.toLowerCase()) {
@@ -182,6 +182,12 @@ const TransactionDetail = ({ transaction }) => {
                         >
                             Comments
                         </button>
+                        <button
+                            className={`tab-btn ${activeTab === 'webhook' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('webhook')}
+                        >
+                            Webhook Payload
+                        </button>
                     </div>
 
                     <div className="tab-content">
@@ -239,6 +245,31 @@ const TransactionDetail = ({ transaction }) => {
                         )}
                         {activeTab === 'comments' && (
                             <div className="empty-state">No comments for this transaction.</div>
+                        )}
+                        {activeTab === 'webhook' && (
+                            <div className="webhook-payloads">
+                                {webhook_events && webhook_events.length > 0 ? (
+                                    webhook_events.map((event) => (
+                                        <div key={event.id} className="webhook-event-card">
+                                            <div className="webhook-event-header">
+                                                <div className="webhook-event-meta">
+                                                    <span className="webhook-event-type">{event.event_type}</span>
+                                                    <span className={`webhook-status-badge ${event.status}`}>{event.status}</span>
+                                                </div>
+                                                <span className="webhook-event-time">{event.created_at}</span>
+                                            </div>
+                                            {event.error_message && (
+                                                <div className="webhook-error">{event.error_message}</div>
+                                            )}
+                                            <div className="webhook-payload-json">
+                                                <pre>{JSON.stringify(event.payload, null, 2)}</pre>
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="empty-state">No webhook events found for this transaction.</div>
+                                )}
+                            </div>
                         )}
                     </div>
                 </div>

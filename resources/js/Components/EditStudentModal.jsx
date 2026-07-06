@@ -14,6 +14,9 @@ const EditStudentModal = ({ show, onClose, student, classes = [], subClasses = [
         sub_class_id: '',
         phone: '',
         email: '',
+        guardian_name: '',
+        guardian_phone: '',
+        address: '',
     });
 
     useEffect(() => {
@@ -25,6 +28,9 @@ const EditStudentModal = ({ show, onClose, student, classes = [], subClasses = [
                 sub_class_id: student.sub_class_id || '',
                 phone: student.phone || '',
                 email: student.email || '',
+                guardian_name: student.guardian_name || '',
+                guardian_phone: student.guardian_phone || '',
+                address: student.address || '',
             });
         }
     }, [student]);
@@ -139,6 +145,36 @@ const EditStudentModal = ({ show, onClose, student, classes = [], subClasses = [
                             className={errors.email ? 'error-input' : ''}
                         />
                         {errors.email && <span className="error-msg">{errors.email}</span>}
+                    </div>
+
+                    <div className="form-group">
+                        <label>Guardian Name</label>
+                        <input
+                            type="text"
+                            placeholder="Parent or guardian full name"
+                            value={data.guardian_name}
+                            onChange={e => setData('guardian_name', e.target.value)}
+                        />
+                    </div>
+
+                    <div className="form-group">
+                        <label>Guardian Phone</label>
+                        <input
+                            type="tel"
+                            placeholder="Parent or guardian phone number"
+                            value={data.guardian_phone}
+                            onChange={e => setData('guardian_phone', e.target.value)}
+                        />
+                    </div>
+
+                    <div className="form-group">
+                        <label>Address</label>
+                        <textarea
+                            placeholder="Residential address"
+                            value={data.address}
+                            onChange={e => setData('address', e.target.value)}
+                            rows={2}
+                        />
                     </div>
 
                     <div className="modal-footer-actions mt-6">

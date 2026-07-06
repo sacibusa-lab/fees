@@ -266,6 +266,97 @@
     font-size: 0.875rem;
 }
 
+/* Webhook Payload */
+.webhook-payloads {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.webhook-event-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #fafafa;
+}
+
+.webhook-event-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: #f3f4f6;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.webhook-event-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.webhook-event-type {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #374151;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    background: #e5e7eb;
+    padding: 3px 10px;
+    border-radius: 4px;
+}
+
+.webhook-status-badge {
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 2px 10px;
+    border-radius: 9999px;
+    text-transform: uppercase;
+}
+
+.webhook-status-badge.processed,
+.webhook-status-badge.success {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.webhook-status-badge.pending {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.webhook-status-badge.failed {
+    background: #fef2f2;
+    color: #dc2626;
+}
+
+.webhook-event-time {
+    font-size: 0.75rem;
+    color: #6b7280;
+}
+
+.webhook-error {
+    padding: 10px 16px;
+    background: #fef2f2;
+    color: #dc2626;
+    font-size: 0.8rem;
+    border-bottom: 1px solid #fecaca;
+}
+
+.webhook-payload-json {
+    padding: 16px;
+    overflow-x: auto;
+}
+
+.webhook-payload-json pre {
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 0.75rem;
+    line-height: 1.6;
+    color: #1f2937;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
 @media (max-width: 1024px) {
     .detail-grid {
         grid-template-columns: 1fr;

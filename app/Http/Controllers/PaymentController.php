@@ -659,7 +659,7 @@ class PaymentController extends Controller
              abort(403);
         }
         
-        $transaction->load(['student.schoolClass', 'fee.session', 'institution']);
+        $transaction->load(['student.schoolClass', 'fee.session', 'institution', 'webhookEvents']);
         
         $metadata = $transaction->metadata ?? [];
         
@@ -727,6 +727,17 @@ class PaymentController extends Controller
                 ]
             ],
             'beneficiaries' => $transaction->fee ? $transaction->fee->beneficiaries()->get() : [],
+            'webhook_events' => $transaction->webhookEvents->map(function ($event) {
+                return [
+                    'id' => $event->id,
+                    'event_type' => $event->event_type,
+                    'status' => $event->status,
+                    'error_message' => $event->error_message,
+                    'payload' => $event->payload,
+                    'processed_at' => $event->processed_at ? $event->processed_at->format('M d, Y h:i A') : null,
+                    'created_at' => $event->created_at->format('M d, Y h:i A'),
+                ];
+            }),
         ];
 
         return Inertia::render('TransactionDetail', [

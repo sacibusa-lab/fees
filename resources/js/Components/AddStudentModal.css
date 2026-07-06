@@ -159,3 +159,168 @@
 .download-template-area .download-link:hover {
     color: #C2185B;
 }
+
+/* Step Indicator */
+.step-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    margin-bottom: 28px;
+    padding: 0 10px;
+}
+
+.step-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.step-circle {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f0f0f0;
+    color: #999;
+    font-size: 0.85rem;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.step-item.active .step-circle {
+    background: #7849F7;
+    color: white;
+    border-color: #7849F7;
+    box-shadow: 0 0 0 4px rgba(120, 73, 247, 0.15);
+}
+
+.step-item.completed .step-circle {
+    background: #26DE81;
+    color: white;
+    border-color: #26DE81;
+}
+
+.step-check {
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.step-label {
+    font-size: 0.75rem;
+    color: #999;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.step-item.active .step-label {
+    color: #7849F7;
+    font-weight: 600;
+}
+
+.step-item.completed .step-label {
+    color: #26DE81;
+}
+
+.step-line {
+    flex: 1;
+    height: 2px;
+    background: #e5e7eb;
+    margin: 0 12px;
+    margin-bottom: 22px;
+    position: relative;
+    min-width: 40px;
+}
+
+.step-line-fill {
+    height: 100%;
+    width: 0;
+    background: #26DE81;
+    transition: width 0.3s ease;
+    border-radius: 2px;
+}
+
+.step-line-fill.filled {
+    width: 100%;
+}
+
+/* Step Content */
+.step-content {
+    animation: fadeIn 0.25s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Form Row - side by side fields */
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+/* Step Actions */
+.step-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+.step-actions .btn-next {
+    width: 100%;
+    padding: 10px 24px;
+    background: #7849F7;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: background 0.2s;
+}
+
+.step-actions .btn-next:hover {
+    background: #5A36CC;
+}
+
+.step-actions .btn-back {
+    padding: 10px 20px;
+    background: white;
+    color: #666;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.step-actions .btn-back:hover {
+    background: #f9fafb;
+    color: #333;
+    border-color: #d1d5db;
+}
+
+.step-actions .btn-promote {
+    flex: 1;
+}
+
+.required {
+    color: #EF4444;
+    margin-left: 2px;
+}
