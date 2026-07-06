@@ -24,42 +24,29 @@ const Login = () => {
             {/* Left Side - Branding */}
             <div className="login-branding">
                 <div className="branding-content">
-                    <div className="logo-large">
-                        <div className="logo-icon-large">
-                            <svg viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z" />
-                            </svg>
-                        </div>
-                        <span className="logo-text-large">Fees</span>
+                    <div className="branding-icon">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z" />
+                        </svg>
+                    </div>
+                    <div className="branding-icon-ring">
+                        <svg viewBox="0 0 100 100" fill="none">
+                            <circle cx="50" cy="50" r="45" stroke="currentColor" strokeWidth="0.5" opacity="0.3" />
+                            <circle cx="50" cy="50" r="35" stroke="currentColor" strokeWidth="0.5" opacity="0.2" />
+                        </svg>
                     </div>
 
-                    <h1 className="branding-title">Fees Management with Convenience.</h1>
-
-                    <p className="branding-description">
-                        Manage and visualize fees without hassle. Powered with everything you need to have a clear/prompt insight of your cash inflow from fees.
+                    <h2 className="branding-heading">Welcome to Fees</h2>
+                    <p className="branding-subtext">
+                        Secure fee management platform for educational institutions.
                     </p>
-
-                    <button className="contact-sales-btn">Contact Sales</button>
-
-                    <div className="trusted-section">
-                        <p className="trusted-text">Trusted by Over 900 Schools</p>
-                        <div className="school-logos">
-                            {[1, 2, 3, 4, 5, 6].map((i) => (
-                                <div key={i} className="school-logo-placeholder">
-                                    <svg viewBox="0 0 24 24" fill="currentColor">
-                                        <path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72L12 15l5-2.73v3.72z" />
-                                    </svg>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
                 </div>
             </div>
 
             {/* Right Side - Login Form */}
             <div className="login-form-section">
                 <div className="login-header">
-                    <span className="login-header-text">Do not have an account?</span>
+                    <span className="login-header-text">Don't have an account?</span>
                     <button className="register-btn">Register</button>
                     <button className="support-btn">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -70,8 +57,8 @@ const Login = () => {
                 </div>
 
                 <div className="login-form-container">
-                    <h2 className="login-title">Log In</h2>
-                    <p className="login-subtitle">Please log in using your phone number and 6-digit PIN</p>
+                    <h2 className="login-title">Welcome Back</h2>
+                    <p className="login-subtitle">Enter your credentials to access your account</p>
 
                     <form onSubmit={handleLogin}>
                         {(errors.phone || errors.pin) && (
@@ -81,7 +68,9 @@ const Login = () => {
                         )}
 
                         <div className="form-group">
+                            <label className="form-label" htmlFor="phone">Phone Number</label>
                             <input
+                                id="phone"
                                 type="tel"
                                 className={`form-input ${errors.phone ? 'error' : ''}`}
                                 placeholder="08162157107"
@@ -93,8 +82,13 @@ const Login = () => {
                         </div>
 
                         <div className="form-group">
+                            <div className="form-label-row">
+                                <label className="form-label" htmlFor="pin">PIN</label>
+                                <a href="#" className="forgot-pin">Forgot PIN?</a>
+                            </div>
                             <div className="password-input-wrapper">
                                 <input
+                                    id="pin"
                                     type={showPin ? 'text' : 'password'}
                                     className={`form-input ${errors.pin ? 'error' : ''}`}
                                     placeholder="••••••"
@@ -125,12 +119,15 @@ const Login = () => {
                                 />
                                 <span>Remember me</span>
                             </label>
-                            <a href="#" className="forgot-pin">Forgot PIN?</a>
                         </div>
 
                         <button type="submit" className="login-submit-btn" disabled={processing}>
-                            {processing ? 'Logging in...' : 'Login'}
+                            {processing ? 'Logging in...' : 'Sign In'}
                         </button>
+
+                        <p className="login-footer-text">
+                            Don't have an account? <a href="#">Register</a>
+                        </p>
                     </form>
                 </div>
             </div>
