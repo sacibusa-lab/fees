@@ -8,6 +8,7 @@ use App\Models\SubClass;
 use App\Models\Fee;
 use App\Models\Session;
 use App\Models\Transaction;
+use App\Models\Alumnus;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
@@ -86,7 +87,7 @@ class BulkOperationsController extends Controller
     }
 
     /**
-     * Bulk graduate students (mark as graduated/inactive)
+     * Bulk graduate students (mark as graduated and archive to alumni)
      */
     public function graduate(Request $request)
     {
@@ -97,14 +98,45 @@ class BulkOperationsController extends Controller
 
         $institutionId = auth()->user()->institution_id;
 
-        $count = Student::whereIn('id', $validated['student_ids'])
+        $students = Student::whereIn('id', $validated['student_ids'])
+            ->where('institution_id', $institutionId)
+            ->get();
+
+        if ($students->isEmpty()) {
+            return redirect()->back()->with('error', 'No students found to graduate.');
+        }
+
+        $currentSession = Session::where('institution_id', $institutionId)
+            ->where('is_current', true)->first();
+        $currentTerm = $currentSession?->current_term;
+
+        $count = 0;
+        foreach ($students as $student) {
+            Alumnus::create([
+                'institution_id' => $institutionId,
+                'original_student_id' => $student->id,
+                'last_class_id' => $student->class_id,
+                'admission_number' => $student->admission_number,
+                'name' => $student->name,
+                'gender' => $student->gender,
+                'email' => $student->email,
+                'phone' => $student->phone,
+                'graduation_year' => now()->format('Y'),
+                'graduation_term' => $currentTerm,
+                'graduated_at' => now(),
+            ]);
+            $count++;
+        }
+
+        Student::whereIn('id', $validated['student_ids'])
             ->where('institution_id', $institutionId)
             ->update([
-                'payment_status' => 'paid',
                 'status' => 'graduated',
+                'class_id' => null,
+                'sub_class_id' => null
             ]);
 
-        return redirect()->back()->with('success', "{$count} students marked as graduated.");
+        return redirect()->back()->with('success', "{$count} students graduated and archived to alumni.");
     }
 
     /**

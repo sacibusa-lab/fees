@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Log;
 use App\Models\Fee;
 use App\Models\Transaction;
 use App\Models\Session;
+use App\Models\Alumnus;
 
 class StudentController extends Controller
 {
@@ -133,14 +134,22 @@ class StudentController extends Controller
             'student_ids' => 'required|array',
             'student_ids.*' => 'exists:students,id',
             'target_class_id' => 'required|exists:classes,id',
+            'target_sub_class_id' => 'nullable|exists:sub_classes,id',
         ]);
+
+        $updateData = [
+            'class_id' => $validated['target_class_id'],
+        ];
+
+        if (isset($validated['target_sub_class_id'])) {
+            $updateData['sub_class_id'] = $validated['target_sub_class_id'];
+        } else {
+            $updateData['sub_class_id'] = null;
+        }
 
         Student::whereIn('id', $validated['student_ids'])
             ->where('institution_id', Auth::user()->institution_id)
-            ->update([
-                'class_id' => $validated['target_class_id'],
-                'sub_class_id' => null // Reset sub-class when promoting
-            ]);
+            ->update($updateData);
 
         return redirect()->back()->with('success', 'Students promoted successfully');
     }
@@ -582,8 +591,39 @@ class StudentController extends Controller
 
         $institutionId = auth()->user()->institution_id;
 
-        // Ensure students belong to this institution
-        $updated = Student::whereIn('id', $validated['student_ids'])
+        // Get students before updating so we have their data for alumni records
+        $students = Student::whereIn('id', $validated['student_ids'])
+            ->where('institution_id', $institutionId)
+            ->get();
+
+        if ($students->isEmpty()) {
+            return redirect()->back()->with('error', 'No students found to graduate.');
+        }
+
+        $currentSession = Session::where('institution_id', $institutionId)
+            ->where('is_current', true)->first();
+        $currentTerm = $currentSession?->current_term;
+
+        $graduated = 0;
+        foreach ($students as $student) {
+            Alumnus::create([
+                'institution_id' => $institutionId,
+                'original_student_id' => $student->id,
+                'last_class_id' => $student->class_id,
+                'admission_number' => $student->admission_number,
+                'name' => $student->name,
+                'gender' => $student->gender,
+                'email' => $student->email,
+                'phone' => $student->phone,
+                'graduation_year' => now()->format('Y'),
+                'graduation_term' => $currentTerm,
+                'graduated_at' => now(),
+            ]);
+            $graduated++;
+        }
+
+        // Update student status and clear class assignments
+        Student::whereIn('id', $validated['student_ids'])
             ->where('institution_id', $institutionId)
             ->update([
                 'status' => 'graduated',
@@ -591,7 +631,7 @@ class StudentController extends Controller
                 'sub_class_id' => null
             ]);
 
-        return redirect()->back()->with('success', "{$updated} students graduated successfully");
+        return redirect()->back()->with('success', "{$graduated} students graduated and archived to alumni successfully");
     }
 
     public function destroy(Student $student)
