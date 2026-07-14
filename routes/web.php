@@ -16,6 +16,7 @@ use App\Http\Controllers\ScholarshipController;
 use App\Http\Controllers\BulkOperationsController;
 use App\Http\Controllers\AlumniController;
 use App\Http\Controllers\InventoryController;
+use App\Http\Controllers\SmsController;
 
 Route::get('/', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
@@ -152,6 +153,33 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/alumni/{id}', [AlumniController::class, 'destroy'])->name('alumni.destroy');
         Route::post('/students/bulk-move-to-alumni', [App\Http\Controllers\StudentController::class, 'bulkMoveToAlumni'])->name('students.bulk-move-to-alumni');
     });
+
+    // SMS Notifications
+    Route::middleware('permission:students.manage')->group(function () {
+        Route::get('/sms', [SmsController::class, 'index'])->name('sms.index');
+        Route::get('/sms/logs', [SmsController::class, 'logs'])->name('sms.logs');
+        Route::post('/sms/toggle', [SmsController::class, 'toggleEnabled'])->name('sms.toggle');
+        Route::post('/sms/templates/save', [SmsController::class, 'saveTemplate'])->name('sms.templates.save');
+        Route::delete('/sms/templates/{id}', [SmsController::class, 'deleteTemplate'])->name('sms.templates.delete');
+        Route::post('/sms/class-settings', [SmsController::class, 'updateClassSettings'])->name('sms.class-settings');
+        Route::post('/sms/send-bulk', [SmsController::class, 'sendBulk'])->name('sms.send-bulk');
+        Route::post('/sms/send-reminders', [SmsController::class, 'sendPaymentReminders'])->name('sms.send-reminders');
+        Route::get('/sms/students', [SmsController::class, 'getStudents'])->name('sms.students');
+    });
+
+    // API: Get student count for a class (used by SMS bulk send)
+    Route::get('/api/students/count', function (\Illuminate\Http\Request $request) {
+        $classId = $request->query('class_id');
+        $subClassId = $request->query('sub_class_id');
+        $status = $request->query('status', 'active');
+        $institutionId = auth()->user()?->institution_id;
+        if (!$institutionId || !$classId) return response()->json(['count' => 0]);
+        $query = \App\Models\Student::where('institution_id', $institutionId)
+            ->where('class_id', $classId);
+        if ($subClassId) $query->where('sub_class_id', $subClassId);
+        if ($status) $query->where('status', $status);
+        return response()->json(['count' => $query->count()]);
+    })->middleware('auth');
 
     // Inventory Management (Storekeeper Module)
     Route::middleware('permission:inventory.manage')->group(function () {

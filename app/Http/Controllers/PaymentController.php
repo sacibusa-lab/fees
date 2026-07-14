@@ -14,6 +14,7 @@ use Inertia\Inertia;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use App\Services\Sms\SmsService;
 
 class PaymentController extends Controller
 {
@@ -364,7 +365,10 @@ class PaymentController extends Controller
         $customAmount = $request->input('amount');
         $description = $request->input('description');
 
-        DB::transaction(function() use ($notices, $institutionId, $validated, $feeId, $paymentMode, $customAmount, $description) {
+        $session = Session::find($validated['session_id']);
+        $term = $validated['term'];
+
+        DB::transaction(function() use ($notices, $institutionId, $validated, $feeId, $paymentMode, $customAmount, $description, $session, $term) {
             foreach ($notices as $notice) {
                 // Determine amount to pay
                 $remainingToPay = 0;
@@ -400,7 +404,7 @@ class PaymentController extends Controller
                         'paid_at' => now(),
                         'metadata' => [
                             'session_id' => (int)$validated['session_id'],
-                            'term' => $validated['term'],
+                            'term' => $term,
                             'type' => 'manual_bulk_payment',
                             'payment_mode' => $paymentMode,
                             'description' => $description,
@@ -425,7 +429,7 @@ class PaymentController extends Controller
                         'paid_at' => now(),
                         'metadata' => [
                             'session_id' => (int)$validated['session_id'],
-                            'term' => $validated['term'],
+                            'term' => $term,
                             'type' => 'manual_bulk_payment_remainder',
                             'description' => $description
                         ]
@@ -433,6 +437,48 @@ class PaymentController extends Controller
                 }
             }
         });
+
+        // Send SMS receipts for each student marked as paid
+        try {
+            if (config('sms.enabled', false)) {
+                $smsService = app(SmsService::class);
+                $students = Student::whereIn('id', $validated['student_ids'])
+                    ->where('institution_id', $institutionId)
+                    ->with('schoolClass')
+                    ->get();
+
+                $feeTitle = $validated['fee_title'] ?? 'School Fees';
+                $totalFee = 0;
+                $firstFee = Fee::where('institution_id', $institutionId)
+                    ->where('session_id', $validated['session_id'])
+                    ->first();
+                if ($firstFee) {
+                    $totalFee = $firstFee->getAmountForTerm($term);
+                }
+
+                foreach ($students as $student) {
+                    if (!$smsService->isEnabledForStudent($student)) continue;
+
+                    $phone = $student->phone;
+                    if (empty($phone)) continue;
+
+                    $smsService->sendPaymentReceipt(
+                        $institutionId,
+                        $student->id,
+                        $phone,
+                        $student->name,
+                        $feeTitle,
+                        $paymentMode === 'partial' ? (float)($customAmount ?? $totalFee) : $totalFee,
+                        $totalFee,
+                        $term
+                    );
+                }
+            }
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to send manual payment SMS', [
+                'error' => $e->getMessage(),
+            ]);
+        }
 
         return redirect()->back()->with('success', 'Payments recorded successfully');
     }

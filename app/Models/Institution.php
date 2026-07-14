@@ -9,7 +9,11 @@ class Institution extends Model
 {
     protected $fillable = [
         'name', 'portal_id', 'logo', 'favicon', 'address', 'phone', 'email', 'status',
-        'primary_color', 'sidebar_color', 'secondary_color'
+        'primary_color', 'sidebar_color', 'secondary_color', 'settings'
+    ];
+
+    protected $casts = [
+        'settings' => 'array',
     ];
 
     public function users(): HasMany

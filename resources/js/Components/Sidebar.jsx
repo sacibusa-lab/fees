@@ -16,7 +16,8 @@ import {
     GraduationCap,
     Zap,
     Package,
-    Archive
+    Archive,
+    MessageSquare
 } from 'lucide-react';
 import VerifyPaymentModal from './VerifyPaymentModal';
 import { usePermission } from '../Hooks/usePermission';
@@ -175,6 +176,13 @@ const Sidebar = ({ institution, isOpen, onClose }) => {
                     <Link href="/alumni" className={`nav-item ${isActive('/alumni') ? 'active' : ''}`} onClick={onClose}>
                         <Archive size={18} />
                         <span>Alumni</span>
+                    </Link>
+                )}
+
+                {can('students.manage') && (
+                    <Link href="/sms" className={`nav-item ${isActive('/sms') ? 'active' : ''}`} onClick={onClose}>
+                        <MessageSquare size={18} />
+                        <span>SMS</span>
                     </Link>
                 )}
 

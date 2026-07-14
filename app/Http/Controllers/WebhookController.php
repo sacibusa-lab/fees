@@ -7,6 +7,10 @@ use Illuminate\Support\Facades\Log;
 use App\Models\Transaction;
 use App\Models\StudentVirtualAccount;
 use App\Models\WebhookEvent;
+use App\Models\Student;
+use App\Models\Fee;
+use App\Models\Session;
+use App\Services\Sms\SmsService;
 
 class WebhookController extends Controller
 {
@@ -215,8 +219,51 @@ class WebhookController extends Controller
         );
 
         if ($studentId) {
-            \App\Models\Student::where('id', $studentId)->update(['payment_status' => 'paid']);
+            Student::where('id', $studentId)->update(['payment_status' => 'paid']);
             Log::info("Student payment status updated to paid", ['student_id' => $studentId]);
+
+            // Send SMS receipt if enabled
+            try {
+                $student = Student::with('schoolClass')->find($studentId);
+                if ($student && config('sms.enabled', false)) {
+                    $smsService = app(SmsService::class);
+
+                    // Check if SMS is enabled for this student's class
+                    if ($smsService->isEnabledForStudent($student)) {
+                        $phone = $student->phone;
+
+                        if (!empty($phone)) {
+                            $feeTitle = 'School Fees';
+                            $totalFee = $amount;
+                            $term = $session->current_term ?? '1st Term';
+
+                            if (isset($feeId)) {
+                                $feeObj = Fee::find($feeId);
+                                if ($feeObj) {
+                                    $feeTitle = $feeObj->title;
+                                    $totalFee = $feeObj->getAmountForTerm($term);
+                                }
+                            }
+
+                            $smsService->sendPaymentReceipt(
+                                $institutionId,
+                                $studentId,
+                                $phone,
+                                $student->name,
+                                $feeTitle,
+                                $amount,
+                                $totalFee,
+                                $term
+                            );
+                        }
+                    }
+                }
+            } catch (\Exception $e) {
+                Log::error('Failed to send payment SMS receipt', [
+                    'student_id' => $studentId,
+                    'error' => $e->getMessage(),
+                ]);
+            }
         }
 
         if ($institutionId && isset($webhookLog)) {
