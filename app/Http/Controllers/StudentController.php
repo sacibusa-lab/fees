@@ -369,15 +369,21 @@ class StudentController extends Controller
         $currentSession = $allSessions->firstWhere('is_current', true) ?? $allSessions->first();
 
         // Build academic history from sessions where the student has transactions
-        $sessionIdsWithTx = Transaction::where('institution_id', $student->institution_id)
+        // session_id is stored in metadata JSON column, not as a direct column
+        $txSessionIds = Transaction::where('institution_id', $student->institution_id)
             ->where('student_id', $student->id)
             ->where('status', 'success')
-            ->distinct()
-            ->pluck('session_id')
+            ->get()
+            ->map(function ($tx) {
+                $meta = is_array($tx->metadata) ? $tx->metadata : json_decode($tx->metadata ?? '{}', true);
+                return $meta['session_id'] ?? ($tx->fee ? $tx->fee->session_id : null);
+            })
             ->filter()
             ->unique()
             ->values()
             ->toArray();
+
+        $sessionIdsWithTx = $txSessionIds;
 
         $academicHistory = $allSessions->filter(function ($s) use ($sessionIdsWithTx) {
             return in_array($s->id, $sessionIdsWithTx);
