@@ -411,3 +411,39 @@
     font-size: 0.85rem;
     color: var(--text-secondary);
 }
+
+/* IT Maintenance Fee Summary */
+.it-fee-summary {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    background: #fff8f0;
+    border: 1px solid #fed7aa;
+    border-radius: 10px;
+}
+
+.it-fee-summary-icon {
+    font-size: 1.5rem;
+}
+
+.it-fee-summary-details {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.it-fee-summary-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #d97706;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.it-fee-summary-value {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #92400e;
+}

@@ -10,7 +10,12 @@ class Fee extends Model
         'institution_id', 'session_id', 'class_id', 'title', 'revenue_code', 
         'cycle', 'type', 'payee_allowed', 'amount', 'charge_bearer', 'status',
         'first_term_amount', 'second_term_amount', 'third_term_amount',
-        'first_term_active', 'second_term_active', 'third_term_active'
+        'first_term_active', 'second_term_active', 'third_term_active',
+        'it_fee'
+    ];
+
+    protected $casts = [
+        'it_fee' => 'decimal:2',
     ];
 
     public function institution()

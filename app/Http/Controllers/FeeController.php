@@ -30,6 +30,7 @@ class FeeController extends Controller
                     'raw_amount' => $fee->amount,
                     'chargeBear' => ucfirst($fee->charge_bearer),
                     'status' => ucfirst($fee->status),
+                    'it_fee' => $fee->it_fee,
                     'beneficiaries' => $fee->beneficiaries,
                     'overrides' => $fee->overrides->map(function($o) {
                         return [
@@ -74,6 +75,7 @@ class FeeController extends Controller
             'third_term_active' => 'nullable|boolean',
             'charge_bearer' => 'required|in:self,institution',
             'status' => 'required|in:active,inactive',
+            'it_fee' => 'nullable|numeric|min:0',
         ]);
 
         $currentSession = \App\Models\Session::where('institution_id', $institutionId)
@@ -117,6 +119,7 @@ class FeeController extends Controller
                 'chargeBear' => ucfirst($fee->charge_bearer),
                 'charge_bearer' => $fee->charge_bearer,
                 'status' => ucfirst($fee->status),
+                'it_fee' => $fee->it_fee,
                 'beneficiaries' => $fee->beneficiaries,
                 'created_at' => $fee->created_at->format('M d, Y'),
                 'overrides' => $fee->overrides->map(function($o) {
@@ -151,6 +154,7 @@ class FeeController extends Controller
             'third_term_active' => 'nullable|boolean',
             'charge_bearer' => 'required|in:self,institution',
             'status' => 'required|in:active,inactive',
+            'it_fee' => 'nullable|numeric|min:0',
         ]);
 
         $fee->update($validated);
@@ -181,7 +185,13 @@ class FeeController extends Controller
             'beneficiaries.*.bank_name' => 'required|string',
             'beneficiaries.*.bank_code' => 'required|string',
             'beneficiaries.*.amount' => 'required|numeric|min:0',
+            'it_fee' => 'nullable|numeric|min:0',
         ]);
+
+        // Save IT maintenance fee on the fee record
+        if ($request->has('it_fee')) {
+            $fee->update(['it_fee' => $request->it_fee ?: null]);
+        }
 
         // Save beneficiaries for internal ledger
         $fee->beneficiaries()->delete();

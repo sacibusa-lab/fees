@@ -10,7 +10,8 @@ const FeeBeneficiariesModal = ({ fee, onClose, bankAccounts = [] }) => {
         : [{ account_name: '', account_number: '', bank_name: '', amount: '' }];
 
     const { data, setData, post, processing, errors } = useForm({
-        beneficiaries: initialBeneficiaries
+        beneficiaries: initialBeneficiaries,
+        it_fee: fee.it_fee ?? ''
     });
 
     const addBeneficiary = () => {
@@ -92,6 +93,36 @@ const FeeBeneficiariesModal = ({ fee, onClose, bankAccounts = [] }) => {
                 </div>
 
                 <form onSubmit={handleSubmit} style={{ padding: '24px' }}>
+
+                    {/* IT MAINTENANCE FEE */}
+                    <div style={{
+                        marginBottom: '24px', padding: '16px', background: '#fff8f0',
+                        borderRadius: '8px', border: '1px solid #fed7aa'
+                    }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div>
+                                <label style={{ fontWeight: '600', fontSize: '0.9rem', color: '#92400e', display: 'block', marginBottom: '4px' }}>
+                                    IT Maintenance Fee (₦)
+                                </label>
+                                <span style={{ fontSize: '0.8rem', color: '#d97706' }}>
+                                    Per-transaction fee deducted for platform maintenance. Leave empty for default (₦100).
+                                </span>
+                            </div>
+                            <input
+                                type="number"
+                                value={data.it_fee}
+                                onChange={e => setData('it_fee', e.target.value)}
+                                placeholder="100"
+                                min="0"
+                                step="50"
+                                style={{
+                                    width: '120px', padding: '10px', borderRadius: '6px',
+                                    border: '1px solid #fed7aa', fontSize: '1rem',
+                                    fontWeight: '700', textAlign: 'center'
+                                }}
+                            />
+                        </div>
+                    </div>
 
                     {!isTotalValid && (
                         <div style={{

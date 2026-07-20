@@ -137,7 +137,7 @@ class SettlementController extends Controller
         ]);
     }
 
-    public function show($date)
+    public function show($date, Request $request)
     {
         $institutionId = auth()->user()->institution_id;
         
@@ -149,6 +149,10 @@ class SettlementController extends Controller
             ->get();
 
         $totalCollected = $transactions->sum('amount');
+        
+        // Pre-load all unique fees referenced by these transactions to avoid N+1
+        $feeIds = $transactions->pluck('fee_id')->filter()->unique()->values()->toArray();
+        $feesMap = Fee::whereIn('id', $feeIds)->get()->keyBy('id');
         
         // Calculate splits across all these transactions
         $payouts = [];
@@ -174,12 +178,18 @@ class SettlementController extends Controller
                 }
             }
 
+            // Determine IT fee for this transaction from the fee record
+            $feeRecord = $feeId ? ($feesMap[$feeId] ?? Fee::find($feeId)) : null;
+            $itFeeForTx = $feeRecord && $feeRecord->it_fee !== null
+                ? (float)$feeRecord->it_fee
+                : 100;
+
             // Calculate Deductions (Only for Online/Paystack)
             $txAmount = (float)$tx->amount;
             $totalFeesForTx = 0;
             if ($tx->channel !== 'manual') {
                 $paystackFee = min($txAmount * 0.01, 300);
-                $itFee = 100;
+                $itFee = $itFeeForTx;
                 $totalFeesForTx = $paystackFee + $itFee;
             }
             

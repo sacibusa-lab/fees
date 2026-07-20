@@ -285,6 +285,19 @@ const FeeDetails = ({ fee, bankAccounts = [], classes = [] }) => {
                                 </button>
                             </div>
 
+                            {/* IT MAINTENANCE FEE */}
+                            <div className="it-fee-summary">
+                                <div className="it-fee-summary-icon">🛡️</div>
+                                <div className="it-fee-summary-details">
+                                    <span className="it-fee-summary-label">IT Maintenance Fee</span>
+                                    <span className="it-fee-summary-value">
+                                        {fee.it_fee !== null && fee.it_fee !== undefined
+                                            ? `₦${Number(fee.it_fee).toLocaleString()} per transaction`
+                                            : '₦100 per transaction (default)'}
+                                    </span>
+                                </div>
+                            </div>
+
                             {fee.beneficiaries && fee.beneficiaries.length > 0 ? (
                                 <div className="accounts-list">
                                     {fee.beneficiaries.map((ben, idx) => (
