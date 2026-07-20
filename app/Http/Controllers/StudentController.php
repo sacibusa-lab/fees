@@ -360,6 +360,40 @@ class StudentController extends Controller
             ]
         ] : []);
 
+        // Load ALL sessions (not just current) to show full academic history
+        $allSessions = \App\Models\Session::where('institution_id', $student->institution_id)
+            ->orderBy('start_date', 'desc')
+            ->orderBy('name', 'desc')
+            ->get();
+
+        $currentSession = $allSessions->firstWhere('is_current', true) ?? $allSessions->first();
+
+        // Build academic history from sessions where the student has transactions
+        $sessionIdsWithTx = Transaction::where('institution_id', $student->institution_id)
+            ->where('student_id', $student->id)
+            ->where('status', 'success')
+            ->distinct()
+            ->pluck('session_id')
+            ->filter()
+            ->unique()
+            ->values()
+            ->toArray();
+
+        $academicHistory = $allSessions->filter(function ($s) use ($sessionIdsWithTx) {
+            return in_array($s->id, $sessionIdsWithTx);
+        })->map(function ($s) {
+            return ['session' => $s->name, 'is_current' => $s->is_current];
+        })->values()->toArray();
+
+        // If no transaction history, at least show the current session
+        if (empty($academicHistory) && $currentSession) {
+            $academicHistory[] = [
+                'session' => $currentSession->name,
+                'class' => $student->schoolClass->name ?? 'N/A',
+                'is_current' => true
+            ];
+        }
+
         $formattedStudent = [
             'id' => $student->id,
             'name' => $student->name,
@@ -376,22 +410,19 @@ class StudentController extends Controller
             'avatar' => $student->avatar,
             'school_name' => $student->institution->name ?? 'N/A',
             'added_on' => $student->created_at->format('M d, Y, h:i A'),
-            'session_added' => $currentSession ? $currentSession->name : 'N/A',
             'status' => $student->status,
-            'academic_history' => [
-                ['class' => $student->schoolClass->name ?? 'N/A', 'session' => $currentSession->name ?? 'N/A']
-            ],
+            'academic_history' => $academicHistory,
             'account_numbers' => $accountNumbers,
             'has_vaccount' => (bool)$student->virtualAccount
         ];
 
-        // Calculate Payment Activity for current session terms
+        // Calculate Payment Activity for ALL sessions
         $paymentActivity = [];
-        if ($currentSession) {
+        foreach ($allSessions as $session) {
             foreach (['1st Term', '2nd Term', '3rd Term'] as $index => $term) {
-                // 1. Get fees for this term
+                // 1. Get fees for this term (for expected calculation)
                 $fees = Fee::where('institution_id', $student->institution_id)
-                    ->where('session_id', $currentSession->id)
+                    ->where('session_id', $session->id)
                     ->where('status', 'active')
                     ->with('overrides')
                     ->where(function($q) use ($term) {
@@ -407,24 +438,30 @@ class StudentController extends Controller
 
                 $expected = 0;
                 foreach ($fees as $fee) {
-                    // Check if fee is class-specific and matches
-                    if ($fee->class_id && $fee->class_id != $student->class_id) {
-                        continue;
-                    }
-
+                    // NOTE: Don't filter by class_id here — the student's class may have
+                    // changed since this session. The fees assigned to their old class
+                    // should still count toward expected amount.
                     $override = $fee->overrides->where('class_id', $student->class_id)->first();
                     $expected += ($override && $override->status === 'active') ? $override->amount : $fee->getAmountForTerm($term);
                 }
 
-                // 2. Get payments for this term
+                // 2. Get payments for this session+term
                 $transactions = Transaction::where('institution_id', $student->institution_id)
                     ->where('student_id', $student->id)
                     ->where('status', 'success')
-                    ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(metadata, '$.session_id')) = ?", [(string)$currentSession->id])
+                    ->where(function($q) use ($session) {
+                        // Match by fee's session_id via fee relationship OR by metadata session_id
+                        $q->whereHas('fee', function($sq) use ($session) {
+                            $sq->where('session_id', $session->id);
+                        })->orWhereRaw("JSON_UNQUOTE(JSON_EXTRACT(metadata, '$.session_id')) = ?", [(string)$session->id]);
+                    })
                     ->where('metadata->term', $term)
                     ->get();
-                
+
+                // Skip terms with no payments AND no expected fees (no data)
                 $paid = $transactions->sum('amount');
+                if ($paid <= 0 && $expected <= 0) continue;
+
                 $lastPayment = $transactions->sortByDesc('paid_at')->first();
 
                 // 3. Determine status
@@ -437,6 +474,7 @@ class StudentController extends Controller
 
                 $paymentActivity[] = [
                     'sn' => $index + 1,
+                    'session' => $session->name,
                     'term' => $term,
                     'status' => $status,
                     'date' => $lastPayment ? $lastPayment->paid_at->format('M d, Y') : '-',
@@ -448,32 +486,36 @@ class StudentController extends Controller
             }
         }
 
-        // 4. Detailed Transaction History for this session
-        $allTransactions = [];
-        if ($currentSession) {
-            $allTransactions = Transaction::where('institution_id', $student->institution_id)
-                ->where('student_id', $student->id)
-                ->where('status', 'success')
-                ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(metadata, '$.session_id')) = ?", [(string)$currentSession->id])
-                ->orderBy('paid_at', 'desc')
-                ->get()
-                ->map(function($t) {
-                    $feeList = $t->metadata['fees'] ?? [];
-                    if (empty($feeList) && $t->fee) {
-                        $feeList = [$t->fee->title];
-                    }
+        // 4. Detailed Transaction History for ALL sessions
+        $allTransactions = Transaction::where('institution_id', $student->institution_id)
+            ->where('student_id', $student->id)
+            ->where('status', 'success')
+            ->orderBy('paid_at', 'desc')
+            ->get()
+            ->map(function($t) {
+                $feeList = $t->metadata['fees'] ?? [];
+                if (empty($feeList) && $t->fee) {
+                    $feeList = [$t->fee->title];
+                }
+                // Resolve session name
+                $sessionId = $t->metadata['session_id'] ?? null;
+                $sessionName = null;
+                if ($sessionId) {
+                    $session = \App\Models\Session::find($sessionId);
+                    $sessionName = $session?->name;
+                }
 
-                    return [
-                        'id' => $t->id,
-                        'reference' => $t->reference,
-                        'amount' => '₦' . number_format($t->amount, 2),
-                        'date' => $t->paid_at ? $t->paid_at->format('M d, Y h:i A') : $t->created_at->format('M d, Y h:i A'),
-                        'method' => ucfirst($t->channel ?? 'Manual'),
-                        'fees' => implode(', ', $feeList),
-                        'term' => $t->metadata['term'] ?? 'N/A'
-                    ];
-                });
-        }
+                return [
+                    'id' => $t->id,
+                    'reference' => $t->reference,
+                    'amount' => '₦' . number_format($t->amount, 2),
+                    'date' => $t->paid_at ? $t->paid_at->format('M d, Y h:i A') : $t->created_at->format('M d, Y h:i A'),
+                    'method' => ucfirst($t->channel ?? 'Manual'),
+                    'fees' => implode(', ', $feeList),
+                    'session' => $sessionName ?? 'N/A',
+                    'term' => $t->metadata['term'] ?? 'N/A'
+                ];
+            });
 
         return Inertia::render('StudentProfile', [
             'student' => $formattedStudent,
@@ -483,6 +525,7 @@ class StudentController extends Controller
                 ->get(),
             'paymentActivity' => $paymentActivity,
             'allTransactions' => $allTransactions,
+            'allSessions' => $allSessions,
             'currentSessionName' => $currentSession ? $currentSession->name : 'N/A'
         ]);
     }

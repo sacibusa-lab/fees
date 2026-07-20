@@ -4,7 +4,7 @@ import Layout from '../Components/Layout';
 import { User, CreditCard, Activity, Settings, Save, Trash2, ArrowLeft } from 'lucide-react';
 import './StudentProfile.css';
 
-const StudentProfile = ({ student, classes, subClasses, paymentActivity = [], allTransactions = [], currentSessionName = 'N/A' }) => {
+const StudentProfile = ({ student, classes, subClasses, paymentActivity = [], allTransactions = [], allSessions = [], currentSessionName = 'N/A' }) => {
     const [activeTab, setActiveTab] = useState('profile');
 
     // Form for editing
@@ -247,7 +247,7 @@ const StudentProfile = ({ student, classes, subClasses, paymentActivity = [], al
                                         <thead>
                                             <tr>
                                                 <th>S/N</th>
-                                                <th>{currentSessionName} SESSION</th>
+                                                <th>Session / Term</th>
                                                 <th>Amount Paid</th>
                                                 <th>Date Of Payment</th>
                                                 <th>Method</th>
@@ -259,7 +259,7 @@ const StudentProfile = ({ student, classes, subClasses, paymentActivity = [], al
                                                     <td>{item.sn}</td>
                                                     <td>
                                                         <div className="term-status-cell">
-                                                            <span className="term-name">{item.term}</span>
+                                                            <span className="term-name">{item.session ? `${item.session} - ` : ''}{item.term}</span>
                                                             <span className={`status-badge-term ${item.status.toLowerCase()}`}>
                                                                 {item.status}
                                                             </span>
@@ -283,7 +283,7 @@ const StudentProfile = ({ student, classes, subClasses, paymentActivity = [], al
                             {/* TRANSACTION HISTORY */}
                             <div className="card-header activity-header transaction-history-header">
                                 <h3>Transaction History</h3>
-                                <p>Detailed record of all payments in the current session.</p>
+                                <p>Detailed record of all payments across all sessions.</p>
                             </div>
 
                             {allTransactions.length > 0 ? (
@@ -294,6 +294,7 @@ const StudentProfile = ({ student, classes, subClasses, paymentActivity = [], al
                                                 <th>Reference</th>
                                                 <th>Fee(s)</th>
                                                 <th>Amount</th>
+                                                <th>Session / Term</th>
                                                 <th>Date</th>
                                                 <th>Method</th>
                                             </tr>
@@ -304,6 +305,7 @@ const StudentProfile = ({ student, classes, subClasses, paymentActivity = [], al
                                                     <td className="tx-ref">{tx.reference}</td>
                                                     <td className="tx-fees">{tx.fees}</td>
                                                     <td className="tx-amount">{tx.amount}</td>
+                                                    <td>{tx.session}{tx.term ? ` - ${tx.term}` : ''}</td>
                                                     <td className="tx-date">{tx.date}</td>
                                                     <td>{tx.method}</td>
                                                 </tr>
@@ -313,7 +315,7 @@ const StudentProfile = ({ student, classes, subClasses, paymentActivity = [], al
                                 </div>
                             ) : (
                                 <div className="empty-state">
-                                    <p>No transactions found for this session.</p>
+                                    <p>No transactions found.</p>
                                 </div>
                             )}
                         </div>

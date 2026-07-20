@@ -631,9 +631,20 @@ class PaymentController extends Controller
 
         $notices = $students->map(function ($student) use ($fees, $session, $term) {
             $studentFees = $fees->map(function ($fee) use ($student, $term) {
-                // Check if fee is class-specific
-                if ($fee->class_id && $fee->class_id != $student->class_id) {
-                    return null;
+                // Check if fee is class-specific — relaxed for promoted students
+                // If the fee targets a class and the student is no longer in that class
+                // (e.g. promoted to next class), still include the fee entry with amount 0
+                // so the student roster is visible.
+                $feeMatchesClass = !$fee->class_id || $fee->class_id == $student->class_id;
+
+                if (!$feeMatchesClass) {
+                    return [
+                        'id' => $fee->id,
+                        'title' => $fee->title,
+                        'amount' => 0,
+                        'status' => 'class_mismatch',
+                        'note' => 'Fee assigned to a different class'
+                    ];
                 }
 
                 $override = $fee->overrides->where('class_id', $student->class_id)->first();
@@ -678,16 +689,23 @@ class PaymentController extends Controller
             return [
                 'student' => $student,
                 'fees' => $studentFees,
-                'total_due' => $balance > 0 ? $balance : 0, // Show balance as due amount
+                'total_due' => $balance > 0 ? $balance : 0,
                 'original_total' => $totalDue,
                 'total_paid' => $totalPaid,
                 'session' => $session->name,
                 'term' => $term,
+                'has_fees_configured' => collect($studentFees)->contains(function ($f) {
+                    return ($f['amount'] ?? 0) > 0;
+                }),
             ];
         })->filter(function($notice) {
-            // Filter out students who have fully paid (balance <= 0) OR have no fees
-            // User requested: "if someone has fuly paid, let them not show"
-            return count($notice['fees']) > 0 && $notice['total_due'] > 0; 
+            // Show students who have fees/adjustments with amounts
+            // This ensures promoted students still appear in the roster
+            // even if their class-specific fees show as 0 (class_mismatch)
+            $hasChargeableFees = collect($notice['fees'])->contains(function ($f) {
+                return ($f['amount'] ?? 0) != 0;
+            });
+            return $hasChargeableFees || $notice['total_due'] > 0;
         })->values();
 
         return [
