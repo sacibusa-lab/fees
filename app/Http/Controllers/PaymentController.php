@@ -600,6 +600,7 @@ class PaymentController extends Controller
             ->get();
 
         // Fetch active fees for this session/term
+        // First, try to get fees explicitly tied to this session OR global fees (null session_id)
         $feesQuery = Fee::where('institution_id', $institutionId)
             ->where(function($q) use ($sessionId) {
                 $q->where('session_id', $sessionId)
@@ -628,6 +629,36 @@ class PaymentController extends Controller
         }
 
         $fees = $feesQuery->with('overrides')->get();
+
+        // If NO fees found for this session, fall back to previous session's fees
+        // This ensures promoted students still see fees when a new session is created
+        // but no new fees have been configured yet.
+        if ($fees->isEmpty()) {
+            $previousSession = Session::where('institution_id', $institutionId)
+                ->where('id', '<', $sessionId)
+                ->orderBy('id', 'desc')
+                ->first();
+
+            if ($previousSession) {
+                $fallbackFees = Fee::where('institution_id', $institutionId)
+                    ->where('session_id', $previousSession->id)
+                    ->where('status', 'active')
+                    ->where(function($q) use ($term) {
+                        $termName = strtolower(str_replace(' Term', '', $term));
+                        $q->whereIn('cycle', ['annually', 'one-time', 'termly', $termName]);
+                    });
+
+                if ($termActivationColumn) {
+                    $fallbackFees->where($termActivationColumn, true);
+                }
+
+                if ($feeTitle && $feeTitle !== 'all') {
+                    $fallbackFees->where('title', $feeTitle);
+                }
+
+                $fees = $fallbackFees->with('overrides')->get();
+            }
+        }
 
         $notices = $students->map(function ($student) use ($fees, $session, $term) {
             $studentFees = $fees->map(function ($fee) use ($student, $term) {
