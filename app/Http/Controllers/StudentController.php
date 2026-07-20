@@ -442,6 +442,30 @@ class StudentController extends Controller
                     })
                     ->get();
 
+                // If no session-specific fees, fall back to global fees (null session_id)
+                if ($fees->isEmpty()) {
+                    $fees = Fee::where('institution_id', $student->institution_id)
+                        ->whereNull('session_id')
+                        ->where('status', 'active')
+                        ->with('overrides')
+                        ->get();
+                }
+
+                // If still no fees, fall back to the previous session's fees
+                if ($fees->isEmpty()) {
+                    $previousSession = \App\Models\Session::where('institution_id', $student->institution_id)
+                        ->where('id', '<', $session->id)
+                        ->orderBy('id', 'desc')
+                        ->first();
+                    if ($previousSession) {
+                        $fees = Fee::where('institution_id', $student->institution_id)
+                            ->where('session_id', $previousSession->id)
+                            ->where('status', 'active')
+                            ->with('overrides')
+                            ->get();
+                    }
+                }
+
                 $expected = 0;
                 foreach ($fees as $fee) {
                     // NOTE: Don't filter by class_id here — the student's class may have
@@ -464,9 +488,10 @@ class StudentController extends Controller
                     ->where('metadata->term', $term)
                     ->get();
 
-                // Skip terms with no payments AND no expected fees (no data)
                 $paid = $transactions->sum('amount');
-                if ($paid <= 0 && $expected <= 0) continue;
+                // Always show the current session's terms even if no data yet
+                $isCurrentSession = $session->is_current ?? false;
+                if ($paid <= 0 && $expected <= 0 && !$isCurrentSession) continue;
 
                 $lastPayment = $transactions->sortByDesc('paid_at')->first();
 
