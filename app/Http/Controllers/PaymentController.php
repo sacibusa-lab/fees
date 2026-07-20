@@ -77,6 +77,26 @@ class PaymentController extends Controller
         }
         
         $activeFees = $activeFeesQuery->with('overrides')->get();
+
+        // Fallback: if no fees found for this session, try the previous session's fees
+        if ($activeFees->isEmpty()) {
+            $previousSession = Session::where('institution_id', $institutionId)
+                ->where('id', '<', $currentSession->id)
+                ->orderBy('id', 'desc')
+                ->first();
+
+            if ($previousSession) {
+                $fallbackFees = Fee::where('institution_id', $institutionId)
+                    ->where('session_id', $previousSession->id)
+                    ->where('status', 'active');
+
+                if ($feeId && $feeId !== 'all') {
+                    $fallbackFees->where('id', $feeId);
+                }
+
+                $activeFees = $fallbackFees->with('overrides')->get();
+            }
+        }
         $classes = SchoolClass::where('institution_id', $institutionId)->with(['category'])->get();
         
         $expectedAmount = 0;

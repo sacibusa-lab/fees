@@ -7,7 +7,7 @@ import FeeBeneficiariesModal from '../Components/FeeBeneficiariesModal';
 import FeeClassOverridesModal from '../Components/FeeClassOverridesModal';
 import '../Pages/StudentProfile.css'; // Reusing Student Profile CSS
 
-const FeeDetails = ({ fee, bankAccounts = [], classes = [] }) => {
+const FeeDetails = ({ fee, bankAccounts = [], classes = [], sessions = [] }) => {
     const [activeTab, setActiveTab] = useState('details');
     const [showBeneficiaryModal, setShowBeneficiaryModal] = useState(false);
     const [showOverridesModal, setShowOverridesModal] = useState(false);
@@ -28,7 +28,8 @@ const FeeDetails = ({ fee, bankAccounts = [], classes = [] }) => {
         second_term_active: fee?.second_term_active !== undefined ? fee.second_term_active : true,
         third_term_active: fee?.third_term_active !== undefined ? fee.third_term_active : true,
         charge_bearer: (fee?.chargeBear || 'self').toLowerCase(),
-        status: (fee?.status || 'active').toLowerCase()
+        status: (fee?.status || 'active').toLowerCase(),
+        session_id: fee?.session_id || ''
     });
 
     const handleUpdate = (e) => {
@@ -144,6 +145,18 @@ const FeeDetails = ({ fee, bankAccounts = [], classes = [] }) => {
                                         />
                                     </div>
 
+
+                                    <div className="form-group">
+                                        <label>Academic Session</label>
+                                        <select value={data.session_id} onChange={e => setData('session_id', e.target.value)}>
+                                            <option value="">Select Session</option>
+                                            {sessions.map(s => (
+                                                <option key={s.id} value={s.id}>
+                                                    {s.name} {s.is_current ? '(Current)' : ''}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
 
                                     <div className="form-group">
                                         <label>Default Amount (₦)</label>

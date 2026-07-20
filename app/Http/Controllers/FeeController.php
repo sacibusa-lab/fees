@@ -30,6 +30,8 @@ class FeeController extends Controller
                     'raw_amount' => $fee->amount,
                     'chargeBear' => ucfirst($fee->charge_bearer),
                     'status' => ucfirst($fee->status),
+                    'session_id' => $fee->session_id,
+                    'session_name' => $fee->session ? $fee->session->name : null,
                     'it_fee' => $fee->it_fee,
                     'beneficiaries' => $fee->beneficiaries,
                     'overrides' => $fee->overrides->map(function($o) {
@@ -45,12 +47,17 @@ class FeeController extends Controller
             
         $accounts = BankAccount::where('institution_id', $institutionId)->get();
         $classes = \App\Models\SchoolClass::where('institution_id', $institutionId)->get();
+        $sessions = \App\Models\Session::where('institution_id', $institutionId)
+            ->orderBy('is_current', 'desc')
+            ->orderBy('name', 'desc')
+            ->get(['id', 'name', 'is_current']);
 
         return Inertia::render('FeesManagement', [
             'fees' => $fees,
             'feeCount' => $fees->count(),
             'bankAccounts' => $accounts,
-            'classes' => $classes
+            'classes' => $classes,
+            'sessions' => $sessions
         ]);
     }
 
@@ -75,16 +82,12 @@ class FeeController extends Controller
             'third_term_active' => 'nullable|boolean',
             'charge_bearer' => 'required|in:self,institution',
             'status' => 'required|in:active,inactive',
+            'session_id' => 'nullable|exists:sessions,id',
             'it_fee' => 'nullable|numeric|min:0',
         ]);
 
-        $currentSession = \App\Models\Session::where('institution_id', $institutionId)
-            ->where('is_current', true)
-            ->first();
-
         Fee::create([
             'institution_id' => $institutionId,
-            'session_id' => $currentSession ? $currentSession->id : null,
             ...$validated
         ]);
 
@@ -119,6 +122,8 @@ class FeeController extends Controller
                 'chargeBear' => ucfirst($fee->charge_bearer),
                 'charge_bearer' => $fee->charge_bearer,
                 'status' => ucfirst($fee->status),
+                'session_id' => $fee->session_id,
+                'session_name' => $fee->session ? $fee->session->name : null,
                 'it_fee' => $fee->it_fee,
                 'beneficiaries' => $fee->beneficiaries,
                 'created_at' => $fee->created_at->format('M d, Y'),
@@ -132,7 +137,11 @@ class FeeController extends Controller
                 })
             ],
             'bankAccounts' => $accounts,
-            'classes' => $classes
+            'classes' => $classes,
+            'sessions' => \App\Models\Session::where('institution_id', $institutionId)
+                ->orderBy('is_current', 'desc')
+                ->orderBy('name', 'desc')
+                ->get(['id', 'name', 'is_current'])
         ]);
     }
 
@@ -154,6 +163,7 @@ class FeeController extends Controller
             'third_term_active' => 'nullable|boolean',
             'charge_bearer' => 'required|in:self,institution',
             'status' => 'required|in:active,inactive',
+            'session_id' => 'nullable|exists:sessions,id',
             'it_fee' => 'nullable|numeric|min:0',
         ]);
 

@@ -7,7 +7,7 @@ import FeeBeneficiariesModal from '../Components/FeeBeneficiariesModal';
 import FeeClassOverridesModal from '../Components/FeeClassOverridesModal';
 import './FeesManagement.css';
 
-const FeesManagement = ({ fees = [], feeCount = 0, bankAccounts = [], classes = [] }) => {
+const FeesManagement = ({ fees = [], feeCount = 0, bankAccounts = [], classes = [], sessions = [] }) => {
     const [showAddModal, setShowAddModal] = useState(false);
     const [modalMode, setModalMode] = useState('add'); // 'add', 'edit', 'set-amount'
     const [editingFee, setEditingFee] = useState(null);
@@ -29,7 +29,8 @@ const FeesManagement = ({ fees = [], feeCount = 0, bankAccounts = [], classes = 
         second_term_active: true,
         third_term_active: true,
         charge_bearer: 'self',
-        status: 'active'
+        status: 'active',
+        session_id: ''
     });
 
     const openAddModal = () => {
@@ -71,7 +72,8 @@ const FeesManagement = ({ fees = [], feeCount = 0, bankAccounts = [], classes = 
             second_term_active: fee?.second_term_active !== undefined ? fee.second_term_active : true,
             third_term_active: fee?.third_term_active !== undefined ? fee.third_term_active : true,
             charge_bearer: (fee?.chargeBear || 'self').toLowerCase(),
-            status: (fee?.status || 'active').toLowerCase()
+            status: (fee?.status || 'active').toLowerCase(),
+            session_id: fee?.session_id || ''
         });
     };
 
@@ -140,6 +142,7 @@ const FeesManagement = ({ fees = [], feeCount = 0, bankAccounts = [], classes = 
                                     <th>Revenue Code</th>
                                     <th>Cycle</th>
                                     <th>Type</th>
+                                    <th>Session</th>
                                     <th>Payers Allowed</th>
                                     <th>Amount</th>
                                     <th>Charge Bearer</th>
@@ -159,6 +162,7 @@ const FeesManagement = ({ fees = [], feeCount = 0, bankAccounts = [], classes = 
                                         <td>{fee.revenueCode}</td>
                                         <td>{fee.cycle}</td>
                                         <td>{fee.type}</td>
+                                        <td>{fee.session_name || 'Global'}</td>
                                         <td>{fee.payeeAllowed}</td>
                                         <td>{fee.amount}</td>
                                         <td>{fee.chargeBear}</td>
@@ -265,14 +269,27 @@ const FeesManagement = ({ fees = [], feeCount = 0, bankAccounts = [], classes = 
                                         </div>
 
                                         <div className="input-group">
+                                            <label>Academic Session *</label>
+                                            <select value={data.session_id} onChange={e => setData('session_id', e.target.value)} required>
+                                                <option value="">Select Session</option>
+                                                {sessions.map(s => (
+                                                    <option key={s.id} value={s.id}>
+                                                        {s.name} {s.is_current ? '(Current)' : ''}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            <small style={{ color: '#666', fontSize: '0.85em' }}>Select which academic session this fee applies to</small>
+                                        </div>
+
+                                        <div className="input-group">
                                             <label>Target Class (Optional)</label>
                                             <select value={data.class_id || ''} onChange={e => setData('class_id', e.target.value)}>
-                                                <option value="">All Classes</option>
+                                                <option value="">All Classes (Global)</option>
                                                 {classes.map(c => (
                                                     <option key={c.id} value={c.id}>{c.name}</option>
                                                 ))}
                                             </select>
-                                            <small style={{ color: '#666', fontSize: '0.85em' }}>Leave empty to apply to all classes</small>
+                                            <small style={{ color: '#666', fontSize: '0.85em' }}>Leave empty to apply to all classes globally</small>
                                         </div>
 
 
