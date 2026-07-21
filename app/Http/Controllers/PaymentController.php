@@ -726,6 +726,50 @@ class PaymentController extends Controller
                 ];
             }
 
+            // Append outstanding balances from PREVIOUS sessions/terms as carry-over charges
+            $allSessions = \App\Models\Session::where('institution_id', $session->institution_id)
+                ->orderBy('id', 'asc')->get();
+            $allFees = \App\Models\Fee::where('institution_id', $session->institution_id)
+                ->where('status', 'active')->with('overrides')->get();
+            $termOrder = ['1st Term', '2nd Term', '3rd Term'];
+
+            foreach ($allSessions as $s) {
+                // Skip the current session (we already show its fees above)
+                if ($s->id == $session->id) continue;
+
+                foreach ($termOrder as $t) {
+                    // Calculate expected for this session/term
+                    $expectedForTerm = 0;
+                    foreach ($allFees as $fee) {
+                        if ($fee->class_id && $fee->class_id != $student->class_id) continue;
+                        if (!$fee->isActiveForTerm($t)) continue;
+                        $override = $fee->overrides->where('class_id', $student->class_id)->first();
+                        $expectedForTerm += ($override && $override->status === 'active')
+                            ? (float)$override->amount
+                            : (float)$fee->getAmountForTerm($t);
+                    }
+                    if ($expectedForTerm <= 0) continue;
+
+                    // Get what was paid for this session/term
+                    $paidForTerm = (float)\App\Models\Transaction::where('institution_id', $session->institution_id)
+                        ->where('student_id', $student->id)->where('status', 'success')
+                        ->where('metadata->term', $t)
+                        ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(metadata, '$.session_id')) = ?", [(string)$s->id])
+                        ->sum('amount');
+
+                    $outstanding = max(0, $expectedForTerm - $paidForTerm);
+                    if ($outstanding > 0) {
+                        $studentFees[] = [
+                            'id' => 'carry-' . $s->id . '-' . $t,
+                            'title' => 'OUTSTANDING: ' . $s->name . ' - ' . $t,
+                            'amount' => $outstanding,
+                            'status' => 'carry_over',
+                            'is_carry_over' => true,
+                        ];
+                    }
+                }
+            }
+
             // Calculate Total Paid for this session/term
             $totalPaid = \App\Models\Transaction::where('institution_id', $session->institution_id)
                 ->where('student_id', $student->id)

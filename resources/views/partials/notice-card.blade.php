@@ -51,10 +51,10 @@
                     </thead>
                     <tbody>
                         @foreach($notice['fees'] as $fee)
-                            <tr>
+                            <tr @if(!empty($fee['is_carry_over'])) style="background: #fef2f2;" @endif>
                                 <td>{{ $session_name }}</td>
                                 <td>{{ $term }}</td>
-                                <td>{{ $fee['title'] }}</td>
+                                <td>{{ $fee['title'] }}@if(!empty($fee['is_carry_over'])) (Carry Over)@endif</td>
                                 <td><span class="currency">&#8358;</span>{{ number_format($fee['amount']) }}</td>
                             </tr>
                         @endforeach

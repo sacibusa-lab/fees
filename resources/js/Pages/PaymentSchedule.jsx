@@ -373,10 +373,14 @@ const PaymentSchedule = ({ sessions = [], classes = [], subClasses = [], fees = 
                                         </thead>
                                         <tbody>
                                             {notice.fees.map((fee, fIdx) => (
-                                                <tr key={fIdx} className={fee.is_adjustment ? 'fee-adjustment-row' : ''}>
+                                                <tr key={fIdx} className={
+                                                    fee.is_adjustment ? 'fee-adjustment-row' :
+                                                    fee.is_carry_over ? 'fee-carry-over-row' : ''
+                                                }>
                                                     <td>
                                                         {fee.title}
                                                         {fee.is_adjustment && <span className="adj-tag">Adj</span>}
+                                                        {fee.is_carry_over && <span className="carry-tag">Carry Over</span>}
                                                     </td>
                                                     <td className={fee.amount < 0 ? 'negative-amount' : ''}>
                                                         {fee.amount < 0 ? '-' : ''}₦{Math.abs(parseFloat(fee.amount)).toLocaleString()}

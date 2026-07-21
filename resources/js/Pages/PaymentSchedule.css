@@ -527,6 +527,14 @@
     background: #fffbeb;
 }
 
+.fee-carry-over-row {
+    background: #fef2f2;
+}
+
+[data-theme="dark"] .fee-carry-over-row {
+    background: #450a0a;
+}
+
 .adj-tag {
     font-size: 0.6rem;
     background: #fbbf24;
@@ -535,6 +543,21 @@
     border-radius: 4px;
     margin-left: 8px;
     font-weight: 800;
+}
+
+.carry-tag {
+    font-size: 0.6rem;
+    background: #fca5a5;
+    color: #991b1b;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: 8px;
+    font-weight: 800;
+}
+
+[data-theme="dark"] .carry-tag {
+    background: #7f1d1d;
+    color: #fca5a5;
 }
 
 .negative-amount {

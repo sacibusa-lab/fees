@@ -135,71 +135,100 @@ class WebhookController extends Controller
             return;
         }
 
-        // 3. Resolve fee_id
+        // 3. Determine which session/term this payment applies to
+        // Since students use the same DVA across all terms, we apply payment
+        // to the OLDEST outstanding balance first.
         $feeId = null;
+        $session = null;
+        $term = null;
+        $student = $studentId ? \App\Models\Student::with('schoolClass')->find($studentId) : null;
+
         try {
-            // Find current session
-            $session = \App\Models\Session::where('institution_id', $institutionId)
-                ->where('is_current', true)
-                ->first();
+            // Get all sessions ordered oldest first
+            $allSessions = \App\Models\Session::where('institution_id', $institutionId)
+                ->orderBy('id', 'asc')
+                ->get();
 
-            if ($session) {
-                // Find a relevant active fee
-                $feeQuery = \App\Models\Fee::where('institution_id', $institutionId)
-                    ->where('session_id', $session->id)
-                    ->where('status', 'active');
+            $allFees = \App\Models\Fee::where('institution_id', $institutionId)
+                ->where('status', 'active')
+                ->with('overrides')
+                ->get();
 
-                if ($studentId) {
-                    $student = \App\Models\Student::find($studentId);
-                    if ($student && $student->class_id) {
-                        // Check if there's a fee specifically for this class
-                        $classFee = (clone $feeQuery)->where('class_id', $student->class_id)->first();
-                        if ($classFee) {
-                            $feeId = $classFee->id;
+            $termOrder = ['1st Term', '2nd Term', '3rd Term'];
+            $remainingAmount = $amount;
+
+            // Walk through sessions oldest-first, then terms
+            foreach ($allSessions as $s) {
+                foreach ($termOrder as $t) {
+                    // Calculate how much this student owes for this session/term
+                    $expectedForTerm = 0;
+                    $matchedFeeForTerm = null;
+
+                    foreach ($allFees as $fee) {
+                        if ($fee->class_id && $student && $fee->class_id != $student->class_id) continue;
+                        if (!$fee->isActiveForTerm($t)) continue;
+
+                        $override = $fee->overrides->where('class_id', $student?->class_id)->first();
+                        $feeAmount = ($override && $override->status === 'active')
+                            ? (float)$override->amount
+                            : (float)$fee->getAmountForTerm($t);
+
+                        if ($feeAmount > 0) {
+                            $expectedForTerm += $feeAmount;
+                            $matchedFeeForTerm = $fee;
                         }
                     }
-                }
 
-                if (!$feeId) {
-                    // Try to match the amount to an active fee for this session (considering term-specific amounts)
-                    $allActiveFees = (clone $feeQuery)->get();
-                    $term = $session->current_term ?? '1st Term';
-                    
-                    $matchedFee = $allActiveFees->first(function($f) use ($amount, $term, $student) {
-                        $expected = $f->getAmountForTerm($term);
-                        // Check if student has an override for this fee
-                        if ($student) {
-                            $override = $f->overrides->where('class_id', $student->class_id)->first();
-                            if ($override && $override->status === 'active') {
-                                $expected = $override->amount;
-                            }
-                        }
-                        return abs($expected - $amount) < 1;
-                    });
+                    if ($expectedForTerm <= 0) continue;
 
-                    if ($matchedFee) {
-                        $feeId = $matchedFee->id;
-                    } else {
-                        // Fallback to the first active fee (e.g., General fees)
-                        $fallbackFee = $allActiveFees->whereNull('class_id')->first() ?? $allActiveFees->first();
-                        $feeId = $fallbackFee->id ?? null;
+                    // Check what's already been paid for this session/term
+                    $alreadyPaid = (float)\App\Models\Transaction::where('institution_id', $institutionId)
+                        ->where('student_id', $studentId)
+                        ->where('status', 'success')
+                        ->where('metadata->term', $t)
+                        ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(metadata, '$.session_id')) = ?", [(string)$s->id])
+                        ->sum('amount');
+
+                    $outstanding = max(0, $expectedForTerm - $alreadyPaid);
+
+                    if ($outstanding > 0 && $remainingAmount > 0) {
+                        $applyAmount = min($remainingAmount, $outstanding);
+                        $remainingAmount -= $applyAmount;
+
+                        // This is the session/term this payment (or part of it) goes to
+                        $session = $s;
+                        $term = $t;
+                        $feeId = $matchedFeeForTerm?->id;
+
+                        // If the full amount was consumed, stop here
+                        if ($remainingAmount <= 0) break 2;
                     }
                 }
             }
+
+            // If no outstanding balance found (overpayment), fallback to current session
+            if (!$session) {
+                $session = \App\Models\Session::where('institution_id', $institutionId)
+                    ->where('is_current', true)
+                    ->first();
+                $term = $session->current_term ?? '1st Term';
+            }
         } catch (\Exception $e) {
-            Log::error('Error resolving fee for transaction', ['error' => $e->getMessage()]);
+            Log::error('Error resolving session/term for transaction', ['error' => $e->getMessage()]);
+            $session = \App\Models\Session::where('institution_id', $institutionId)
+                ->where('is_current', true)
+                ->first();
+            $term = $session->current_term ?? '1st Term';
         }
 
         $metadata = $data;
-        if (isset($session)) {
-            $metadata['session_id'] = $session->id;
-            $metadata['term'] = $session->current_term ?? '1st Term';
-            
-            if ($feeId) {
-                $feeObj = \App\Models\Fee::find($feeId);
-                if ($feeObj) {
-                    $metadata['fees'] = [$feeObj->title];
-                }
+        $metadata['session_id'] = $session->id;
+        $metadata['term'] = $term;
+        
+        if ($feeId) {
+            $feeObj = \App\Models\Fee::find($feeId);
+            if ($feeObj) {
+                $metadata['fees'] = [$feeObj->title];
             }
         }
 
@@ -235,13 +264,12 @@ class WebhookController extends Controller
                         if (!empty($phone)) {
                             $feeTitle = 'School Fees';
                             $totalFee = $amount;
-                            $term = $session->current_term ?? '1st Term';
 
                             if (isset($feeId)) {
                                 $feeObj = Fee::find($feeId);
                                 if ($feeObj) {
                                     $feeTitle = $feeObj->title;
-                                    $totalFee = $feeObj->getAmountForTerm($term);
+                                    $totalFee = $feeObj->getAmountForTerm($term ?? '1st Term');
                                 }
                             }
 
