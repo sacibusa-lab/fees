@@ -108,6 +108,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/payments/schedule/preview', [PaymentController::class, 'getSchedulePreview'])->name('payments.schedule.preview');
         Route::get('/payments/schedule/export', [PaymentController::class, 'exportSchedule'])->name('payments.schedule.export');
         Route::get('/payments/schedule/download', [PaymentController::class, 'downloadSchedulePdf'])->name('payments.schedule.download');
+        Route::get('/payments/gateway', [App\Http\Controllers\PaymentGatewayController::class, 'index'])->name('payments.gateway');
     });
 
     Route::middleware('permission:payments.manage')->group(function () {
@@ -199,6 +200,13 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/academic-sessions/{session}/set-term', [AcademicSessionController::class, 'setTerm'])->name('academic-sessions.set-term');
         Route::post('/academic-sessions/{session}/next-term', [AcademicSessionController::class, 'nextTerm'])->name('academic-sessions.next-term');
         Route::put('/academic-sessions/{session}/toggle-status', [AcademicSessionController::class, 'toggleStatus'])->name('academic-sessions.toggle-status');
+    });
+
+    // Collection Reports
+    Route::middleware('permission:payments.view')->group(function () {
+        Route::get('/reports', [App\Http\Controllers\ReportsController::class, 'index'])->name('reports.index');
+        Route::get('/reports/export', [App\Http\Controllers\ReportsController::class, 'exportCsv'])->name('reports.export');
+        Route::get('/installments', [App\Http\Controllers\InstallmentController::class, 'index'])->name('installments.index');
     });
 
     // API-like routes for components

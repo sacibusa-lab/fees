@@ -140,12 +140,24 @@ const Sidebar = ({ institution, isOpen, onClose }) => {
                                     <span className="dot"></span>
                                     Transactions
                                 </Link>
+                                <Link href="/payments/gateway" className={`nav-subitem ${isActive('/payments/gateway') ? 'active' : ''}`} onClick={onClose}>
+                                    <span className="dot"></span>
+                                    Gateway
+                                </Link>
                                 {can('settlements.view') && (
                                     <Link href="/settlements" className={`nav-subitem ${isActive('/settlements') ? 'active' : ''}`} onClick={onClose}>
                                         <span className="dot"></span>
                                         Settlements
                                     </Link>
                                 )}
+                                <Link href="/reports" className={`nav-subitem ${isActive('/reports') ? 'active' : ''}`} onClick={onClose}>
+                                    <span className="dot"></span>
+                                    Reports
+                                </Link>
+                                <Link href="/installments" className={`nav-subitem ${isActive('/installments') ? 'active' : ''}`} onClick={onClose}>
+                                    <span className="dot"></span>
+                                    Installments
+                                </Link>
                             </div>
                         )}
                     </div>

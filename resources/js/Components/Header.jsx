@@ -1,9 +1,9 @@
 import React from 'react';
-import { Bell, User, Menu, Search } from 'lucide-react';
+import { Bell, User, Menu, Search, Moon, Sun } from 'lucide-react';
 import { usePage } from '@inertiajs/react';
 import './Header.css';
 
-const Header = ({ title, onMenuButtonClick }) => {
+const Header = ({ title, onMenuButtonClick, isDarkMode, onToggleDarkMode }) => {
     const { auth } = usePage().props;
     const user = auth.user;
     return (
@@ -19,6 +19,14 @@ const Header = ({ title, onMenuButtonClick }) => {
             </div>
 
             <div className="header-actions">
+                <button
+                    className="icon-btn theme-toggle"
+                    onClick={onToggleDarkMode}
+                    title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                >
+                    {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
+                </button>
+
                 <button className="icon-btn notification-btn">
                     <Bell size={18} />
                     <span className="notification-badge"></span>

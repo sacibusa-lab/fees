@@ -21,13 +21,15 @@
   --danger-light: #FFEBEB;
   --info: #45AAF2;
 
-  /* Neutral Colors (Modern cool grays) */
+  /* Neutral Colors (Modern cool grays) — LIGHT THEME */
   --background: #F4F7FE;
   --surface: #FFFFFF;
+  --surface-hover: #F8FAFC;
   --border: #E9EDF7;
-  --text-primary: #000000;
-  --text-secondary: #000000;
+  --text-primary: #1E293B;
+  --text-secondary: #64748B;
   --text-disabled: #CBD5E0;
+  --input-bg: #FFFFFF;
 
   /* Spacing */
   --spacing-xs: 0.25rem;
@@ -60,6 +62,45 @@
   --transition-normal: 400ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* ===== DARK THEME ===== */
+[data-theme="dark"] {
+  --primary-light: #2D1B69;
+  --background: #0F172A;
+  --surface: #1E293B;
+  --surface-hover: #334155;
+  --border: #334155;
+  --text-primary: #F1F5F9;
+  --text-secondary: #94A3B8;
+  --text-disabled: #475569;
+  --input-bg: #334155;
+
+  --shadow-sm: 0 5px 10px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 10px 20px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.4);
+  --shadow-purple: 0 10px 20px rgba(120, 73, 247, 0.15);
+
+  --sidebar-bg: #0F172A;
+  --sidebar-color: #F1F5F9;
+}
+
+[data-theme="dark"] body {
+  background-color: var(--background);
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] img:not(.no-dark-mode) {
+  opacity: 0.9;
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-track {
+  background: var(--surface);
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 8px;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -75,6 +116,11 @@ body {
   color: var(--text-primary);
   font-size: 14px;
   line-height: 1.5;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+html {
+  transition: background-color 0.3s ease;
 }
 
 h1,
@@ -107,4 +153,275 @@ textarea {
   font-family: inherit;
   font-size: inherit;
   outline: none;
+}
+
+/* ===== GLOBAL DARK MODE OVERRIDES ===== */
+[data-theme="dark"] {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+[data-theme="dark"] .content {
+  background: var(--background) !important;
+}
+
+/* Cards & Surfaces */
+[data-theme="dark"] .card,
+[data-theme="dark"] .content-card,
+[data-theme="dark"] .stat-card,
+[data-theme="dark"] .settlement-card,
+[data-theme="dark"] .notice-preview-card,
+[data-theme="dark"] .schedule-filter-card,
+[data-theme="dark"] .profile-header,
+[data-theme="dark"] .account-item {
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
+}
+
+[data-theme="dark"] .card-header,
+[data-theme="dark"] .settlement-card-header {
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
+}
+
+/* Inputs, Selects, Textareas */
+[data-theme="dark"] input:not([type="checkbox"]):not([type="radio"]),
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
+  background: var(--input-bg) !important;
+  border-color: var(--border) !important;
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .header-search-input,
+[data-theme="dark"] .schedule-select {
+  background: var(--input-bg) !important;
+  border-color: var(--border) !important;
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] input::placeholder,
+[data-theme="dark"] .header-search-input::placeholder {
+  color: var(--text-disabled) !important;
+}
+
+/* Buttons & Icon Buttons */
+[data-theme="dark"] .icon-btn,
+[data-theme="dark"] .mobile-menu-btn {
+  background: var(--surface) !important;
+  color: var(--text-secondary) !important;
+  border-color: var(--border) !important;
+}
+
+[data-theme="dark"] .icon-btn:hover {
+  color: var(--primary) !important;
+}
+
+/* Tables */
+[data-theme="dark"] table,
+[data-theme="dark"] .activity-table,
+[data-theme="dark"] .transactions-table {
+  background: var(--surface) !important;
+}
+
+[data-theme="dark"] table th,
+[data-theme="dark"] .activity-table th,
+[data-theme="dark"] .transactions-table th {
+  background: var(--surface-hover) !important;
+  color: var(--text-secondary) !important;
+  border-color: var(--border) !important;
+}
+
+[data-theme="dark"] table td,
+[data-theme="dark"] .activity-table td,
+[data-theme="dark"] .transactions-table td {
+  border-color: var(--border) !important;
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] table tr:hover td {
+  background: var(--surface-hover) !important;
+}
+
+/* Modals */
+[data-theme="dark"] .modal-content {
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
+}
+
+[data-theme="dark"] .modal-header {
+  border-color: var(--border) !important;
+}
+
+/* Payout items / Settlement cards */
+[data-theme="dark"] .payout-item {
+  background: var(--surface-hover) !important;
+  border-color: var(--border) !important;
+}
+
+[data-theme="dark"] .payout-item.highlight {
+  background: #1a1a3e !important;
+  border-color: #2d2d6e !important;
+}
+
+/* Status Badges */
+[data-theme="dark"] .status-badge,
+[data-theme="dark"] .status-pill {
+  opacity: 0.9;
+}
+
+[data-theme="dark"] .status-ready_for_split {
+  background: #064e3b !important;
+  color: #6ee7b7 !important;
+  border-color: #065f46 !important;
+}
+
+[data-theme="dark"] .status-awaiting_bank_settlement {
+  background: #78350f !important;
+  color: #fcd34d !important;
+  border-color: #92400e !important;
+}
+
+[data-theme="dark"] .status-disbursed {
+  background: #1e293b !important;
+  color: #94a3b8 !important;
+}
+
+/* Empty states */
+[data-theme="dark"] .empty-state {
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
+}
+
+[data-theme="dark"] .empty-state h3,
+[data-theme="dark"] .empty-state p {
+  color: var(--text-secondary) !important;
+}
+
+/* Dividers & borders */
+[data-theme="dark"] hr,
+[data-theme="dark"] .divider {
+  border-color: var(--border) !important;
+}
+
+/* Student card headers etc */
+[data-theme="dark"] .student-info-row,
+[data-theme="dark"] .selection-info-bar {
+  background: var(--surface-hover) !important;
+  border-color: var(--border) !important;
+}
+
+/* Sidebar in dark mode */
+[data-theme="dark"] .sidebar {
+  background: var(--sidebar-bg) !important;
+}
+
+[data-theme="dark"] .sidebar a,
+[data-theme="dark"] .sidebar .nav-item {
+  color: var(--sidebar-color) !important;
+}
+
+/* Account info boxes */
+[data-theme="dark"] .account-info-box {
+  background: var(--surface-hover) !important;
+  border-color: var(--border) !important;
+}
+
+/* Fees table specific */
+[data-theme="dark"] .preview-fees-table td,
+[data-theme="dark"] .preview-fees-table th,
+[data-theme="dark"] .preview-fees-table tfoot {
+  border-color: var(--border) !important;
+  background: transparent !important;
+}
+
+[data-theme="dark"] .fee-adjustment-row td {
+  color: var(--warning) !important;
+}
+
+/* Dashboard specific */
+[data-theme="dark"] .dashboard .stat-card {
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
+}
+
+[data-theme="dark"] .dashboard .stat-label {
+  color: var(--text-secondary) !important;
+}
+
+[data-theme="dark"] .dashboard .stat-value {
+  color: var(--text-primary) !important;
+}
+
+/* Student profile */
+[data-theme="dark"] .profile-avatar-large {
+  background: var(--surface-hover) !important;
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .profile-meta .meta-item {
+  color: var(--text-secondary) !important;
+}
+
+/* Settings & tabs */
+[data-theme="dark"] .tab-item {
+  color: var(--text-secondary) !important;
+}
+
+[data-theme="dark"] .tab-item.active {
+  color: var(--primary) !important;
+  border-color: var(--primary) !important;
+}
+
+[data-theme="dark"] .tab-item:hover {
+  color: var(--text-primary) !important;
+}
+
+/* Academic Sessions */
+[data-theme="dark"] .session-card,
+[data-theme="dark"] .class-item {
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
+}
+
+/* Inventory & Bulk Ops */
+[data-theme="dark"] .inventory-item,
+[data-theme="dark"] .bulk-card {
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
+}
+
+/* Dropdowns & popovers */
+[data-theme="dark"] .dropdown-menu,
+[data-theme="dark"] .export-menu {
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
+}
+
+[data-theme="dark"] .dropdown-menu button,
+[data-theme="dark"] .export-menu button {
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .dropdown-menu button:hover,
+[data-theme="dark"] .export-menu button:hover {
+  background: var(--surface-hover) !important;
+}
+
+/* Scrollbar for dark mode */
+[data-theme="dark"] ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-track {
+  background: var(--background);
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 8px;
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+  background: var(--text-disabled);
 }

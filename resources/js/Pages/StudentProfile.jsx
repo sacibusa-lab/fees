@@ -1,25 +1,56 @@
 import React, { useState } from 'react';
 import { Head, useForm, Link, router } from '@inertiajs/react';
 import Layout from '../Components/Layout';
-import { User, CreditCard, Activity, Settings, Save, Trash2, ArrowLeft } from 'lucide-react';
+import { User, CreditCard, Activity, Settings, Save, Trash2, ArrowLeft, ExternalLink } from 'lucide-react';
 import './StudentProfile.css';
 
 const StudentProfile = ({ student, classes, subClasses, paymentActivity = [], allTransactions = [], allSessions = [], currentSessionName = 'N/A' }) => {
     const [activeTab, setActiveTab] = useState('profile');
 
     // Form for editing
-    const { data, setData, put, processing, errors } = useForm({
+    const { data, setData, processing, errors } = useForm({
         name: student.name,
         gender: student.gender,
         class_id: student.class_id,
         sub_class_id: student.sub_class_id,
     });
 
+    const [avatarFile, setAvatarFile] = useState(null);
+    const [avatarPreview, setAvatarPreview] = useState(student.avatar ? `/storage/${student.avatar}` : null);
+
+    const handleAvatarChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            setAvatarFile(file);
+            setAvatarPreview(URL.createObjectURL(file));
+        }
+    };
+
+    const [saving, setSaving] = useState(false);
+
     const handleUpdate = (e) => {
         e.preventDefault();
-        put(`/students/${student.id}`, {
+        setSaving(true);
+        const fd = new FormData();
+        fd.append('_method', 'PUT');
+        fd.append('name', data.name);
+        fd.append('gender', data.gender);
+        fd.append('class_id', data.class_id);
+        fd.append('sub_class_id', data.sub_class_id);
+        if (avatarFile) {
+            fd.append('avatar', avatarFile);
+        }
+        router.post(`/students/${student.id}`, fd, {
             preserveScroll: true,
-            onSuccess: () => alert('Student updated successfully!')
+            onSuccess: () => {
+                alert('Student updated successfully!');
+                setAvatarFile(null);
+                setSaving(false);
+            },
+            onError: () => {
+                setSaving(false);
+            },
+            onFinish: () => setSaving(false),
         });
     };
 
@@ -98,8 +129,29 @@ const StudentProfile = ({ student, classes, subClasses, paymentActivity = [], al
                                 <h3>Personal Information</h3>
                                 <p>View and update student details.</p>
                             </div>
-                            <form onSubmit={handleUpdate} className="profile-form">
-                                <div className="form-grid">
+                            <form onSubmit={handleUpdate} className="profile-form" encType="multipart/form-data">
+                                <div className="form-grid form-grid-with-avatar">
+                                    <div className="avatar-upload-section">
+                                        <div className="avatar-preview">
+                                            {avatarPreview ? (
+                                                <img src={avatarPreview} alt="Student" className="avatar-preview-img" />
+                                            ) : (
+                                                <div className="avatar-placeholder">{student.name.charAt(0)}</div>
+                                            )}
+                                        </div>
+                                        <label className="avatar-upload-btn">
+                                            Choose Photo
+                                            <input
+                                                type="file"
+                                                accept="image/jpeg,image/png"
+                                                onChange={handleAvatarChange}
+                                                hidden
+                                            />
+                                        </label>
+                                        <span className="avatar-upload-hint">JPG or PNG, max 2MB</span>
+                                        {errors.avatar && <span className="error-msg">{errors.avatar}</span>}
+                                    </div>
+                                    <div className="form-fields-grid">
                                     <div className="form-group">
                                         <label>Full Name</label>
                                         <input
@@ -166,11 +218,12 @@ const StudentProfile = ({ student, classes, subClasses, paymentActivity = [], al
                                         <input type="text" value={student.guardian_phone || 'N/A'} disabled className="disabled-input" />
                                     </div>
                                 </div>
+                                </div>
 
                                 <div className="form-actions">
-                                    <button type="submit" className="btn-save" disabled={processing}>
+                                    <button type="submit" className="btn-save" disabled={saving}>
                                         <Save size={18} />
-                                        {processing ? 'Saving...' : 'Save Changes'}
+                                        {saving ? 'Saving...' : 'Save Changes'}
                                     </button>
                                 </div>
                             </form>
@@ -236,9 +289,23 @@ const StudentProfile = ({ student, classes, subClasses, paymentActivity = [], al
                     {/* ACTIVITY TAB */}
                     {activeTab === 'activity' && (
                         <div className="content-card no-padding">
-                            <div className="card-header activity-header">
-                                <h3>Payment Activity</h3>
-                                <p>Summary of termly fee payments.</p>
+                            <div className="card-header activity-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <div>
+                                    <h3>Payment Activity</h3>
+                                    <p>Summary of termly fee payments.</p>
+                                </div>
+                                <Link
+                                    href={`/installments?student_id=${student.id}`}
+                                    className="btn-view-installments"
+                                    style={{
+                                        display: 'inline-flex', alignItems: 'center', gap: '6px',
+                                        padding: '8px 16px', borderRadius: '8px', fontSize: '13px',
+                                        fontWeight: 600, background: 'var(--primary)', color: 'white',
+                                        textDecoration: 'none'
+                                    }}
+                                >
+                                    <ExternalLink size={16} /> View Installments
+                                </Link>
                             </div>
 
                             {paymentActivity.length > 0 ? (

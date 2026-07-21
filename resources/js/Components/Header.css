@@ -92,6 +92,20 @@
     border: 2px solid white;
 }
 
+.theme-toggle {
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.theme-toggle:hover {
+    color: var(--primary) !important;
+    transform: rotate(15deg);
+}
+
+[data-theme="dark"] .theme-toggle {
+    color: #fbbf24 !important;
+}
+
 .user-profile-summary {
     display: flex;
     align-items: center;

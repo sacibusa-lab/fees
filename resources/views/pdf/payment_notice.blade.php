@@ -71,9 +71,10 @@
             border-collapse: collapse;
         }
         .info-table td {
-            font-size: 7px;
-            padding-bottom: 1px;
+            font-size: 9px;
+            padding-bottom: 3px;
             vertical-align: top;
+            line-height: 1.4;
         }
         .info-label {
             font-weight: bold;
@@ -83,20 +84,24 @@
         .fees-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 7px;
+            font-size: 9px;
         }
 
         .fees-table th,
         .fees-table td {
             border: 1px solid #ddd;
-            padding: 2px;
+            padding: 4px 6px;
+        }
+
+        .fees-table th {
+            font-size: 9px;
         }
 
         .amount-due {
             text-align: center;
             font-weight: bold;
-            margin-top: 3px;
-            font-size: 11px;
+            margin-top: 5px;
+            font-size: 12px;
         }
 
         .footer {

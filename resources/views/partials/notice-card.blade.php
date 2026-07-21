@@ -13,12 +13,25 @@
                 <div class="info-section">
                     <table class="info-table">
                         <tr>
-                            <td width="50%">
+                            <td width="15%" style="text-align: center; vertical-align: middle;">
+                                @php
+                                    $avatarPath = $notice['student']->avatar;
+                                    $avatarFullPath = $avatarPath ? public_path('storage/' . $avatarPath) : null;
+                                @endphp
+                                @if($avatarFullPath && file_exists($avatarFullPath))
+                                    <img src="{{ $avatarFullPath }}" style="width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 1px solid #ddd;">
+                                @else
+                                    <div style="width: 45px; height: 45px; border-radius: 50%; background: #eee; display: inline-flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; color: #666;">
+                                        {{ strtoupper(substr($notice['student']->name, 0, 1)) }}
+                                    </div>
+                                @endif
+                            </td>
+                            <td width="40%">
                                 <span class="info-label">Name:</span> {{ strtoupper($notice['student']->name) }}<br>
                                 <span class="info-label">Reg No:</span> {{ $notice['student']->admission_number }}<br>
                                 <span class="info-label">Class:</span> {{ $notice['student']->schoolClass->name ?? 'N/A' }}
                             </td>
-                            <td width="50%">
+                            <td width="45%">
                                 <span class="info-label">Account No.:</span> <b>{{ $notice['student']->virtualAccount->account_number ?? 'N/A' }}</b><br>
                                 <span class="info-label">Account Name:</span> {{ $notice['student']->virtualAccount->account_name ?? 'N/A' }}<br>
                                 <span class="info-label">Bank Name:</span> {{ $notice['student']->virtualAccount->bank_name ?? 'N/A' }}

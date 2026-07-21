@@ -111,9 +111,10 @@ class StudentController extends Controller
             'guardian_name' => 'nullable|string|max:255',
             'guardian_phone' => 'nullable|string|max:20',
             'address' => 'nullable|string',
+            'avatar' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
-        $student->update([
+        $updateData = [
             'name' => $validated['name'],
             'gender' => $validated['gender'],
             'class_id' => $validated['class_id'],
@@ -123,7 +124,15 @@ class StudentController extends Controller
             'guardian_name' => $validated['guardian_name'] ?? $student->guardian_name,
             'guardian_phone' => $validated['guardian_phone'] ?? $student->guardian_phone,
             'address' => $validated['address'] ?? $student->address,
-        ]);
+        ];
+
+        // Handle avatar upload
+        if ($request->hasFile('avatar')) {
+            $avatarPath = $request->file('avatar')->store('avatars', 'public');
+            $updateData['avatar'] = $avatarPath;
+        }
+
+        $student->update($updateData);
 
         return redirect()->back()->with('success', 'Student updated successfully');
     }

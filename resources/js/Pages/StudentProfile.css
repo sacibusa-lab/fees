@@ -447,3 +447,87 @@
     font-weight: 700;
     color: #92400e;
 }
+
+/* Avatar Upload */
+.form-grid-with-avatar {
+    display: flex !important;
+    gap: 24px;
+    align-items: flex-start;
+}
+
+.avatar-upload-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 20px;
+    border: 2px dashed var(--border);
+    border-radius: 12px;
+    min-width: 160px;
+}
+
+.avatar-preview {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 3px solid var(--primary-light);
+}
+
+.avatar-preview-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.avatar-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    font-weight: 700;
+    background: var(--primary-light);
+    color: var(--primary);
+}
+
+.avatar-upload-btn {
+    display: inline-block;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    background: var(--primary);
+    color: white;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.avatar-upload-btn:hover {
+    background: var(--primary-dark);
+}
+
+.avatar-upload-hint {
+    font-size: 11px;
+    color: var(--text-disabled);
+    text-align: center;
+}
+
+.form-fields-grid {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+@media (max-width: 768px) {
+    .form-grid-with-avatar {
+        flex-direction: column;
+        align-items: center;
+    }
+    .form-fields-grid {
+        grid-template-columns: 1fr;
+        width: 100%;
+    }
+}
