@@ -178,19 +178,18 @@ class SettlementController extends Controller
                 }
             }
 
-            // Determine IT fee for this transaction from the fee record
-            $feeRecord = $feeId ? ($feesMap[$feeId] ?? Fee::find($feeId)) : null;
+            // Determine IT maintenance fee for this transaction
+            // First try the already-loaded $tx->fee relationship, then fallback to DB
+            $feeRecord = $tx->fee ?? ($feeId ? ($feesMap[$feeId] ?? Fee::find($feeId)) : null);
             $itFeeForTx = $feeRecord && $feeRecord->it_fee !== null
                 ? (float)$feeRecord->it_fee
                 : 100;
 
-            // Calculate Deductions (Only for Online/Paystack)
+            // Deduct only the IT Maintenance fee (Paystack fee is lumped into IT fee)
             $txAmount = (float)$tx->amount;
             $totalFeesForTx = 0;
             if ($tx->channel !== 'manual') {
-                $paystackFee = min($txAmount * 0.01, 300);
-                $itFee = $itFeeForTx;
-                $totalFeesForTx = $paystackFee + $itFee;
+                $totalFeesForTx = $itFeeForTx;
             }
             
             if ($feeId) {

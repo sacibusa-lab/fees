@@ -232,6 +232,9 @@ class WebhookController extends Controller
             }
         }
 
+        // Get the channel from the Paystack data
+        $channel = $data['channel'] ?? 'bank_transfer';
+
         // Update or create transaction
         Transaction::updateOrCreate(
             ['reference' => $reference],
@@ -241,7 +244,8 @@ class WebhookController extends Controller
                 'fee_id' => $feeId,
                 'amount' => $amount,
                 'status' => 'success',
-                'payment_method' => 'paystack',
+                'channel' => $channel,
+                'gateway' => 'paystack',
                 'metadata' => $metadata,
                 'paid_at' => now()
             ]
