@@ -23,6 +23,56 @@
     margin-top: 4px;
 }
 
+/* Academic Session Selector */
+.session-selector {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+}
+
+.session-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    background: white;
+    font-size: 14px;
+    font-weight: 600;
+    color: #475569;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.session-tab:hover {
+    border-color: #cbd5e1;
+    background: #f8fafc;
+}
+
+.session-tab.active {
+    background: #1e293b;
+    color: white;
+    border-color: #1e293b;
+}
+
+.session-current-badge {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+
+.session-tab.active .session-current-badge {
+    background: rgba(255, 255, 255, 0.18);
+    color: white;
+}
+
 /* Stats Section */
 .settlement-stats-grid {
     display: grid;
@@ -90,6 +140,75 @@
 
 @media (max-width: 640px) {
     .settlement-stats-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Compact / Sub-group Stat Cards (per session & per term) */
+.settlement-stats-grid.compact {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin: 12px 0 20px;
+}
+
+.stat-card.compact {
+    padding: 12px 16px;
+    border-radius: 10px;
+    gap: 2px;
+}
+
+.stat-card.compact .stat-label {
+    font-size: 10px;
+}
+
+.stat-card.compact .stat-value {
+    font-size: 15px;
+}
+
+.stat-card.compact .stat-footer {
+    font-size: 10px;
+    margin-top: 2px;
+}
+
+/* Per-academic-session summary blocks */
+.session-summaries {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    margin-bottom: 40px;
+}
+
+.session-summary-block {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 16px;
+}
+
+.session-summary-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #1e293b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 12px;
+}
+
+.session-summary-block .settlement-stats-grid {
+    margin-bottom: 0;
+}
+
+@media (max-width: 1024px) {
+    .settlement-stats-grid.compact {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 640px) {
+    .settlement-stats-grid.compact {
         grid-template-columns: 1fr;
     }
 }

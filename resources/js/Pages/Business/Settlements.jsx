@@ -15,8 +15,8 @@ import {
 } from 'lucide-react';
 import './Settlements.css';
 
-const Settlements = ({ groupedSettlements = {}, stats = {}, auth, flash }) => {
-    console.log('Settlements Component Rendered', { stats, groupedCount: Object.keys(groupedSettlements || {}).length });
+const Settlements = ({ groupedSettlements = {}, termStats = {}, sessionStats = {}, sessions = [], selectedSessionId = null, auth, flash }) => {
+    console.log('Settlements Component Rendered', { groupedCount: Object.keys(groupedSettlements || {}).length, selectedSessionId });
     
     const [expandedDate, setExpandedDate] = useState(null);
     const [details, setDetails] = useState(null);
@@ -125,6 +125,41 @@ const Settlements = ({ groupedSettlements = {}, stats = {}, auth, flash }) => {
         alert('Copied to clipboard: ' + text);
     };
 
+    // Stat cards for a specific scope. `full` renders a larger, titled block
+    // used for the per-academic-session summary at the top of the page;
+    // the compact variant is used under each term heading.
+    const StatCards = ({ stats, scope, variant = 'compact', title }) => {
+        if (!stats || !(Number(stats.total_collected) > 0)) return null;
+
+        const full = variant === 'full';
+        const cards = [
+            { key: 'total_collected', label: 'Total Collections', cls: '', footer: full ? 'All Collections' : `Collected ${scope}` },
+            { key: 'total_zenith', label: 'Zenith Total', cls: 'highlight-zenith', footer: full ? 'Zenith Allocation' : `Zenith ${scope}` },
+            { key: 'total_keystone', label: 'Keystone Total', cls: 'highlight-keystone', footer: full ? 'Keystone Allocation' : `Keystone ${scope}` },
+            { key: 'total_it', label: 'IT Maintenance', cls: 'highlight-it', footer: full ? 'IT / Platform Fees' : `IT Fees ${scope}` },
+        ];
+
+        return (
+            <div className="session-summary-block">
+                {title && (
+                    <div className="session-summary-title">
+                        <Calendar size={16} />
+                        {title}
+                    </div>
+                )}
+                <div className={`settlement-stats-grid ${full ? '' : 'compact'}`}>
+                    {cards.map((c) => (
+                        <div key={c.key} className={`stat-card ${full ? '' : 'compact'} ${c.cls}`}>
+                            <span className="stat-label">{c.label}</span>
+                            <span className="stat-value">{formatCurrency(stats[c.key])}</span>
+                            <div className="stat-footer">{c.footer}</div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
+    };
+
     return (
         <Layout>
             <Head title="Settlements & Payouts" />
@@ -137,28 +172,34 @@ const Settlements = ({ groupedSettlements = {}, stats = {}, auth, flash }) => {
                     </div>
                 </div>
 
-                {stats && (
-                    <div className="settlement-stats-grid">
-                        <div className="stat-card">
-                            <span className="stat-label">Total Collections</span>
-                            <span className="stat-value">{formatCurrency(stats?.total_collected)}</span>
-                            <div className="stat-footer">Cumulative Disbursed</div>
-                        </div>
-                        <div className="stat-card highlight-zenith">
-                            <span className="stat-label">Zenith Total</span>
-                            <span className="stat-value">{formatCurrency(stats?.total_zenith)}</span>
-                            <div className="stat-footer">Paid to Zenith Accounts</div>
-                        </div>
-                        <div className="stat-card highlight-keystone">
-                            <span className="stat-label">Keystone Total</span>
-                            <span className="stat-value">{formatCurrency(stats?.total_keystone)}</span>
-                            <div className="stat-footer">Paid to Keystone Accounts</div>
-                        </div>
-                        <div className="stat-card highlight-it">
-                            <span className="stat-label">IT Maintenance</span>
-                            <span className="stat-value">{formatCurrency(stats?.total_it)}</span>
-                            <div className="stat-footer">Total Platform Fees</div>
-                        </div>
+                {/* Academic session selector — defaults to the active/current session */}
+                {sessions?.length > 1 && (
+                    <div className="session-selector">
+                        {sessions.map((s) => (
+                            <button
+                                key={s.id}
+                                className={`session-tab ${s.id === selectedSessionId ? 'active' : ''}`}
+                                onClick={() => {
+                                    if (s.id !== selectedSessionId) {
+                                        router.get('/settlements', { session: s.id }, { preserveScroll: true });
+                                    }
+                                }}
+                            >
+                                {s.name}
+                                {s.is_current && <span className="session-current-badge">Current</span>}
+                            </button>
+                        ))}
+                    </div>
+                )}
+
+                {/* Per-academic-session summary — one separated block per session */}
+                {Object.values(sessionStats || {}).some((v) => Number(v?.total_collected) > 0) && (
+                    <div className="session-summaries">
+                        {Object.entries(sessionStats || {})
+                            .filter(([, v]) => Number(v?.total_collected) > 0)
+                            .map(([session, st]) => (
+                                <StatCards key={session} stats={st} variant="full" title={session} />
+                            ))}
                     </div>
                 )}
 
@@ -179,7 +220,7 @@ const Settlements = ({ groupedSettlements = {}, stats = {}, auth, flash }) => {
                                     {expandedSessions.includes(session) ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                                     {session}
                                 </h2>
-                                
+
                                 {expandedSessions.includes(session) && Object.entries(terms || {}).map(([term, months]) => (
                                     <div key={term} className="term-section">
                                         <h3 
@@ -189,6 +230,8 @@ const Settlements = ({ groupedSettlements = {}, stats = {}, auth, flash }) => {
                                             {expandedTerms.includes(`${session}|${term}`) ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                                             {term}
                                         </h3>
+
+                                        <StatCards stats={termStats?.[session]?.[term]} scope="in this term" />
                                         
                                         {expandedTerms.includes(`${session}|${term}`) && Object.entries(months || {}).map(([month, days]) => {
                                             const dayEntries = Object.values(days || {});
