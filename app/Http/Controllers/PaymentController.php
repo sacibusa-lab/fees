@@ -364,16 +364,7 @@ class PaymentController extends Controller
         ]);
 
         $institutionId = auth()->user()->institution_id;
-        $feeId = null;
 
-        if ($request->fee_title && $request->fee_title !== 'all') {
-            $fee = Fee::where('institution_id', $institutionId)
-                ->where('session_id', $validated['session_id'])
-                ->where('title', $request->fee_title)
-                ->first();
-            $feeId = $fee?->id;
-        }
-        
         // Use getNoticeData to calculate totals
         $preview = $this->getNoticeData($request);
         if ($preview instanceof \Illuminate\Http\RedirectResponse) {
@@ -388,7 +379,7 @@ class PaymentController extends Controller
         $session = Session::find($validated['session_id']);
         $term = $validated['term'];
 
-        DB::transaction(function() use ($notices, $institutionId, $validated, $feeId, $paymentMode, $customAmount, $description, $session, $term) {
+        DB::transaction(function() use ($notices, $institutionId, $validated, $paymentMode, $customAmount, $description, $session, $term) {
             foreach ($notices as $notice) {
                 // Determine amount to pay
                 $remainingToPay = 0;
@@ -404,10 +395,25 @@ class PaymentController extends Controller
                 foreach ($notice['fees'] as $feeNotice) {
                     if ($remainingToPay <= 0) break;
 
-                    // Skip adjustments for splits (or handle them differently if they have beneficiaries)
-                    // Currently, adjustments are tagged with 'is_adjustment' => true
-                    $feeId = (isset($feeNotice['is_adjustment']) && $feeNotice['is_adjustment']) ? null : $feeNotice['id'];
-                    
+                    // Adjustments ('adj-*') and carry-over balances ('carry-*') are virtual lines with
+                    // no matching row in the fees table, so they must be stored with a null fee_id
+                    // (a non-numeric id would otherwise be rejected by MySQL).
+                    $isAdjustment = !empty($feeNotice['is_adjustment']);
+                    $isCarryOver = !empty($feeNotice['is_carry_over']);
+
+                    $lineFeeId = (!$isAdjustment && !$isCarryOver && is_numeric($feeNotice['id'] ?? null))
+                        ? (int) $feeNotice['id']
+                        : null;
+
+                    // Carry-over amounts are credited to the session/term they originated from,
+                    // otherwise they would never clear from the schedule.
+                    $lineSessionId = $isCarryOver
+                        ? (int) ($feeNotice['carry_session_id'] ?? $validated['session_id'])
+                        : (int) $validated['session_id'];
+                    $lineTerm = $isCarryOver
+                        ? ($feeNotice['carry_term'] ?? $term)
+                        : $term;
+
                     // Limit payment to the amount due for this specific fee
                     $paymentForThisFee = min($remainingToPay, (float) $feeNotice['amount']);
                     
@@ -416,16 +422,20 @@ class PaymentController extends Controller
                     Transaction::create([
                         'institution_id' => $institutionId,
                         'student_id' => $notice['student']->id,
-                        'fee_id' => $feeId,
+                        'fee_id' => $lineFeeId,
                         'reference' => 'MAN-' . strtoupper(Str::random(10)),
                         'amount' => $paymentForThisFee,
                         'status' => 'success',
                         'channel' => 'manual',
                         'paid_at' => now(),
                         'metadata' => [
-                            'session_id' => (int)$validated['session_id'],
-                            'term' => $term,
-                            'type' => 'manual_bulk_payment',
+                            'session_id' => $lineSessionId,
+                            'term' => $lineTerm,
+                            'type' => $isCarryOver
+                                ? 'manual_bulk_payment_carry_over'
+                                : ($isAdjustment ? 'manual_bulk_payment_adjustment' : 'manual_bulk_payment'),
+                            'applied_to_session_id' => (int) $validated['session_id'],
+                            'applied_to_term' => $term,
                             'payment_mode' => $paymentMode,
                             'description' => $description,
                             'fee_title' => $feeNotice['title']
@@ -680,7 +690,22 @@ class PaymentController extends Controller
             }
         }
 
-        $notices = $students->map(function ($student) use ($fees, $session, $term) {
+        // Pre-load fees for PAST sessions — used to work out carry-over (arrears) balances.
+        // Only fees that actually belong to a session count as owed for that session;
+        // mixing in other sessions' fees would inflate the outstanding balance.
+        $carrySessions = Session::where('institution_id', $institutionId)
+            ->where('id', '<', $session->id)
+            ->orderBy('id', 'asc')
+            ->get();
+        $carryFeesBySession = Fee::where('institution_id', $institutionId)
+            ->where('status', 'active')
+            ->whereIn('session_id', $carrySessions->pluck('id'))
+            ->with('overrides')
+            ->get()
+            ->groupBy('session_id');
+        $termOrder = ['1st Term', '2nd Term', '3rd Term'];
+
+        $notices = $students->map(function ($student) use ($fees, $session, $term, $carrySessions, $carryFeesBySession, $termOrder) {
             $studentFees = $fees->map(function ($fee) use ($student, $term) {
                 // Check if fee is class-specific — relaxed for promoted students
                 // If the fee targets a class and the student is no longer in that class
@@ -727,20 +752,13 @@ class PaymentController extends Controller
             }
 
             // Append outstanding balances from PREVIOUS sessions/terms as carry-over charges
-            $allSessions = \App\Models\Session::where('institution_id', $session->institution_id)
-                ->orderBy('id', 'asc')->get();
-            $allFees = \App\Models\Fee::where('institution_id', $session->institution_id)
-                ->where('status', 'active')->with('overrides')->get();
-            $termOrder = ['1st Term', '2nd Term', '3rd Term'];
-
-            foreach ($allSessions as $s) {
-                // Skip the current session (we already show its fees above)
-                if ($s->id == $session->id) continue;
+            foreach ($carrySessions as $s) {
+                $sessionFees = $carryFeesBySession->get($s->id, collect());
 
                 foreach ($termOrder as $t) {
-                    // Calculate expected for this session/term
+                    // Calculate expected for this session/term (that session's own fees only)
                     $expectedForTerm = 0;
-                    foreach ($allFees as $fee) {
+                    foreach ($sessionFees as $fee) {
                         if ($fee->class_id && $fee->class_id != $student->class_id) continue;
                         if (!$fee->isActiveForTerm($t)) continue;
                         $override = $fee->overrides->where('class_id', $student->class_id)->first();
@@ -765,6 +783,9 @@ class PaymentController extends Controller
                             'amount' => $outstanding,
                             'status' => 'carry_over',
                             'is_carry_over' => true,
+                            // Credit payments for this virtual line to the session/term it came from
+                            'carry_session_id' => (int) $s->id,
+                            'carry_term' => $t,
                         ];
                     }
                 }
