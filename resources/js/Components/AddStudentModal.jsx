@@ -28,8 +28,6 @@ const AddStudentModal = ({ show, onClose, classes = [], subClasses = [] }) => {
     // Multiple Student (CSV) Form
     const { data: multiData, setData: setMultiData, post: postMulti, processing: multiProcessing, errors: multiErrors, reset: resetMulti } = useForm({
         file: null,
-        class_id: '',
-        sub_class_id: '',
     });
 
     // Use all sub-classes globally
@@ -100,7 +98,7 @@ const AddStudentModal = ({ show, onClose, classes = [], subClasses = [] }) => {
                         className={`tab-btn ${activeTab === 'multiple' ? 'active' : ''}`}
                         onClick={() => handleTabSwitch('multiple')}
                     >
-                        Multiple Students (CSV)
+                        Multiple Students (CSV/Excel)
                     </button>
                 </div>
 
@@ -306,14 +304,16 @@ const AddStudentModal = ({ show, onClose, classes = [], subClasses = [] }) => {
                     <form onSubmit={handleMultiSubmit} className="student-form">
                         <div className="download-template-area">
                             <a href="/students/template" target="_blank" className="download-link">
-                                Download Sample File Here. Do not change the headers !
-                            </a>                        </div>
+                                Download the roster template and keep its headers
+                            </a>
+                            <p>Each row is assigned to the class and arm named in that row. Existing admission numbers are moved to the uploaded class and arm.</p>
+                        </div>
 
                         <div className="file-upload-area">
                             <input
                                 type="file"
                                 id="csv-upload-tab"
-                                accept=".csv"
+                                accept=".csv,.xls,.xlsx"
                                 onChange={handleFileChange}
                                 className="hidden-file-input"
                             />
@@ -324,40 +324,10 @@ const AddStudentModal = ({ show, onClose, classes = [], subClasses = [] }) => {
                                 <span className="upload-text">
                                     Drop your students file here or <span className="highlight-text">Browse</span>
                                 </span>
-                                <span className="upload-subtext">Supports: CSV, XLS, XLSX</span>
+                                <span className="upload-subtext">Supports CSV, XLS, and XLSX (max 2MB)</span>
                                 {multiData.file && <div className="file-name-tag">{multiData.file.name}</div>}
                             </label>
                             {multiErrors.file && <div className="error-msg mt-2">{multiErrors.file}</div>}
-                        </div>
-
-                        <div className="form-group">
-                            <label>Class</label>
-                            <select
-                                value={multiData.class_id}
-                                onChange={e => setMultiData('class_id', e.target.value)}
-                                className={multiErrors.class_id ? 'error-input' : ''}
-                            >
-                                <option value="">--Select class--</option>
-                                {classes.map(cls => (
-                                    <option key={cls.id} value={cls.id}>{cls.name}</option>
-                                ))}
-                            </select>
-                            {multiErrors.class_id && <span className="error-msg">{multiErrors.class_id}</span>}
-                        </div>
-
-                        <div className="form-group">
-                            <label>Subclass</label>
-                            <select
-                                value={multiData.sub_class_id}
-                                onChange={e => setMultiData('sub_class_id', e.target.value)}
-                                className={multiErrors.sub_class_id ? 'error-input' : ''}
-                            >
-                                <option value="">Select Subclass</option>
-                                {filteredSubClasses.map(sc => (
-                                    <option key={sc.id} value={sc.id}>{sc.name}</option>
-                                ))}
-                            </select>
-                            {multiErrors.sub_class_id && <span className="error-msg">{multiErrors.sub_class_id}</span>}
                         </div>
 
                         <button
@@ -365,7 +335,7 @@ const AddStudentModal = ({ show, onClose, classes = [], subClasses = [] }) => {
                             className="btn-promote full-width"
                             disabled={multiProcessing || !multiData.file}
                         >
-                            {multiProcessing ? 'Saving...' : 'Save'}
+                            {multiProcessing ? 'Importing...' : 'Import & Arrange Students'}
                         </button>
                     </form>
                 )}

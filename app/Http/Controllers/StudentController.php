@@ -9,6 +9,9 @@ use App\Services\Payment\PaystackProvider;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 use App\Models\Fee;
 use App\Models\Transaction;
 use App\Models\Session;
@@ -221,16 +224,15 @@ class StudentController extends Controller
     public function downloadTemplate()
     {
         $headers = [
-            "Content-type" => "text/csv",
-            "Content-Disposition" => "attachment; filename=students_import_template.csv",
+            'Content-type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename=students_import_template.csv',
         ];
 
-        $callback = function() {
+        $callback = function () {
             $file = fopen('php://output', 'w');
-            // Headers matches the columns we expect
-            fputcsv($file, ['Full Name', 'Admission Number', 'Gender (Male/Female)', 'Phone', 'Email', 'Guardian Name', 'Guardian Phone', 'Address']);
+            fputcsv($file, ['Full Name', 'Admission Number', 'Class', 'Arm', 'Gender (Male/Female)', 'Phone', 'Email', 'Guardian Name', 'Guardian Phone', 'Address']);
             // Example row
-            fputcsv($file, ['John Doe', 'ADM/2026/001', 'Male', '08012345678', 'john@example.com', 'Jane Doe', '08098765432', '123 Main Street, City']);
+            fputcsv($file, ['John Doe', 'ADM/2026/001', 'JSS 1', 'A', 'Male', '08012345678', 'john@example.com', 'Jane Doe', '08098765432', '123 Main Street, City']);
             fclose($file);
         };
 
@@ -239,55 +241,187 @@ class StudentController extends Controller
 
     public function import(Request $request)
     {
-        $request->validate([
-            'file' => 'required|file|mimes:csv,txt|max:2048',
-            'class_id' => 'required|exists:classes,id',
-            'sub_class_id' => 'required|exists:sub_classes,id',
+        $validated = $request->validate([
+            'file' => 'required|file|mimes:csv,txt,xls,xlsx|max:2048',
         ]);
 
-        $file = $request->file('file');
-        $handle = fopen($file->getPathname(), 'r');
-        
-        // Skip header row
-        fgetcsv($handle);
+        $institutionId = auth()->user()->institution_id;
+        $reader = IOFactory::createReaderForFile($validated['file']->getPathname());
+        $reader->setReadDataOnly(true);
+        $rows = $reader->load($validated['file']->getPathname())
+            ->getActiveSheet()
+            ->toArray(null, true, true, false);
 
-        $targetClassId = $request->class_id;
-        $targetSubClassId = $request->sub_class_id;
+        if (count($rows) < 2) {
+            throw ValidationException::withMessages([
+                'file' => 'The uploaded file must include a header row and at least one student.',
+            ]);
+        }
 
-        while (($row = fgetcsv($handle)) !== false) {
-            // Basic mapping: Name, RegNo, Gender
-            if (count($row) < 2) continue;
-
-            $student = Student::updateOrCreate(
-                ['admission_number' => trim($row[1])],
-                [
-                    'name' => trim($row[0]),
-                    'class_id' => $targetClassId,
-                    'sub_class_id' => $targetSubClassId,
-                    'gender' => isset($row[2]) ? trim($row[2]) : null,
-                    'phone' => isset($row[3]) ? trim($row[3]) : null,
-                    'email' => isset($row[4]) ? trim($row[4]) : null,
-                    'guardian_name' => isset($row[5]) ? trim($row[5]) : null,
-                    'guardian_phone' => isset($row[6]) ? trim($row[6]) : null,
-                    'address' => isset($row[7]) ? trim($row[7]) : null,
-                    'institution_id' => auth()->user()->institution_id,
-                    'payment_status' => 'pending'
-                ]
-            );
-
-            // Automate DVA Generation
-            try {
-                if (!$student->virtualAccount) {
-                    $this->processDvaGeneration($student);
+        $normalize = static fn ($value) => preg_replace('/[^a-z0-9]/', '', strtolower(trim((string) $value)));
+        $aliases = [
+            'name' => ['fullname', 'name', 'studentname'],
+            'admission_number' => ['admissionnumber', 'regnumber', 'registrationnumber'],
+            'class' => ['class', 'classname'],
+            'arm' => ['arm', 'classarm', 'subclass', 'subclassname'],
+            'gender' => ['gendermalefemale', 'gender'],
+            'phone' => ['phone', 'studentphone'],
+            'email' => ['email'],
+            'guardian_name' => ['guardianname'],
+            'guardian_phone' => ['guardianphone'],
+            'address' => ['address'],
+        ];
+        $columnMap = [];
+        $headerRow = reset($rows);
+        foreach ($headerRow as $index => $header) {
+            $normalizedHeader = $normalize($header);
+            foreach ($aliases as $field => $names) {
+                if (in_array($normalizedHeader, $names, true)) {
+                    $columnMap[$field] = $index;
+                    break;
                 }
-            } catch (\Exception $e) {
-                Log::error("Failed to auto-generate DVA for student {$student->id} during import: " . $e->getMessage());
             }
         }
 
-        fclose($handle);
+        foreach (['name', 'admission_number', 'class', 'arm'] as $requiredColumn) {
+            if (! array_key_exists($requiredColumn, $columnMap)) {
+                throw ValidationException::withMessages([
+                    'file' => 'Required column missing: '.str_replace('_', ' ', ucfirst($requiredColumn)).'. Download the latest template and keep its headers.',
+                ]);
+            }
+        }
 
-        return redirect()->back()->with('success', 'Students imported successfully');
+        $classes = SchoolClass::where('institution_id', $institutionId)->get()
+            ->groupBy(fn ($class) => $normalize($class->name));
+        $subClasses = \App\Models\SubClass::where('institution_id', $institutionId)->get();
+        $preparedRows = [];
+        $rowErrors = [];
+        $seenAdmissions = [];
+
+        foreach (array_slice($rows, 1, null, true) as $rowIndex => $row) {
+            $values = [];
+            foreach ($columnMap as $field => $columnIndex) {
+                $values[$field] = trim((string) ($row[$columnIndex] ?? ''));
+            }
+
+            if (implode('', $values) === '') {
+                continue;
+            }
+
+            $lineNumber = $rowIndex + 1;
+            $admissionNumber = $values['admission_number'] ?? '';
+            $classMatches = $classes->get($normalize($values['class'] ?? ''));
+
+            if ($values['name'] === '' || $admissionNumber === '' || ($values['class'] ?? '') === '' || ($values['arm'] ?? '') === '') {
+                $rowErrors[] = "Row {$lineNumber}: name, admission number, class, and arm are required.";
+
+                continue;
+            }
+
+            $admissionKey = strtolower($admissionNumber);
+            if (isset($seenAdmissions[$admissionKey])) {
+                $rowErrors[] = "Row {$lineNumber}: admission number {$admissionNumber} is duplicated in the file.";
+
+                continue;
+            }
+            $seenAdmissions[$admissionKey] = true;
+
+            if (! $classMatches || $classMatches->count() !== 1) {
+                $rowErrors[] = "Row {$lineNumber}: class \"{$values['class']}\" was not found or is ambiguous for this institution.";
+
+                continue;
+            }
+
+            $schoolClass = $classMatches->first();
+            $armMatches = $subClasses->filter(function ($subClass) use ($normalize, $values, $schoolClass) {
+                return $normalize($subClass->name) === $normalize($values['arm'])
+                    && ($subClass->class_id === null || (int) $subClass->class_id === (int) $schoolClass->id);
+            });
+
+            if ($armMatches->isEmpty()) {
+                $rowErrors[] = "Row {$lineNumber}: arm \"{$values['arm']}\" was not found for class \"{$schoolClass->name}\".";
+
+                continue;
+            }
+
+            $specificArmMatches = $armMatches->where('class_id', $schoolClass->id);
+            if ($specificArmMatches->count() > 1 || ($specificArmMatches->isEmpty() && $armMatches->count() > 1)) {
+                $rowErrors[] = "Row {$lineNumber}: arm \"{$values['arm']}\" is ambiguous for class \"{$schoolClass->name}\".";
+
+                continue;
+            }
+
+            $preparedRows[] = [
+                'values' => $values,
+                'admission_number' => $admissionNumber,
+                'class_id' => $schoolClass->id,
+                'sub_class_id' => ($specificArmMatches->first() ?? $armMatches->first())->id,
+                'line' => $lineNumber,
+            ];
+        }
+
+        if ($rowErrors) {
+            throw ValidationException::withMessages(['file' => implode(' ', $rowErrors)]);
+        }
+
+        if (! $preparedRows) {
+            throw ValidationException::withMessages(['file' => 'No student rows were found in the uploaded file.']);
+        }
+
+        $createdStudents = [];
+        $updatedCount = 0;
+        DB::transaction(function () use ($preparedRows, $institutionId, &$createdStudents, &$updatedCount) {
+            foreach ($preparedRows as $prepared) {
+                $values = $prepared['values'];
+                $student = Student::where('institution_id', $institutionId)
+                    ->where('admission_number', $prepared['admission_number'])
+                    ->first();
+
+                if (! $student && Student::where('admission_number', $prepared['admission_number'])->exists()) {
+                    throw ValidationException::withMessages([
+                        'file' => "Row {$prepared['line']}: admission number {$prepared['admission_number']} belongs to another institution.",
+                    ]);
+                }
+
+                $studentData = [
+                    'name' => $values['name'],
+                    'class_id' => $prepared['class_id'],
+                    'sub_class_id' => $prepared['sub_class_id'],
+                ];
+                foreach (['gender', 'phone', 'email', 'guardian_name', 'guardian_phone', 'address'] as $optionalField) {
+                    if (($values[$optionalField] ?? '') !== '') {
+                        $studentData[$optionalField] = $values[$optionalField];
+                    }
+                }
+
+                if ($student) {
+                    $student->update($studentData);
+                    $updatedCount++;
+                } else {
+                    $studentData += [
+                        'institution_id' => $institutionId,
+                        'admission_number' => $prepared['admission_number'],
+                        'payment_status' => 'pending',
+                        'status' => 'active',
+                    ];
+                    $student = Student::create($studentData);
+                    $createdStudents[] = $student;
+                }
+            }
+        });
+
+        foreach ($createdStudents as $student) {
+            try {
+                $this->processDvaGeneration($student);
+            } catch (\Exception $e) {
+                Log::error("Failed to auto-generate DVA for student {$student->id} during import: ".$e->getMessage());
+            }
+        }
+
+        return redirect()->back()->with(
+            'success',
+            count($createdStudents).' students added and '.$updatedCount.' existing students arranged by class and arm.'
+        );
     }
 
     public function store(Request $request) 
