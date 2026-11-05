@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use App\Models\Fee;
@@ -203,14 +204,14 @@ class StudentController extends Controller
                     $student->id,
                     $student->name,
                     $student->admission_number,
-                    $student->schoolClass->name ?? 'N/A',
-                    $student->subClass->name ?? 'N/A',
+                    $student->schoolClass->name ?? '',
+                    $student->subClass->name ?? '',
                     $student->gender,
-                    $student->phone ?? 'N/A',
-                    $student->email ?? 'N/A',
-                    $student->guardian_name ?? 'N/A',
-                    $student->guardian_phone ?? 'N/A',
-                    $student->address ?? 'N/A',
+                    $student->phone ?? '',
+                    $student->email ?? '',
+                    $student->guardian_name ?? '',
+                    $student->guardian_phone ?? '',
+                    $student->address ?? '',
                     $student->payment_status
                 ]);
             }
@@ -221,18 +222,23 @@ class StudentController extends Controller
         return response()->stream($callback, 200, $headers);
     }
 
-    public function downloadTemplate()
+    public function downloadTemplate(Request $request)
     {
+        $existingStudents = $request->query('type') === 'existing';
         $headers = [
             'Content-type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename=students_import_template.csv',
+            'Content-Disposition' => 'attachment; filename='.($existingStudents ? 'existing_students_template.csv' : 'new_students_template.csv'),
         ];
 
-        $callback = function () {
+        $callback = function () use ($existingStudents) {
             $file = fopen('php://output', 'w');
-            fputcsv($file, ['Full Name', 'Admission Number', 'Class', 'Arm', 'Gender (Male/Female)', 'Phone', 'Email', 'Guardian Name', 'Guardian Phone', 'Address']);
-            // Example row
-            fputcsv($file, ['John Doe', 'ADM/2026/001', 'JSS 1', 'A', 'Male', '08012345678', 'john@example.com', 'Jane Doe', '08098765432', '123 Main Street, City']);
+            if ($existingStudents) {
+                fputcsv($file, ['Full Name', 'Admission Number']);
+                fputcsv($file, ['John Doe', 'ADM/2026/001']);
+            } else {
+                fputcsv($file, ['Full Name', 'Admission Number', 'Gender (Male/Female)', 'Phone', 'Email', 'Guardian Name', 'Guardian Phone', 'Address']);
+                fputcsv($file, ['John Doe', 'ADM/2026/001', 'Male', '08012345678', 'john@example.com', 'Jane Doe', '08098765432', '123 Main Street, City']);
+            }
             fclose($file);
         };
 
@@ -243,9 +249,29 @@ class StudentController extends Controller
     {
         $validated = $request->validate([
             'file' => 'required|file|mimes:csv,txt,xls,xlsx|max:2048',
+            'import_mode' => ['required', Rule::in(['new', 'existing'])],
+            'class_id' => [
+                'required',
+                Rule::exists('classes', 'id')->where('institution_id', auth()->user()->institution_id),
+            ],
+            'sub_class_id' => [
+                'required',
+                Rule::exists('sub_classes', 'id')->where('institution_id', auth()->user()->institution_id),
+            ],
         ]);
 
         $institutionId = auth()->user()->institution_id;
+        $schoolClass = SchoolClass::where('institution_id', $institutionId)
+            ->findOrFail($validated['class_id']);
+        $subClass = \App\Models\SubClass::where('institution_id', $institutionId)
+            ->findOrFail($validated['sub_class_id']);
+
+        if ($subClass->class_id !== null && (int) $subClass->class_id !== (int) $schoolClass->id) {
+            throw ValidationException::withMessages([
+                'sub_class_id' => 'Select an arm that belongs to the selected class.',
+            ]);
+        }
+
         $reader = IOFactory::createReaderForFile($validated['file']->getPathname());
         $reader->setReadDataOnly(true);
         $rows = $reader->load($validated['file']->getPathname())
@@ -262,8 +288,6 @@ class StudentController extends Controller
         $aliases = [
             'name' => ['fullname', 'name', 'studentname'],
             'admission_number' => ['admissionnumber', 'regnumber', 'registrationnumber'],
-            'class' => ['class', 'classname'],
-            'arm' => ['arm', 'classarm', 'subclass', 'subclassname'],
             'gender' => ['gendermalefemale', 'gender'],
             'phone' => ['phone', 'studentphone'],
             'email' => ['email'],
@@ -283,17 +307,14 @@ class StudentController extends Controller
             }
         }
 
-        foreach (['name', 'admission_number', 'class', 'arm'] as $requiredColumn) {
+        foreach (['name', 'admission_number'] as $requiredColumn) {
             if (! array_key_exists($requiredColumn, $columnMap)) {
                 throw ValidationException::withMessages([
-                    'file' => 'Required column missing: '.str_replace('_', ' ', ucfirst($requiredColumn)).'. Download the latest template and keep its headers.',
+                    'file' => 'Required column missing: '.str_replace('_', ' ', ucfirst($requiredColumn)).'. Download the correct template and keep its headers.',
                 ]);
             }
         }
 
-        $classes = SchoolClass::where('institution_id', $institutionId)->get()
-            ->groupBy(fn ($class) => $normalize($class->name));
-        $subClasses = \App\Models\SubClass::where('institution_id', $institutionId)->get();
         $preparedRows = [];
         $rowErrors = [];
         $seenAdmissions = [];
@@ -307,13 +328,11 @@ class StudentController extends Controller
             if (implode('', $values) === '') {
                 continue;
             }
-
             $lineNumber = $rowIndex + 1;
             $admissionNumber = $values['admission_number'] ?? '';
-            $classMatches = $classes->get($normalize($values['class'] ?? ''));
 
-            if ($values['name'] === '' || $admissionNumber === '' || ($values['class'] ?? '') === '' || ($values['arm'] ?? '') === '') {
-                $rowErrors[] = "Row {$lineNumber}: name, admission number, class, and arm are required.";
+            if (($values['name'] ?? '') === '' || $admissionNumber === '') {
+                $rowErrors[] = "Row {$lineNumber}: name and admission number are required.";
 
                 continue;
             }
@@ -326,36 +345,9 @@ class StudentController extends Controller
             }
             $seenAdmissions[$admissionKey] = true;
 
-            if (! $classMatches || $classMatches->count() !== 1) {
-                $rowErrors[] = "Row {$lineNumber}: class \"{$values['class']}\" was not found or is ambiguous for this institution.";
-
-                continue;
-            }
-
-            $schoolClass = $classMatches->first();
-            $armMatches = $subClasses->filter(function ($subClass) use ($normalize, $values, $schoolClass) {
-                return $normalize($subClass->name) === $normalize($values['arm'])
-                    && ($subClass->class_id === null || (int) $subClass->class_id === (int) $schoolClass->id);
-            });
-
-            if ($armMatches->isEmpty()) {
-                $rowErrors[] = "Row {$lineNumber}: arm \"{$values['arm']}\" was not found for class \"{$schoolClass->name}\".";
-
-                continue;
-            }
-
-            $specificArmMatches = $armMatches->where('class_id', $schoolClass->id);
-            if ($specificArmMatches->count() > 1 || ($specificArmMatches->isEmpty() && $armMatches->count() > 1)) {
-                $rowErrors[] = "Row {$lineNumber}: arm \"{$values['arm']}\" is ambiguous for class \"{$schoolClass->name}\".";
-
-                continue;
-            }
-
             $preparedRows[] = [
                 'values' => $values,
                 'admission_number' => $admissionNumber,
-                'class_id' => $schoolClass->id,
-                'sub_class_id' => ($specificArmMatches->first() ?? $armMatches->first())->id,
                 'line' => $lineNumber,
             ];
         }
@@ -369,35 +361,55 @@ class StudentController extends Controller
         }
 
         $createdStudents = [];
-        $updatedCount = 0;
-        DB::transaction(function () use ($preparedRows, $institutionId, &$createdStudents, &$updatedCount) {
+        $arrangedCount = 0;
+        DB::transaction(function () use ($preparedRows, $institutionId, $validated, $schoolClass, $subClass, $normalize, &$createdStudents, &$arrangedCount) {
             foreach ($preparedRows as $prepared) {
                 $values = $prepared['values'];
                 $student = Student::where('institution_id', $institutionId)
                     ->where('admission_number', $prepared['admission_number'])
                     ->first();
 
-                if (! $student && Student::where('admission_number', $prepared['admission_number'])->exists()) {
+                if ($validated['import_mode'] === 'existing' && ! $student) {
+                    if (Student::where('admission_number', $prepared['admission_number'])->exists()) {
+                        $rowMessage = 'belongs to another institution';
+                    } else {
+                        $rowMessage = 'was not found in this school';
+                    }
                     throw ValidationException::withMessages([
-                        'file' => "Row {$prepared['line']}: admission number {$prepared['admission_number']} belongs to another institution.",
+                        'file' => "Row {$prepared['line']}: admission number {$prepared['admission_number']} {$rowMessage}. No students were moved.",
+                    ]);
+                }
+
+                if ($validated['import_mode'] === 'new' && ! $student && Student::where('admission_number', $prepared['admission_number'])->exists()) {
+                    throw ValidationException::withMessages([
+                        'file' => "Row {$prepared['line']}: admission number {$prepared['admission_number']} belongs to another institution. No students were added.",
+                    ]);
+                }
+
+                if ($validated['import_mode'] === 'new' && $student) {
+                    throw ValidationException::withMessages([
+                        'file' => "Row {$prepared['line']}: admission number {$prepared['admission_number']} already exists. Use the existing-students upload. No students were added.",
+                    ]);
+                }
+
+                if ($validated['import_mode'] === 'existing' && $normalize($student->name) !== $normalize($values['name'])) {
+                    throw ValidationException::withMessages([
+                        'file' => "Row {$prepared['line']}: the name does not match admission number {$prepared['admission_number']}. No students were moved.",
                     ]);
                 }
 
                 $studentData = [
-                    'name' => $values['name'],
-                    'class_id' => $prepared['class_id'],
-                    'sub_class_id' => $prepared['sub_class_id'],
+                    'class_id' => $schoolClass->id,
+                    'sub_class_id' => $subClass->id,
                 ];
-                foreach (['gender', 'phone', 'email', 'guardian_name', 'guardian_phone', 'address'] as $optionalField) {
-                    if (($values[$optionalField] ?? '') !== '') {
-                        $studentData[$optionalField] = $values[$optionalField];
-                    }
-                }
 
-                if ($student) {
-                    $student->update($studentData);
-                    $updatedCount++;
-                } else {
+                if ($validated['import_mode'] === 'new') {
+                    $studentData['name'] = $values['name'];
+                    foreach (['gender', 'phone', 'email', 'guardian_name', 'guardian_phone', 'address'] as $optionalField) {
+                        $studentData[$optionalField] = ($values[$optionalField] ?? '') !== ''
+                            ? $values[$optionalField]
+                            : null;
+                    }
                     $studentData += [
                         'institution_id' => $institutionId,
                         'admission_number' => $prepared['admission_number'],
@@ -406,6 +418,9 @@ class StudentController extends Controller
                     ];
                     $student = Student::create($studentData);
                     $createdStudents[] = $student;
+                } else {
+                    $student->update($studentData);
+                    $arrangedCount++;
                 }
             }
         });
@@ -418,10 +433,11 @@ class StudentController extends Controller
             }
         }
 
-        return redirect()->back()->with(
-            'success',
-            count($createdStudents).' students added and '.$updatedCount.' existing students arranged by class and arm.'
-        );
+        if ($validated['import_mode'] === 'existing') {
+            return redirect()->back()->with('success', "{$arrangedCount} existing students arranged in {$schoolClass->name} ({$subClass->name}).");
+        }
+
+        return redirect()->back()->with('success', count($createdStudents).' new students added successfully.');
     }
 
     public function store(Request $request) 

@@ -28,11 +28,14 @@ class StudentRosterImportTest extends TestCase
         $this->actingAs($user)
             ->from('/students')
             ->post('/students/import', [
+                'import_mode' => 'existing',
+                'class_id' => $classes['JSS 1']->id,
+                'sub_class_id' => $arms['B']->id,
                 'file' => UploadedFile::fake()->createWithContent(
                     'roster.csv',
-                    "Full Name,Admission Number,Class,Arm,Gender (Male/Female)\n".
-                    "Student One,ADM-001,JSS 1,B,Female\n".
-                    "Student Two,ADM-002,JSS 2,A,Male\n"
+                    "Full Name,Admission Number\n".
+                    "Student One,ADM-001\n".
+                    "Student Two,ADM-002\n"
                 ),
             ])
             ->assertSessionHasNoErrors()
@@ -45,8 +48,8 @@ class StudentRosterImportTest extends TestCase
         ]);
         $this->assertDatabaseHas('students', [
             'id' => $studentTwo->id,
-            'class_id' => $classes['JSS 2']->id,
-            'sub_class_id' => $arms['A']->id,
+            'class_id' => $classes['JSS 1']->id,
+            'sub_class_id' => $arms['B']->id,
         ]);
     }
 
@@ -67,7 +70,12 @@ class StudentRosterImportTest extends TestCase
 
         $this->actingAs($user)
             ->from('/students')
-            ->post('/students/import', ['file' => $legacyFile])
+            ->post('/students/import', [
+                'import_mode' => 'existing',
+                'class_id' => $classes['JSS 1']->id,
+                'sub_class_id' => $arms['A']->id,
+                'file' => $legacyFile,
+            ])
             ->assertSessionHasNoErrors()
             ->assertRedirect('/students');
 
@@ -90,7 +98,12 @@ class StudentRosterImportTest extends TestCase
 
         $this->actingAs($user)
             ->from('/students')
-            ->post('/students/import', ['file' => $file])
+            ->post('/students/import', [
+                'import_mode' => 'existing',
+                'class_id' => $classes['JSS 1']->id,
+                'sub_class_id' => $arms['B']->id,
+                'file' => $file,
+            ])
             ->assertSessionHasNoErrors()
             ->assertRedirect('/students');
 
@@ -98,6 +111,157 @@ class StudentRosterImportTest extends TestCase
             'id' => $student->id,
             'class_id' => $classes['JSS 1']->id,
             'sub_class_id' => $arms['B']->id,
+        ]);
+    }
+
+    public function test_blank_optional_roster_fields_preserve_existing_contact_details(): void
+    {
+        [$user, $institution, $classes, $arms] = $this->createSchoolSetup();
+        $student = $this->createStudent($institution, $classes['JSS 2'], $arms['A']);
+        $student->update([
+            'phone' => '08012345678',
+            'email' => 'student@example.test',
+            'guardian_name' => 'Parent One',
+            'guardian_phone' => '08087654321',
+            'address' => '1 Example Street',
+        ]);
+
+        $this->actingAs($user)
+            ->from('/students')
+            ->post('/students/import', [
+                'import_mode' => 'existing',
+                'class_id' => $classes['JSS 1']->id,
+                'sub_class_id' => $arms['B']->id,
+                'file' => UploadedFile::fake()->createWithContent(
+                    'roster.csv',
+                    "Full Name,Admission Number\n".
+                    "Student One,ADM-001\n"
+                ),
+            ])
+            ->assertSessionHasNoErrors()
+            ->assertRedirect('/students');
+
+        $this->assertDatabaseHas('students', [
+            'id' => $student->id,
+            'class_id' => $classes['JSS 1']->id,
+            'sub_class_id' => $arms['B']->id,
+            'phone' => '08012345678',
+            'email' => 'student@example.test',
+            'guardian_name' => 'Parent One',
+            'guardian_phone' => '08087654321',
+            'address' => '1 Example Street',
+        ]);
+    }
+
+    public function test_new_student_roster_creates_students_in_the_selected_class_and_arm(): void
+    {
+        [$user, $institution, $classes, $arms] = $this->createSchoolSetup();
+
+        $this->actingAs($user)
+            ->from('/students')
+            ->post('/students/import', [
+                'import_mode' => 'new',
+                'class_id' => $classes['JSS 1']->id,
+                'sub_class_id' => $arms['A']->id,
+                'file' => UploadedFile::fake()->createWithContent(
+                    'new-students.csv',
+                    "Full Name,Admission Number,Gender (Male/Female),Phone,Email\n".
+                    "New Student,ADM-NEW-001,Female,08012345678,new@example.test\n"
+                ),
+            ])
+            ->assertSessionHasNoErrors()
+            ->assertRedirect('/students');
+
+        $this->assertDatabaseHas('students', [
+            'institution_id' => $institution->id,
+            'admission_number' => 'ADM-NEW-001',
+            'name' => 'New Student',
+            'class_id' => $classes['JSS 1']->id,
+            'sub_class_id' => $arms['A']->id,
+            'phone' => '08012345678',
+            'email' => 'new@example.test',
+        ]);
+    }
+
+    public function test_new_student_roster_does_not_duplicate_an_existing_admission_number(): void
+    {
+        [$user, $institution, $classes, $arms] = $this->createSchoolSetup();
+        $student = $this->createStudent($institution, $classes['JSS 2'], $arms['A']);
+
+        $this->actingAs($user)
+            ->from('/students')
+            ->post('/students/import', [
+                'import_mode' => 'new',
+                'class_id' => $classes['JSS 1']->id,
+                'sub_class_id' => $arms['B']->id,
+                'file' => UploadedFile::fake()->createWithContent(
+                    'new-students.csv',
+                    "Full Name,Admission Number\n".
+                    "Changed Name,ADM-001\n"
+                ),
+            ])
+            ->assertSessionHasErrors('file');
+
+        $this->assertDatabaseCount('students', 1);
+        $this->assertDatabaseHas('students', [
+            'id' => $student->id,
+            'name' => 'Student One',
+            'class_id' => $classes['JSS 2']->id,
+            'sub_class_id' => $arms['A']->id,
+        ]);
+    }
+
+    public function test_existing_student_roster_rejects_unknown_students_without_creating_records(): void
+    {
+        [$user, $institution, $classes, $arms] = $this->createSchoolSetup();
+        $student = $this->createStudent($institution, $classes['JSS 2'], $arms['A']);
+
+        $this->actingAs($user)
+            ->from('/students')
+            ->post('/students/import', [
+                'import_mode' => 'existing',
+                'class_id' => $classes['JSS 1']->id,
+                'sub_class_id' => $arms['B']->id,
+                'file' => UploadedFile::fake()->createWithContent(
+                    'existing-students.csv',
+                    "Full Name,Admission Number\n".
+                    "Student One,ADM-001\n".
+                    "Unknown Student,ADM-UNKNOWN\n"
+                ),
+            ])
+            ->assertSessionHasErrors('file');
+
+        $this->assertDatabaseHas('students', [
+            'id' => $student->id,
+            'class_id' => $classes['JSS 2']->id,
+            'sub_class_id' => $arms['A']->id,
+        ]);
+        $this->assertDatabaseMissing('students', ['admission_number' => 'ADM-UNKNOWN']);
+    }
+
+    public function test_existing_student_roster_rejects_a_name_that_does_not_match_the_admission_number(): void
+    {
+        [$user, $institution, $classes, $arms] = $this->createSchoolSetup();
+        $student = $this->createStudent($institution, $classes['JSS 2'], $arms['A']);
+
+        $this->actingAs($user)
+            ->from('/students')
+            ->post('/students/import', [
+                'import_mode' => 'existing',
+                'class_id' => $classes['JSS 1']->id,
+                'sub_class_id' => $arms['B']->id,
+                'file' => UploadedFile::fake()->createWithContent(
+                    'existing-students.csv',
+                    "Full Name,Admission Number\n".
+                    "Different Student,ADM-001\n"
+                ),
+            ])
+            ->assertSessionHasErrors('file');
+
+        $this->assertDatabaseHas('students', [
+            'id' => $student->id,
+            'class_id' => $classes['JSS 2']->id,
+            'sub_class_id' => $arms['A']->id,
         ]);
     }
 

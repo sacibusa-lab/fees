@@ -7,7 +7,7 @@ import './AddStudentModal.css'; // New styles for tabs and specific form inputs
 const AddStudentModal = ({ show, onClose, classes = [], subClasses = [] }) => {
     if (!show) return null;
 
-    const [activeTab, setActiveTab] = useState('single'); // 'single' or 'multiple'
+    const [activeTab, setActiveTab] = useState('single');
     const [step, setStep] = useState(1); // 1 = Student Info, 2 = Contact Details
 
     // Single Student Form
@@ -28,10 +28,16 @@ const AddStudentModal = ({ show, onClose, classes = [], subClasses = [] }) => {
     // Multiple Student (CSV) Form
     const { data: multiData, setData: setMultiData, post: postMulti, processing: multiProcessing, errors: multiErrors, reset: resetMulti } = useForm({
         file: null,
+        import_mode: 'new',
+        class_id: '',
+        sub_class_id: '',
     });
 
     // Use all sub-classes globally
     const filteredSubClasses = subClasses;
+    const importSubClasses = subClasses.filter(sc =>
+        !sc.class_id || !multiData.class_id || sc.class_id == multiData.class_id
+    );
 
     const handleNext = () => {
         // Basic validation before proceeding
@@ -73,6 +79,13 @@ const AddStudentModal = ({ show, onClose, classes = [], subClasses = [] }) => {
     const handleTabSwitch = (tab) => {
         setActiveTab(tab);
         setStep(1);
+        if (tab === 'new' || tab === 'existing') {
+            setMultiData(data => ({
+                ...data,
+                file: null,
+                import_mode: tab,
+            }));
+        }
     };
 
     return (
@@ -95,10 +108,16 @@ const AddStudentModal = ({ show, onClose, classes = [], subClasses = [] }) => {
                         Single Student
                     </button>
                     <button
-                        className={`tab-btn ${activeTab === 'multiple' ? 'active' : ''}`}
-                        onClick={() => handleTabSwitch('multiple')}
+                        className={`tab-btn ${activeTab === 'new' ? 'active' : ''}`}
+                        onClick={() => handleTabSwitch('new')}
                     >
-                        Multiple Students (CSV/Excel)
+                        New Students
+                    </button>
+                    <button
+                        className={`tab-btn ${activeTab === 'existing' ? 'active' : ''}`}
+                        onClick={() => handleTabSwitch('existing')}
+                    >
+                        Existing Students
                     </button>
                 </div>
 
@@ -303,26 +322,34 @@ const AddStudentModal = ({ show, onClose, classes = [], subClasses = [] }) => {
                 ) : (
                     <form onSubmit={handleMultiSubmit} className="student-form">
                         <div className="download-template-area">
-                            <a href="/students/template" target="_blank" className="download-link">
-                                Download the roster template and keep its headers
+                            <a
+                                href={`/students/template${activeTab === 'existing' ? '?type=existing' : ''}`}
+                                target="_blank"
+                                className="download-link"
+                            >
+                                Download {activeTab === 'existing' ? 'existing-student' : 'new-student'} template
                             </a>
-                            <p>Each row is assigned to the class and arm named in that row. Existing admission numbers are moved to the uploaded class and arm.</p>
+                            <p>
+                                {activeTab === 'existing'
+                                    ? 'Use this for students already in your school. Only their class and arm will change; their other details and records stay as they are.'
+                                    : 'Use this for students who are not yet in your school. Choose a class and arm below for everyone in this file.'}
+                            </p>
                         </div>
 
                         <div className="file-upload-area">
                             <input
                                 type="file"
-                                id="csv-upload-tab"
+                                id={`csv-upload-${activeTab}`}
                                 accept=".csv,.xls,.xlsx"
                                 onChange={handleFileChange}
                                 className="hidden-file-input"
                             />
-                            <label htmlFor="csv-upload-tab" className="upload-label">
+                            <label htmlFor={`csv-upload-${activeTab}`} className="upload-label">
                                 <div className="upload-icon-wrapper">
                                     <Upload size={32} />
                                 </div>
                                 <span className="upload-text">
-                                    Drop your students file here or <span className="highlight-text">Browse</span>
+                                    Choose a {activeTab === 'existing' ? 'existing' : 'new'} students file or <span className="highlight-text">Browse</span>
                                 </span>
                                 <span className="upload-subtext">Supports CSV, XLS, and XLSX (max 2MB)</span>
                                 {multiData.file && <div className="file-name-tag">{multiData.file.name}</div>}
@@ -330,12 +357,53 @@ const AddStudentModal = ({ show, onClose, classes = [], subClasses = [] }) => {
                             {multiErrors.file && <div className="error-msg mt-2">{multiErrors.file}</div>}
                         </div>
 
+                        <div className="form-group">
+                            <label>Class <span className="required">*</span></label>
+                            <select
+                                value={multiData.class_id}
+                                onChange={e => setMultiData(data => ({
+                                    ...data,
+                                    class_id: e.target.value,
+                                    sub_class_id: '',
+                                }))}
+                                className={multiErrors.class_id ? 'error-input' : ''}
+                                required
+                            >
+                                <option value="">--Select class--</option>
+                                {classes.map(cls => (
+                                    <option key={cls.id} value={cls.id}>{cls.name}</option>
+                                ))}
+                            </select>
+                            {multiErrors.class_id && <span className="error-msg">{multiErrors.class_id}</span>}
+                        </div>
+
+                        <div className="form-group">
+                            <label>Arm <span className="required">*</span></label>
+                            <select
+                                value={multiData.sub_class_id}
+                                onChange={e => setMultiData('sub_class_id', e.target.value)}
+                                className={multiErrors.sub_class_id ? 'error-input' : ''}
+                                disabled={!multiData.class_id}
+                                required
+                            >
+                                <option value="">--Select arm--</option>
+                                {importSubClasses.map(sc => (
+                                    <option key={sc.id} value={sc.id}>{sc.name}</option>
+                                ))}
+                            </select>
+                            {multiErrors.sub_class_id && <span className="error-msg">{multiErrors.sub_class_id}</span>}
+                        </div>
+
                         <button
                             type="submit"
                             className="btn-promote full-width"
-                            disabled={multiProcessing || !multiData.file}
+                            disabled={multiProcessing || !multiData.file || !multiData.class_id || !multiData.sub_class_id}
                         >
-                            {multiProcessing ? 'Importing...' : 'Import & Arrange Students'}
+                            {multiProcessing
+                                ? 'Importing...'
+                                : activeTab === 'existing'
+                                    ? 'Move Existing Students'
+                                    : 'Add New Students'}
                         </button>
                     </form>
                 )}
